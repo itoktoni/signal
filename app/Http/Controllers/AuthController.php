@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +30,7 @@ class AuthController extends Controller
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
+            'user' => UserResource::make($user),
             'token' => $token,
         ]);
     }
@@ -51,7 +52,7 @@ class AuthController extends Controller
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
+            'user' => UserResource::make($user),
             'token' => $token,
         ], 201);
     }

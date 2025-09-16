@@ -31,6 +31,24 @@ class User extends Authenticatable
         'password',
     ];
 
+      // define rules array
+    public $rules = [
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users',
+        'password' => 'required|string|min:8|confirmed',
+    ];
+
+    // messages are optional, only provide when want customize message
+    public $messages = [
+        'name.required' => 'The name field is required.',
+        'email.required' => 'The email field is required.',
+        'email.email' => 'Please enter a valid email address.',
+        'email.unique' => 'This email is already registered.',
+        'password.required' => 'The password field is required.',
+        'password.min' => 'Password must be at least 8 characters.',
+        'password.confirmed' => 'Password confirmation does not match.',
+    ];
+
     /**
      * The attributes that should be hidden for serialization.
      *
