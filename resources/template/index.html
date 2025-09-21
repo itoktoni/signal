@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="/assets/css/app.css" />
+    <link rel="stylesheet" href="/assets/css/safe-area.css" />
+    <title>Users - Obsesiman Report - Vanilla</title>
+</head>
+
+<body>
+    <div class="app-container is-full-screen">
+        <!-- Sidebar Container for both columns -->
+        <div id="sidebar-container" class="sidebar-container">
+            <!-- Column 1: Main Sidebar -->
+            <aside class="main-sidebar safe-area-drawer">
+                <ul class="main-nav">
+                    <li>
+                        <a href="#" class="nav-item" data-menu="home">
+                            <i class="bi bi-house"></i>
+                            <span>Home</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item" data-menu="aplikasi">
+                            <i class="bi bi-rocket"></i>
+                            <span>Apps</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item" data-menu="laporan">
+                            <i class="bi bi-printer"></i>
+                            <span>Report</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item active" data-menu="system">
+                            <i class="bi bi-wrench-adjustable-circle"></i>
+                            <span>System</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item" data-menu="test">
+                            <i class="bi bi-bug"></i>
+                            <span>Test</span>
+                        </a>
+                    </li>
+                </ul>
+            </aside>
+
+            <!-- Column 2: Sub Menu -->
+            <div id="sub-menu-container" class="sub-menu-container">
+                <!-- Logo -->
+                <a href="/" class="logo">
+                    <h1>
+                        <img src="/assets/images/logo.png" alt="logo" style="max-height: 40px" />
+                    </h1>
+                </a>
+
+                <!-- Home Sub Menu -->
+                <div class="sub-menu" id="home-submenu" style="display: none">
+                    <div class="sub-menu-list">
+                        <a href="/dashboard">
+                            <span>Dashboard</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/analytics">
+                            <span>Analytics</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/reports">
+                            <span>Reports</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Apps Sub Menu -->
+                <div class="sub-menu" id="aplikasi-submenu" style="display: none">
+                    <div class="sub-menu-list">
+                        <a href="/apps">
+                            <span>App List</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/apps/new">
+                            <span>New App</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/apps/settings">
+                            <span>Settings</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Report Sub Menu -->
+                <div class="sub-menu" id="laporan-submenu" style="display: none">
+                    <div class="sub-menu-list">
+                        <a href="/reports/sales">
+                            <span>Sales Report</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/reports/users">
+                            <span>User Report</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/reports/financials">
+                            <span>Financials</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- System Sub Menu -->
+                <div class="sub-menu" id="system-submenu" style="display: block">
+                    <div class="sub-menu-list">
+                        <a href="/system/groups">
+                            <span>Group</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/roles">
+                            <span>Roles</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/system/menu">
+                            <span>Menu</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/system/links">
+                            <span>Link</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/system/permissions">
+                            <span>Permission</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/system/settings">
+                            <span>Setting Website</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="users.html" class="active">
+                            <span>User</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Test Sub Menu -->
+                <div class="sub-menu" id="test-submenu" style="display: none">
+                    <div class="sub-menu-list">
+                        <a href="/test-safe-area">
+                            <span>Safe Area Test</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/test-safe-area-page">
+                            <span>Safe Area Page Test</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/test-form-select">
+                            <span>FormSelect Test</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/test/capacitor-plugins">
+                            <span>All Capacitor Plugins</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/test/plugin-tests">
+                            <span>Plugins by Navigation</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/test/plugins-by-package">
+                            <span>Plugins by Package</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/test/plugins/uhf-rfid-scanner">
+                            <span>UHF RFID Scanner</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <main class="main-content">
+            <header class="safe-area-header main-header">
+                <div class="header-title-wrapper is-vertical-align">
+                    <button id="mobile-menu-button" class="mobile-menu-button safe-area-left">
+                        <i class="bi bi-sliders"></i>
+                    </button>
+                    <h1 class="header-title">ASSET MANAGEMENT</h1>
+                </div>
+                <div class="user-profile is-vertical-align safe-area-right">
+                    <div class="notification-icon" id="notification-icon">
+                        <i class="bi bi-bell"></i><span class="notification-badge">2</span>
+                    </div>
+                    <div class="profile-icon" id="profile-icon">
+                        <i class="bi bi-person-badge"></i>
+                        <div class="profile-dropdown" id="profile-dropdown">
+                            <a href="/profile" class="dropdown-item">Profile</a><a href="/settings" class="dropdown-item">Settings</a><a href="#" class="dropdown-item">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <div class="content-body">
+                <div class="card">
+                    <div class="page-header">
+                        <h2>Users</h2>
+                    </div>
+                    <div class="card-table">
+                        <div class="form-table-container">
+                            <form class="form-table-filter">
+                                <div class="row">
+                                    <div class="form-group col-4">
+                                        <label for="username" class="form-label">Username </label><input id="username" name="username" type="text" placeholder="Search by username" class="form-input" value="" />
+                                    </div>
+                                    <div class="form-group col-4">
+                                        <label for="email" class="form-label">Email </label><input id="email" name="email" type="text" placeholder="Search by email" class="form-input" value="" />
+                                    </div>
+                                    <div class="form-group col-4">
+                                        <label for="role" class="form-label">Role </label>
+                                        <div class="select-wrapper">
+                                            <div id="role" class="select-display form-select" tabindex="0">
+                                                <span class="select-placeholder">Select role</span><i class="select-arrow"></i>
+                                            </div>
+                                            <div class="select-dropdown" style="display: none">
+                                                <div class="select-options">
+                                                    <div class="select-option selected">All Roles</div>
+                                                    <div class="select-option">Admin</div>
+                                                    <div class="select-option">User</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-2">
+                                        <label for="perpage" class="form-label">Per Page </label>
+                                        <div class="select-wrapper">
+                                            <div id="perpage" class="select-display form-select" tabindex="0">
+                                                <span class="select-text">10</span><i class="select-arrow"></i>
+                                            </div>
+                                            <div class="select-dropdown" style="display: none">
+                                                <div class="select-options">
+                                                    <div class="select-option selected">10</div>
+                                                    <div class="select-option">20</div>
+                                                    <div class="select-option">50</div>
+                                                    <div class="select-option">100</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-4">
+                                        <label for="filter" class="form-label">Filter </label>
+                                        <div class="select-wrapper">
+                                            <div id="filter" class="select-display form-select" tabindex="0">
+                                                <span class="select-placeholder">Select filter</span><i class="select-arrow"></i>
+                                            </div>
+                                            <div class="select-dropdown" style="display: none">
+                                                <div class="select-options">
+                                                    <div class="select-option selected">All Filter</div>
+                                                    <div class="select-option">Username</div>
+                                                    <div class="select-option">Role</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-6">
+                                        <label for="search" class="form-label">Search </label><input id="search" name="search" type="text" placeholder="Enter search term" class="form-input" value="" />
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="button button secondary">
+                                        <span class="">Reset</span></button><button type="submit" class="button button primary">
+                                        <span class="">Search</span>
+                                    </button>
+                                </div>
+                            </form>
+                            <div class="form-table-content">
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th><input type="checkbox" /></th>
+                                                <th class="text-center action-table">Actions</th>
+                                                <th>ID</th>
+                                                <th>Username</th>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Role</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="hide-lg">
+                                                <td data-label="Check All Data">
+                                                    <input type="checkbox" />
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="checkbox" /></td>
+                                                <td data-label="Actions">
+                                                    <div class="action-table">
+                                                        <button type="button" class="button button primary">
+                                                            <i class="bi bi-pencil-square"></i><span class=""></span></button><!-- Delete/Remove type --><button class="button button danger">
+                                                            <i class="bi bi-trash"></i><span class=""><span></span></span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td data-label="ID">2207</td>
+                                                <td data-label="Username">admin</td>
+                                                <td data-label="Name">Admin</td>
+                                                <td data-label="Email">admin@gmail.com</td>
+                                                <td data-label="Role Name">Admin</td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="checkbox" /></td>
+                                                <td data-label="Actions">
+                                                    <div class="action-table">
+                                                        <button type="button" class="button button primary">
+                                                            <i class="bi bi-pencil-square"></i><span class=""></span></button><!-- Delete/Remove type --><button class="button button danger">
+                                                            <i class="bi bi-trash"></i><span class=""><span></span></span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td data-label="ID">2212</td>
+                                                <td data-label="Username">cakrabuana24</td>
+                                                <td data-label="Name">cakra buana</td>
+                                                <td data-label="Email">samosir.lulut@utami.in</td>
+                                                <td data-label="Role Name">Admin</td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="checkbox" /></td>
+                                                <td data-label="Actions">
+                                                    <div class="action-table">
+                                                        <button type="button" class="button button primary">
+                                                            <i class="bi bi-pencil-square"></i><span class=""></span></button><!-- Delete/Remove type --><button class="button button danger">
+                                                            <i class="bi bi-trash"></i><span class=""><span></span></span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td data-label="ID">2218</td>
+                                                <td data-label="Username">karya.zulaika</td>
+                                                <td data-label="Name">Rika Safitri S.E.</td>
+                                                <td data-label="Email">kamal.suartini@yahoo.com</td>
+                                                <td data-label="Role Name">Admin</td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="checkbox" /></td>
+                                                <td data-label="Actions">
+                                                    <div class="action-table">
+                                                        <button type="button" class="button button primary">
+                                                            <i class="bi bi-pencil-square"></i><span class=""></span></button><!-- Delete/Remove type --><button class="button button danger">
+                                                            <i class="bi bi-trash"></i><span class=""><span></span></span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td data-label="ID">2219</td>
+                                                <td data-label="Username">xnovitasari</td>
+                                                <td data-label="Name">Ana Syahrini Hariyah S.E.I</td>
+                                                <td data-label="Email">
+                                                    eprasetyo@kuswandari.web.id
+                                                </td>
+                                                <td data-label="Role Name">Admin</td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="checkbox" /></td>
+                                                <td data-label="Actions">
+                                                    <div class="action-table">
+                                                        <button type="button" class="button button primary">
+                                                            <i class="bi bi-pencil-square"></i><span class=""></span></button><!-- Delete/Remove type --><button class="button button danger">
+                                                            <i class="bi bi-trash"></i><span class=""><span></span></span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td data-label="ID">2220</td>
+                                                <td data-label="Username">csitumorang</td>
+                                                <td data-label="Name">situmorang simarmata</td>
+                                                <td data-label="Email">
+                                                    latupono.waluyo@gmail.co.id
+                                                </td>
+                                                <td data-label="Role Name">Admin</td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="checkbox" /></td>
+                                                <td data-label="Actions">
+                                                    <div class="action-table">
+                                                        <button type="button" class="button button primary">
+                                                            <i class="bi bi-pencil-square"></i><span class=""></span></button><!-- Delete/Remove type --><button class="button button danger">
+                                                            <i class="bi bi-trash"></i><span class=""><span></span></span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td data-label="ID">2235</td>
+                                                <td data-label="Username">nasyidah.zelda</td>
+                                                <td data-label="Name">Yessi Purnawati</td>
+                                                <td data-label="Email">
+                                                    puspasari.ajeng@gmail.co.id
+                                                </td>
+                                                <td data-label="Role Name">Admin</td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="checkbox" /></td>
+                                                <td data-label="Actions">
+                                                    <div class="action-table">
+                                                        <button type="button" class="button button primary">
+                                                            <i class="bi bi-pencil-square"></i><span class=""></span></button><!-- Delete/Remove type --><button class="button button danger">
+                                                            <i class="bi bi-trash"></i><span class=""><span></span></span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td data-label="ID">2237</td>
+                                                <td data-label="Username">saefullah.nilam</td>
+                                                <td data-label="Name">Yuni Betania Nuraini M.Kom.</td>
+                                                <td data-label="Email">xyuniar@nugroho.mil.id</td>
+                                                <td data-label="Role Name">Admin</td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="checkbox" /></td>
+                                                <td data-label="Actions">
+                                                    <div class="action-table">
+                                                        <button type="button" class="button button primary">
+                                                            <i class="bi bi-pencil-square"></i><span class=""></span></button><!-- Delete/Remove type --><button class="button button danger">
+                                                            <i class="bi bi-trash"></i><span class=""><span></span></span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td data-label="ID">2243</td>
+                                                <td data-label="Username">nwahyudin</td>
+                                                <td data-label="Name">Siska Siti Mulyani</td>
+                                                <td data-label="Email">
+                                                    hutagalung.elvina@gmail.co.id
+                                                </td>
+                                                <td data-label="Role Name">Admin</td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="checkbox" /></td>
+                                                <td data-label="Actions">
+                                                    <div class="action-table">
+                                                        <button type="button" class="button button primary">
+                                                            <i class="bi bi-pencil-square"></i><span class=""></span></button><!-- Delete/Remove type --><button class="button button danger">
+                                                            <i class="bi bi-trash"></i><span class=""><span></span></span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td data-label="ID">2244</td>
+                                                <td data-label="Username">calista96</td>
+                                                <td data-label="Name">Dewi Ulya Mulyani S.H.</td>
+                                                <td data-label="Email">xbudiyanto@wibowo.co.id</td>
+                                                <td data-label="Role Name">Admin</td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="checkbox" /></td>
+                                                <td data-label="Actions">
+                                                    <div class="action-table">
+                                                        <button type="button" class="button button primary">
+                                                            <i class="bi bi-pencil-square"></i><span class=""></span></button><!-- Delete/Remove type --><button class="button button danger">
+                                                            <i class="bi bi-trash"></i><span class=""><span></span></span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td data-label="ID">2245</td>
+                                                <td data-label="Username">amelia81</td>
+                                                <td data-label="Name">Gadang Wasita</td>
+                                                <td data-label="Email">
+                                                    hassanah.perkasa@puspasari.or.id
+                                                </td>
+                                                <td data-label="Role Name">Admin</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="form-table-pagination">
+                                <nav class="pagination">
+                                    <button disabled="" class="button secondary">
+                                        <i class="bi bi-arrow-left"></i></button><span class="pagination-info"> Page 1 of 8</span><button class="button secondary">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="content-footer safe-area-bottom">
+                        <div class="form-actions">
+                            <!-- Delete/Remove type --><button class="button button danger disabled" disabled="">
+                                <span class=""><span>Delete</span></span></button><button type="button" class="button button success">
+                                <i class="bi bi-plus"></i><span class="">Create</span>
+                            </button>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+            <!-- Network Monitor - Only visible on mobile -->
+        </main>
+    </div>
+
+    <!-- Notification Drawer -->
+    <div class="notification-drawer" id="notification-drawer">
+        <div class="notification-header safe-area-header">
+            <h2 class="notification-title">Notifications</h2>
+            <button class="notification-close">×</button>
+        </div>
+        <div class="notification-list is-paddingless">
+            <div class="notification-item unread">
+                <div class="notification-icon-small">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-message">
+                        A new user 'john_doe' has registered to the system.
+                    </p>
+                    <div class="notification-time">10 minutes ago</div>
+                    <div class="notification-actions">
+                        <button class="notification-action">Mark as read</button>
+                        <button class="notification-action">Dismiss</button>
+                    </div>
+                </div>
+            </div>
+            <div class="notification-item unread">
+                <div class="notification-icon-small">
+                    <i class="bi bi-bell"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-message">
+                        Your monthly sales report has been successfully generated.
+                    </p>
+                    <div class="notification-time">1 hour ago</div>
+                    <div class="notification-actions">
+                        <button class="notification-action">Mark as read</button>
+                        <button class="notification-action">Dismiss</button>
+                    </div>
+                </div>
+            </div>
+            <div class="notification-item">
+                <div class="notification-icon-small">
+                    <i class="bi bi-bell"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-message">
+                        A new system update is available. Please update at your
+                        convenience.
+                    </p>
+                    <div class="notification-time">2 hours ago</div>
+                    <div class="notification-actions">
+                        <button class="notification-action">Mark as read</button>
+                        <button class="notification-action">Dismiss</button>
+                    </div>
+                </div>
+            </div>
+            <div class="notification-item">
+                <div class="notification-icon-small">
+                    <i class="bi bi-bell"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-message">
+                        A payment of $250.00 has been received from Customer Inc.
+                    </p>
+                    <div class="notification-time">5 hours ago</div>
+                    <div class="notification-actions">
+                        <button class="notification-action">Mark as read</button>
+                        <button class="notification-action">Dismiss</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="notification-footer safe-area-bottom">
+            <button class="mark-all-read">Mark all as read</button>
+        </div>
+    </div>
+
+    <div class="copyright">
+        <p>&copy; Alphara</p>
+    </div>
+
+    <div id="overlay" class="overlay"></div>
+
+    <script>
+        let sidebarOpen = false;
+        let selectedMenu = "system";
+
+        // Menu navigation
+        document.querySelectorAll(".nav-item").forEach((item) => {
+            item.addEventListener("click", function(e) {
+                e.preventDefault();
+                const menuId = this.getAttribute("data-menu");
+                selectedMenu = menuId;
+
+                // Update active class
+                document
+                    .querySelectorAll(".nav-item")
+                    .forEach((nav) => nav.classList.remove("active"));
+                this.classList.add("active");
+
+                // Hide all sub-menus
+                document
+                    .querySelectorAll(".sub-menu")
+                    .forEach((sub) => (sub.style.display = "none"));
+
+                // Show selected sub-menu
+                const subMenu = document.getElementById(menuId + "-submenu");
+                if (subMenu) {
+                    subMenu.style.display = "block";
+                }
+            });
+        });
+
+        // Mobile menu toggle
+        document
+            .getElementById("mobile-menu-button")
+            .addEventListener("click", function() {
+                sidebarOpen = !sidebarOpen;
+                const sidebar = document.getElementById("sidebar-container");
+                sidebar.classList.toggle("open", sidebarOpen);
+                document
+                    .getElementById("overlay")
+                    .classList.toggle("active", sidebarOpen);
+            });
+
+        // Overlay click to close
+        document.getElementById("overlay").addEventListener("click", function() {
+            sidebarOpen = false;
+            document.getElementById("sidebar-container").classList.remove("open");
+            this.classList.remove("active");
+        });
+
+        // Profile dropdown toggle
+        document
+            .getElementById("profile-icon")
+            .addEventListener("click", function() {
+                const dropdown = document.getElementById("profile-dropdown");
+                dropdown.classList.toggle("active");
+                document
+                    .getElementById("notification-drawer")
+                    .classList.remove("open");
+            });
+
+        // Notification toggle
+        document
+            .getElementById("notification-icon")
+            .addEventListener("click", function() {
+                const drawer = document.getElementById("notification-drawer");
+                drawer.classList.toggle("open");
+                document
+                    .getElementById("profile-dropdown")
+                    .classList.remove("active");
+            });
+
+        // Close notification drawer
+        document
+            .querySelector(".notification-close")
+            .addEventListener("click", function() {
+                document
+                    .getElementById("notification-drawer")
+                    .classList.remove("open");
+            });
+
+        // Close on outside click
+        document.addEventListener("click", function(e) {
+            if (!e.target.closest(".profile-icon")) {
+                document
+                    .getElementById("profile-dropdown")
+                    .classList.remove("active");
+            }
+            if (
+                !e.target.closest(".notification-icon") &&
+                !e.target.closest(".notification-drawer")
+            ) {
+                document
+                    .getElementById("notification-drawer")
+                    .classList.remove("open");
+            }
+        });
+
+        // Initialize active menu
+        document
+            .querySelector(`[data-menu="${selectedMenu}"]`)
+            .classList.add("active");
+        document.getElementById(selectedMenu + "-submenu").style.display =
+            "block";
+    </script>
+</body>
+
+</html>

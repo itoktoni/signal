@@ -1,0 +1,132 @@
+:root {
+  /* Base Colors */
+  --white: #ffffff;
+  --black: #000000;
+
+  /* Background Colors */
+  --bg-color: var(--white);
+  --bg-secondary-color: #f3f3f6;
+  --bg-light: #f3f4f6;
+  --bg-white: var(--white);
+  --bg-light-secondary: #f8f9fa;
+  --bg-error-light: #fff5f5;
+
+  /* Text Colors */
+  --font-color: #333;
+  --font-color-secondary: var(--bg-secondary-color);
+  --text-light: var(--white);
+  --text-dark: #1f2937;
+  --text-muted: #6b7280;
+  --text-gray: #555;
+  --text-gray-light: #6c757d;
+  --text-gray-dark: #495057;
+  --text-gray-medium: #868e96;
+  --text-placeholder: #bdbfc4;
+
+  /* Primary Colors */
+  --color-primary: #2563eb;
+  --primary-color: var(--color-primary);
+  --primary-hover: #1d4ed8;
+  --primary-active: #1f4abf;
+
+  /* Grayscale Colors */
+  --color-lightGrey: #d2d6dd;
+  --color-grey: #747681;
+  --color-darkGrey: #3f4144;
+  --color-border-light: #e9ecef;
+  --color-scrollbar-track: #f5f5f5;
+  --color-scrollbar-thumb: #d3d3d3;
+
+  /* Status Colors */
+  --color-error: #d43939;
+  --color-success: #14854f;
+  --danger-color: #ef4444;
+  --success-color: #14854f;
+  --color-error-bootstrap: #dc3545;
+  --color-primary-bootstrap: #007bff;
+
+  /* Special Colors */
+  --border-color: #e5e7eb;
+  --notification-unread-bg: #f0f7ff;
+
+  /* Shadow Colors */
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --shadow-color-light: rgba(0, 0, 0, 0.05);
+  --shadow-color-medium: rgba(0, 0, 0, 0.05);
+  --shadow-color-dark: rgba(0, 0, 0, 0.1);
+  --shadow-overlay: rgba(0, 0, 0, 0.5);
+  --shadow-primary: rgba(0, 123, 255, 0.1);
+  --shadow-error: rgba(220, 53, 69, 0.1);
+
+  /* Typography */
+  --font-size: 1.6rem;
+  --icon-text: 1rem;
+
+  /* Grid System */
+  --grid-maxWidth: 120rem;
+  --grid-gutter: 2rem;
+
+  /* Font Families */
+  --font-family-sans: 'Inter', sans-serif, "Segoe UI", "Helvetica Neue", sans-serif, -apple-system, "BlinkMacSystemFont", "Avenir",
+    "Avenir Next", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+    "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  --font-family-mono: monaco, "Consolas", "Lucida Console", monospace;
+}
+
+/* Dark Mode Variables */
+.dark {
+  /* Background Colors */
+  --bg-color: #1f2937;
+  --bg-secondary-color: #374151;
+  --bg-light: #111827;
+  --bg-white: #1f2937;
+  --bg-light-secondary: #374151;
+  --bg-error-light: #451a1a;
+
+  /* Text Colors */
+  --font-color: #f9fafb;
+  --font-color-secondary: #d1d5db;
+  --text-light: #f9fafb;
+  --text-dark: #f9fafb;
+  --text-muted: #9ca3af;
+  --text-gray: #d1d5db;
+  --text-gray-light: #9ca3af;
+  --text-gray-dark: #d1d5db;
+  --text-gray-medium: #9ca3af;
+  --text-placeholder: #6b7280;
+
+  /* Primary Colors */
+  --color-primary: #3b82f6;
+  --primary-color: var(--color-primary);
+  --primary-hover: #2563eb;
+  --primary-active: #1d4ed8;
+
+  /* Grayscale Colors */
+  --color-lightGrey: #4b5563;
+  --color-grey: #9ca3af;
+  --color-darkGrey: #f9fafb;
+  --color-border-light: #374151;
+  --color-scrollbar-track: #374151;
+  --color-scrollbar-thumb: #6b7280;
+
+  /* Status Colors */
+  --color-error: #ef4444;
+  --color-success: #14854f;
+  --danger-color: #ef4444;
+  --success-color: #14854f;
+  --color-error-bootstrap: #ef4444;
+  --color-primary-bootstrap: #3b82f6;
+
+  /* Special Colors */
+  --border-color: #374151;
+  --notification-unread-bg: #1e3a8a;
+
+  /* Shadow Colors */
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --shadow-color-light: rgba(0, 0, 0, 0.2);
+  --shadow-color-medium: rgba(0, 0, 0, 0.2);
+  --shadow-color-dark: rgba(0, 0, 0, 0.3);
+  --shadow-overlay: rgba(0, 0, 0, 0.7);
+  --shadow-primary: rgba(59, 130, 246, 0.2);
+  --shadow-error: rgba(239, 68, 68, 0.2);
+}

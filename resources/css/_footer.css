@@ -1,0 +1,45 @@
+a/* Fixed Footer */
+.content-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 9;
+    height: 5.7rem;
+    width: 100%;
+    background-color: var(--bg-white);
+    padding: 1rem 0.5rem;
+    padding-right: 1rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    box-shadow: 0 -2px 5px var(--shadow-color-medium);
+}
+
+/* Copyright Styles (moved from _layout.css) */
+.copyright{
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .content-footer {
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        padding: 1.2rem;
+        padding-bottom: var(--safe-area-bottom);
+    }
+
+    .content-footer .form-actions {
+        margin-bottom: -10px;
+        gap: 1rem;
+    }
+
+    /* Copyright Mobile Styles (moved from _layout.css) */
+    .copyright{
+        position: fixed;
+        bottom: 0px;
+        width: 100%;
+        z-index: 999;
+        height: 20px;
+        background-color: var(--primary-color);
+    }
+}

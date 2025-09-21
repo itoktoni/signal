@@ -52,6 +52,22 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $controller = $route->getController();
+
+        if (!$controller) {
+            return [
+                'controller' => null,
+                'controller_short' => null,
+                'module' => null,
+                'module_plural' => null,
+                'action' => null,
+                'current_route' => $route->getName(),
+                'is_create' => false,
+                'is_edit' => false,
+                'is_index' => false,
+                'is_show' => false,
+            ];
+        }
+
         $className = get_class($controller);
         $shortName = class_basename($className);
         $controllerShort = str_replace('Controller', '', $shortName);

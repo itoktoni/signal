@@ -1,47 +1,112 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Create User') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                <div class="p-6">
-                    <form method="POST" action="{{ route('user.postCreate') }}">
-                        @csrf
-
-                        <div class="mb-4">
-                            <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                            <input type="text" name="name" id="name" value="{{ old('name') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
-                            @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" name="email" id="email" value="{{ old('email') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
-                            @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                            <input type="password" name="password" id="password" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
-                            @error('password') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-                            <input type="password" name="password_confirmation" id="password_confirmation" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
-                        </div>
-
-                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            Create User
-                        </button>
-                        <a href="{{ route('user.index') }}" class="ml-4 text-gray-500">Cancel</a>
-                    </form>
-                </div>
-            </div>
+<x-template-layout title="Create User">
+    <div class="card">
+        <div class="page-header">
+            <h2>Create Form</h2>
         </div>
+
+        <form class="form-container" action="{{ route('user.postCreate') }}" method="POST">
+            @csrf
+            <div class="form-group col-6">
+                <label for="username" class="form-label">
+                    Username<span class="required-asterisk">*</span>
+                </label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    class="form-input"
+                    value="{{ old('username') }}"
+                    required
+                />
+                <div class="field-hint">Username cannot be changed</div>
+                @error('username') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-group col-6">
+                <label for="name" class="form-label">
+                    Name<span class="required-asterisk">*</span>
+                </label>
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    class="form-input"
+                    value="{{ old('name') }}"
+                    required
+                />
+                @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-group col-12">
+                <label for="email" class="form-label">
+                    Email<span class="required-asterisk">*</span>
+                </label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    class="form-input"
+                    value="{{ old('email') }}"
+                    required
+                />
+                @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-group col-6">
+                <label for="password" class="form-label">
+                    Password<span class="required-asterisk">*</span>
+                </label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-input"
+                    required
+                    minlength="6"
+                />
+                @error('password') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-group col-6">
+                <label for="password_confirmation" class="form-label">
+                    Password Confirmation<span class="required-asterisk">*</span>
+                </label>
+                <input
+                    type="password"
+                    id="password_confirmation"
+                    name="password_confirmation"
+                    class="form-input"
+                    required
+                />
+                @error('password_confirmation') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-group col-6">
+                <label for="role" class="form-label">
+                    Role<span class="required-asterisk">*</span>
+                </label>
+                <select
+                    id="role"
+                    name="role"
+                    class="form-select"
+                    required
+                >
+                    <option value="">Select Role</option>
+                    <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                    <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>User</option>
+                    <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>Manager</option>
+                </select>
+                @error('role') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ route('user.index') }}" class="button secondary">
+                    Back
+                </a>
+                <button type="submit" class="button primary">
+                    Create
+                </button>
+            </div>
+        </form>
     </div>
-</x-app-layout>
+</x-template-layout>
