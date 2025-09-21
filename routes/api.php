@@ -13,4 +13,4 @@ Route::middleware('auth:sanctum')->group(function () {
 
 });
 
-Route::auto('user', UserController::class);
+// Route::auto('user', UserController::class);

@@ -1,50 +1,64 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('User Details') }}
-            </h2>
-            <a href="{{ route('user.index]') }}" class="text-gray-500">Back to Users</a>
+<x-template-layout>
+    @section('header')
+        <div class="header-title-wrapper is-vertical-align">
+            <button id="mobile-menu-button" class="mobile-menu-button safe-area-left">
+                <i class="bi bi-sliders"></i>
+            </button>
+            <h1 class="header-title">ASSET MANAGEMENT</h1>
         </div>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                <div class="p-6">
-                    <div class="mb-4">
-                        <strong>ID:</strong> {{ $user->id }}
-                    </div>
-                    <div class="mb-4">
-                        <strong>Name:</strong> {{ $user->name }}
-                    </div>
-                    <div class="mb-4">
-                        <strong>Email:</strong> {{ $user->email }}
-                    </div>
-                    <div class="mb-4">
-                        <strong>Email Verified:</strong> {{ $user->email_verified_at ? 'Yes' : 'No' }}
-                    </div>
-                    <div class="mb-4">
-                        <strong>Created At:</strong> {{ $user->created_at->format('Y-m-d H:i:s') }}
-                    </div>
-                    <div class="mb-4">
-                        <strong>Updated At:</strong> {{ $user->updated_at->format('Y-m-d H:i:s') }}
-                    </div>
-
-                    <div class="mt-6">
-                        <a href="{{ route('users.edit', $user) }}" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mr-2">
-                            Edit User
-                        </a>
-                        <form method="POST" action="{{ route('users.destroy', $user) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this user?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-                                Delete User
-                            </button>
-                        </form>
-                    </div>
+        <div class="user-profile is-vertical-align safe-area-right">
+            <div class="notification-icon" id="notification-icon">
+                <i class="bi bi-bell"></i><span class="notification-badge">2</span>
+            </div>
+            <div class="profile-icon" id="profile-icon">
+                <i class="bi bi-person-badge"></i>
+                <div class="profile-dropdown" id="profile-dropdown">
+                    <a href="{{ route('profile.show') }}" class="dropdown-item">Profile</a>
+                    <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                        @csrf
+                        <button type="submit" class="dropdown-item"
+                            style="background: none; border: none; padding: 0; cursor: pointer; text-align: left; width: 100%;">Logout</button>
+                    </form>
                 </div>
             </div>
         </div>
+    @endsection
+
+    <div class="card">
+        <div class="page-header">
+            <h2>User Details</h2>
+        </div>
+        <div class="card-table">
+            <div class="form-group">
+                <strong>ID:</strong> {{ $user->id }}
+            </div>
+            <div class="form-group">
+                <strong>Name:</strong> {{ $user->name }}
+            </div>
+            <div class="form-group">
+                <strong>Email:</strong> {{ $user->email }}
+            </div>
+            <div class="form-group">
+                <strong>Email Verified:</strong> {{ $user->email_verified_at ? 'Yes' : 'No' }}
+            </div>
+            <div class="form-group">
+                <strong>Created At:</strong> {{ $user->created_at->format('Y-m-d H:i:s') }}
+            </div>
+            <div class="form-group">
+                <strong>Updated At:</strong> {{ $user->updated_at->format('Y-m-d H:i:s') }}
+            </div>
+
+            <footer class="content-footer safe-area-bottom">
+            <div class="form-actions">
+                <a href="{{ route('users.edit', $user) }}" class="button primary">Edit User</a>
+                <form method="POST" action="{{ route('users.destroy', $user) }}" class="inline"
+                    onsubmit="return confirm('Are you sure you want to delete this user?')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="button danger">Delete User</button>
+                </form>
+            </div>
+            </footer>
+        </div>
     </div>
-</x-app-layout>
+</x-template-layout>

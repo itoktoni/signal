@@ -187,27 +187,29 @@
 
         <main class="main-content">
             <header class="safe-area-header main-header">
-                <div class="header-title-wrapper is-vertical-align">
-                    <button id="mobile-menu-button" class="mobile-menu-button safe-area-left">
-                        <i class="bi bi-sliders"></i>
-                    </button>
-                    <h1 class="header-title">{{ $title ?? 'ASSET MANAGEMENT' }}</h1>
-                </div>
-                <div class="user-profile is-vertical-align safe-area-right">
-                    <div class="notification-icon" id="notification-icon">
-                        <i class="bi bi-bell"></i><span class="notification-badge">2</span>
+                @section('header')
+                    <div class="header-title-wrapper is-vertical-align">
+                        <button id="mobile-menu-button" class="mobile-menu-button safe-area-left">
+                            <i class="bi bi-sliders"></i>
+                        </button>
+                        <h1 class="header-title">{{ $title ?? 'ASSET MANAGEMENT' }}</h1>
                     </div>
-                    <div class="profile-icon" id="profile-icon">
-                        <i class="bi bi-person-badge"></i>
-                        <div class="profile-dropdown" id="profile-dropdown">
-                            <a href="{{ route('profile.show') }}" class="dropdown-item">Profile</a>
-                            <form method="POST" action="{{ route('logout') }}" style="display: inline;">
-                                @csrf
-                                <button type="submit" class="dropdown-item" style="background: none; border: none; padding: 0; cursor: pointer; text-align: left; width: 100%;">Logout</button>
-                            </form>
+                    <div class="user-profile is-vertical-align safe-area-right">
+                        <div class="notification-icon" id="notification-icon">
+                            <i class="bi bi-bell"></i><span class="notification-badge">2</span>
+                        </div>
+                        <div class="profile-icon" id="profile-icon">
+                            <i class="bi bi-person-badge"></i>
+                            <div class="profile-dropdown" id="profile-dropdown">
+                                <a href="{{ route('profile.show') }}" class="dropdown-item">Profile</a>
+                                <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item" style="background: none; border: none; padding: 0; cursor: pointer; text-align: left; width: 100%;">Logout</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                </div>
+                @show
             </header>
             <div class="content-body">
                 {{ $slot }}
@@ -229,7 +231,7 @@
                 </div>
                 <div class="notification-content">
                     <p class="notification-message">
-                        A new user has been registered to the system.
+                        A new user 'john_doe' has registered to the system.
                     </p>
                     <div class="notification-time">10 minutes ago</div>
                     <div class="notification-actions">
@@ -244,9 +246,40 @@
                 </div>
                 <div class="notification-content">
                     <p class="notification-message">
-                        Your monthly report has been generated.
+                        Your monthly sales report has been successfully generated.
                     </p>
                     <div class="notification-time">1 hour ago</div>
+                    <div class="notification-actions">
+                        <button class="notification-action">Mark as read</button>
+                        <button class="notification-action">Dismiss</button>
+                    </div>
+                </div>
+            </div>
+            <div class="notification-item">
+                <div class="notification-icon-small">
+                    <i class="bi bi-bell"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-message">
+                        A new system update is available. Please update at your
+                        convenience.
+                    </p>
+                    <div class="notification-time">2 hours ago</div>
+                    <div class="notification-actions">
+                        <button class="notification-action">Mark as read</button>
+                        <button class="notification-action">Dismiss</button>
+                    </div>
+                </div>
+            </div>
+            <div class="notification-item">
+                <div class="notification-icon-small">
+                    <i class="bi bi-bell"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-message">
+                        A payment of $250.00 has been received from Customer Inc.
+                    </p>
+                    <div class="notification-time">5 hours ago</div>
                     <div class="notification-actions">
                         <button class="notification-action">Mark as read</button>
                         <button class="notification-action">Dismiss</button>

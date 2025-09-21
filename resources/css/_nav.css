@@ -44,7 +44,7 @@
 }
 
 .main-nav :first-child {
-  padding-top: 1rem;
+  padding-top: 0.5rem;
 }
 
 .main-nav .bi {
