@@ -33,7 +33,8 @@ class UserController extends Controller
 
     public function getData()
     {
-        $data = User::paginate(15);
+        $perPage = request('perpage', 15);
+        $data = User::filter(request())->paginate($perPage);
 
         return $this->views($this->module(),[
             'data' => $data,

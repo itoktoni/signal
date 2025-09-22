@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Traits\Filterable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -12,6 +13,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
+    use Filterable;
     use HasApiTokens;
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -29,6 +31,18 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+    ];
+
+    protected $filterable = [
+        'email',
+        'role',
+    ];
+
+    protected $sortable = [
+        'id',
+        'username',
+        'email',
+        'role',
     ];
 
       // define rules array
