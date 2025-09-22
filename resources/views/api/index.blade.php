@@ -13,7 +13,7 @@
             <div class="profile-icon" id="profile-icon">
                 <i class="bi bi-person-badge"></i>
                 <div class="profile-dropdown" id="profile-dropdown">
-                    <a href="{{ route('profile.show') }}" class="dropdown-item">Profile</a>
+                    <a href="{{ route('profile') }}" class="dropdown-item">Profile</a>
                     <form method="POST" action="{{ route('logout') }}" style="display: inline;">
                         @csrf
                         <button type="submit" class="dropdown-item"

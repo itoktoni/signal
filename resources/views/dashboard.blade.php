@@ -1,4 +1,4 @@
-<x-template-layout title="Dashboard">
+<x-layout title="Dashboard">
     <div class="dashboard-content">
         <!-- Welcome Section -->
         <div class="card">
@@ -240,4 +240,4 @@
             }
         }
     </style>
-</x-template-layout>
+</x-layout>

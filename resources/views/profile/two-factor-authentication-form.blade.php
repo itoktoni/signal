@@ -1,14 +1,7 @@
 <x-action-section>
-    <x-slot name="title">
-        {{ __('Two Factor Authentication') }}
-    </x-slot>
-
-    <x-slot name="description">
-        {{ __('Add additional security to your account using two factor authentication.') }}
-    </x-slot>
 
     <x-slot name="content">
-        <h3 class="text-lg font-medium text-gray-900">
+        <h4 class="text-lg font-medium text-gray-900">
             @if ($this->enabled)
                 @if ($showingConfirmation)
                     {{ __('Finish enabling two factor authentication.') }}
@@ -18,7 +11,7 @@
             @else
                 {{ __('You have not enabled two factor authentication.') }}
             @endif
-        </h3>
+        </h4>
 
         <div class="mt-3 max-w-xl text-sm text-gray-600">
             <p>
@@ -76,10 +69,10 @@
             @endif
         @endif
 
-        <div class="mt-5">
+        <div class="mt-3">
             @if (! $this->enabled)
                 <x-confirms-password wire:then="enableTwoFactorAuthentication">
-                    <x-button type="button" wire:loading.attr="disabled">
+                    <x-button class="button success" type="button" wire:loading.attr="disabled">
                         {{ __('Enable') }}
                     </x-button>
                 </x-confirms-password>

@@ -5,7 +5,7 @@ namespace App\View\Components;
 use Illuminate\View\Component;
 use Illuminate\View\View;
 
-class TemplateLayout extends Component
+class Layout extends Component
 {
     public $title;
 

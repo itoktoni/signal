@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Models\User;
 use App\Traits\ContextHelper;
 use App\Traits\ControllerHelper;
@@ -82,7 +83,9 @@ class UserController extends Controller
      */
     public function postUpdate(Request $request, User $user)
     {
-        return $this->update($request->all(), $user);
+        app(UpdateUserProfileInformation::class)->update($user, $request->only(['name', 'email']));
+
+        return redirect()->route('user.index')->with('success', 'User updated successfully');
     }
 
     /**
@@ -99,6 +102,16 @@ class UserController extends Controller
     {
         $user->delete();
 
-        return redirect()->route('user.index]')->with('success', 'User deleted successfully');
+        return redirect()->route('user.index')->with('success', 'User deleted successfully');
+    }
+
+    public function getProfile()
+    {
+        return view('user.profile');
+    }
+
+    public function getSecurity()
+    {
+        return view('user.profile');
     }
 }
