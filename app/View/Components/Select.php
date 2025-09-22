@@ -17,6 +17,7 @@ class Select extends Component
     public $hint;
     public $col;
     public $searchable;
+    public $multiple;
     public $optionKey;
     public $optionValue;
     public $attributes;
@@ -33,6 +34,7 @@ class Select extends Component
         $hint = null,
         $col = 6,
         $searchable = false,
+        $multiple = false,
         $optionKey = 'id',
         $optionValue = 'name',
         $attributes = []
@@ -48,6 +50,7 @@ class Select extends Component
         $this->hint = $hint;
         $this->col = $col;
         $this->searchable = $searchable;
+        $this->multiple = $multiple;
         $this->optionKey = $optionKey;
         $this->optionValue = $optionValue;
     }

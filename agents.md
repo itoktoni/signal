@@ -24,7 +24,7 @@ if(1=1)
 
 ## Component Usage Examples
 - **Input Component:** `<x-input type="email" name="email" col="12" required/>`
-- **Select Component:** `<x-select name="role" :options="['admin' => 'Admin', 'user' => 'User']" required searchable/>`
+- **Select Component:** `<x-select name="role" :options="$users" option-key="id" option-value="name" required searchable multiple/>`
 - **Textarea Component:** `<x-textarea name="description" rows="4" required/>`
 - **Footer Component:** `<x-footer> <x-button type="submit" class="primary">Submit</x-button> </x-footer>`
 - prefer to make like

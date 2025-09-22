@@ -5,9 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <title>{{ $title ?? 'Users' }} - Obsesiman Report - Laravel</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
@@ -321,14 +319,208 @@
     @endif
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize searchable selects
-            document.querySelectorAll('select[data-searchable="true"]').forEach(function(select) {
-                $(select).select2({
-                    placeholder: select.querySelector('option[value=""]')?.text || 'Select an option',
-                    allowClear: true
-                });
+        function confirmDelete(url, name) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to delete user "${name}". This action cannot be undone!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
             });
+        }
+
+        function confirmBulkDelete() {
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                Swal.fire('No Selection', 'Please select at least one user to delete.', 'warning');
+                return;
+            }
+
+            const ids = Array.from(checkedBoxes).map(cb => cb.value);
+            const count = ids.length;
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to delete ${count} user(s). This action cannot be undone!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete them!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('bulk-delete-ids').value = ids.join(',');
+                    document.getElementById('bulk-delete-form').submit();
+                }
+            });
+        }
+
+        // Handle checkall functionality and custom selects
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkall = document.querySelector('.checkall');
+            const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+            const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+
+            if (checkall) {
+                checkall.addEventListener('change', function() {
+                    rowCheckboxes.forEach(cb => cb.checked = this.checked);
+                    updateBulkDeleteButton();
+                });
+            }
+
+            rowCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateBulkDeleteButton);
+            });
+
+            function updateBulkDeleteButton() {
+                if (bulkDeleteBtn) {
+                    const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
+                    bulkDeleteBtn.disabled = checkedCount === 0;
+                    bulkDeleteBtn.classList.toggle('disabled', checkedCount === 0);
+                }
+            }
+
+            // Custom Select Functionality
+            document.querySelectorAll('.custom-select-wrapper').forEach(function(wrapper) {
+                const input = wrapper.querySelector('.custom-select-input');
+                const dropdown = wrapper.querySelector('.custom-select-dropdown');
+                const searchInput = wrapper.querySelector('.custom-select-search');
+                const options = wrapper.querySelectorAll('.custom-select-option');
+                const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+                const placeholder = wrapper.querySelector('.custom-select-placeholder');
+                const isMultiple = wrapper.dataset.multiple === 'true';
+
+                let selectedValues = [];
+                let selectedTexts = [];
+
+                // Initialize selected values
+                options.forEach(option => {
+                    if (option.dataset.selected === 'true') {
+                        const value = option.dataset.value;
+                        const text = option.textContent.trim();
+                        selectedValues.push(value);
+                        selectedTexts.push(text);
+                        option.classList.add('selected');
+                    }
+                });
+
+                updateDisplay();
+
+                // Toggle dropdown
+                input.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isOpen = dropdown.style.display === 'block';
+                    closeAllDropdowns();
+                    if (!isOpen) {
+                        dropdown.style.display = 'block';
+                        input.classList.add('open');
+                        searchInput.value = '';
+                        // Show all options
+                        options.forEach(option => option.style.display = 'block');
+                        searchInput.focus();
+                    }
+                });
+
+                // Search functionality
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    options.forEach(option => {
+                        const text = option.textContent.toLowerCase();
+                        option.style.display = text.includes(searchTerm) ? 'block' : 'none';
+                    });
+                });
+
+                // Option selection
+                options.forEach(option => {
+                    option.addEventListener('click', function() {
+                        const value = this.dataset.value;
+                        const text = this.textContent.trim();
+
+                        if (isMultiple) {
+                            const index = selectedValues.indexOf(value);
+                            if (index > -1) {
+                                // Remove
+                                selectedValues.splice(index, 1);
+                                selectedTexts.splice(index, 1);
+                                this.classList.remove('selected');
+                            } else {
+                                // Add
+                                selectedValues.push(value);
+                                selectedTexts.push(text);
+                                this.classList.add('selected');
+                            }
+                        } else {
+                            // Single select
+                            selectedValues = [value];
+                            selectedTexts = [text];
+                            options.forEach(opt => opt.classList.remove('selected'));
+                            this.classList.add('selected');
+                            closeAllDropdowns();
+                        }
+
+                        updateDisplay();
+                    });
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!wrapper.contains(e.target)) {
+                        closeAllDropdowns();
+                    }
+                });
+
+                function updateDisplay() {
+                    if (isMultiple) {
+                        if (selectedTexts.length > 0) {
+                            placeholder.innerHTML = `<div class="custom-select-tags">
+                                ${selectedTexts.map(text => `<span class="custom-select-tag">${text} <span class="custom-select-tag-remove" data-value="${selectedValues[selectedTexts.indexOf(text)]}">×</span></span>`).join('')}
+                            </div>`;
+                            placeholder.classList.remove('empty');
+                        } else {
+                            placeholder.textContent = wrapper.querySelector('.custom-select-placeholder').dataset.placeholder || 'Select options';
+                            placeholder.classList.add('empty');
+                        }
+                    } else {
+                        placeholder.textContent = selectedTexts.length > 0 ? selectedTexts[0] : (wrapper.querySelector('.custom-select-placeholder').dataset.placeholder || 'Select an option');
+                        placeholder.classList.toggle('empty', selectedTexts.length === 0);
+                    }
+
+                    hiddenInput.value = isMultiple ? selectedValues.join(',') : (selectedValues[0] || '');
+                }
+
+                // Handle tag removal for multiple select
+                if (isMultiple) {
+                    placeholder.addEventListener('click', function(e) {
+                        if (e.target.classList.contains('custom-select-tag-remove')) {
+                            e.stopPropagation();
+                            const value = e.target.dataset.value;
+                            const index = selectedValues.indexOf(value);
+                            if (index > -1) {
+                                selectedValues.splice(index, 1);
+                                selectedTexts.splice(index, 1);
+                                wrapper.querySelector(`[data-value="${value}"]`).classList.remove('selected');
+                                updateDisplay();
+                            }
+                        }
+                    });
+                }
+            });
+
+            function closeAllDropdowns() {
+                document.querySelectorAll('.custom-select-dropdown').forEach(d => {
+                    d.style.display = 'none';
+                    d.closest('.custom-select-wrapper').querySelector('.custom-select-input').classList.remove('open');
+                });
+            }
         });
     </script>
 
