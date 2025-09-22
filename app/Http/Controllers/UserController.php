@@ -114,4 +114,12 @@ class UserController extends Controller
     {
         return view('user.profile');
     }
+
+    public function postBulkDelete(Request $request)
+    {
+        $ids = explode(',', $request->ids);
+        User::whereIn('id', $ids)->delete();
+
+        return redirect()->route('user.getData')->with('success', 'Users deleted successfully');
+    }
 }

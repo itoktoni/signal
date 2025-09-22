@@ -5,7 +5,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <title>{{ $title ?? 'Users' }} - Obsesiman Report - Laravel</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
@@ -317,6 +319,18 @@
         });
     </script>
     @endif
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize searchable selects
+            document.querySelectorAll('select[data-searchable="true"]').forEach(function(select) {
+                $(select).select2({
+                    placeholder: select.querySelector('option[value=""]')?.text || 'Select an option',
+                    allowClear: true
+                });
+            });
+        });
+    </script>
 
     @livewireScripts
 </body>

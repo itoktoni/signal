@@ -28,9 +28,11 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'username',
         'name',
         'email',
         'password',
+        'role',
     ];
 
     protected $filterable = [
@@ -47,13 +49,17 @@ class User extends Authenticatable
 
       // define rules array
     public $rules = [
+        'username' => 'required|string|max:255|unique:users',
         'name' => 'required|string|max:255',
         'email' => 'required|string|email|max:255|unique:users',
         'password' => 'required|string|min:8|confirmed',
+        'role' => 'required|string|in:admin,user,manager',
     ];
 
     // messages are optional, only provide when want customize message
     public $messages = [
+        'username.required' => 'The username field is required.',
+        'username.unique' => 'This username is already taken.',
         'name.required' => 'The name field is required.',
         'email.required' => 'The email field is required.',
         'email.email' => 'Please enter a valid email address.',
@@ -61,6 +67,8 @@ class User extends Authenticatable
         'password.required' => 'The password field is required.',
         'password.min' => 'Password must be at least 8 characters.',
         'password.confirmed' => 'Password confirmation does not match.',
+        'role.required' => 'The role field is required.',
+        'role.in' => 'Please select a valid role.',
     ];
 
     /**

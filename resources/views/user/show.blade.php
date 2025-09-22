@@ -48,17 +48,15 @@
                 <strong>Updated At:</strong> {{ $user->updated_at->format('Y-m-d H:i:s') }}
             </div>
 
-            <footer class="content-footer safe-area-bottom">
-            <div class="form-actions">
-                <a href="{{ route('users.edit', $user) }}" class="button primary">Edit User</a>
-                <form method="POST" action="{{ route('users.destroy', $user) }}" class="inline"
+            <x-footer>
+                <x-button class="primary" :attributes="['href' => route('user.getUpdate', $user)]">Edit User</x-button>
+                <form method="POST" action="{{ route('user.getDelete', $user) }}" class="inline"
                     onsubmit="return confirm('Are you sure you want to delete this user?')">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="button danger">Delete User</button>
+                    <x-button type="submit" class="danger">Delete User</x-button>
                 </form>
-            </div>
-            </footer>
+            </x-footer>
         </div>
     </div>
 </x-layout>

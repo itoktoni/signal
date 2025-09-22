@@ -1,5 +1,10 @@
-@props(['value'])
-
-<label {{ $attributes->merge(['class' => 'block font-medium text-sm text-gray-700']) }}>
-    {{ $value ?? $slot }}
+<label
+    @if($for) for="{{ $for }}" @endif
+    class="{{ $class }}"
+    @if($id) id="{{ $id }}" @endif
+    @foreach($attributes as $key => $value)
+        {{ $key }}="{{ $value }}"
+    @endforeach
+>
+    {{ $slot }}
 </label>

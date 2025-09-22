@@ -8,32 +8,14 @@
         <form class="form-container" action="{{ route('user.postUpdate', $model) }}" method="POST">
             @csrf
 
-            <div class="form-group col-6">
-                <label for="name" class="form-label">Name</label>
-                <input type="text" name="name" id="name" value="{{ old('name', $model->name) }}"
-                    class="form-input" required>
-                @error('name')
-                    <span class="field-error">{{ $message }}</span>
-                @enderror
-            </div>
+            <x-input name="name" :value="old('name', $model->name)" required/>
 
-            <div class="form-group col-6">
-                <label for="email" class="form-label">Email</label>
-                <input type="email" name="email" id="email" value="{{ old('email', $model->email) }}"
-                    class="form-input" required>
-                @error('email')
-                    <span class="field-error">{{ $message }}</span>
-                @enderror
-            </div>
+            <x-input type="email" name="email" :value="old('email', $model->email)" required/>
 
-            <footer class="content-footer safe-area-bottom">
-            <div class="form-actions">
-                <button type="submit" class="button primary">
-                    Update User
-                </button>
+            <x-footer>
+                <x-button type="submit" class="primary">Update User</x-button>
                 <a href="{{ route('user.index') }}" class="button secondary">Cancel</a>
-            </div>
-            </footer>
+            </x-footer>
         </form>
     </div>
     </div>

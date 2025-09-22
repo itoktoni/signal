@@ -2,23 +2,17 @@
     <label for="{{ $id }}" class="form-label">
         {{ $label }}@if($required)<span class="required-asterisk">*</span>@endif
     </label>
-    <select
+    <textarea
         name="{{ $name }}"
         id="{{ $id }}"
+        placeholder="{{ $placeholder }}"
         @if($required) required @endif
-        class="{{ $class }} @if($searchable) searchable-select @endif"
-        @if($searchable) data-searchable="true" @endif
+        class="{{ $class }}"
+        rows="{{ $rows }}"
         @foreach($attributes as $key => $value)
             {{ $key }}="{{ $value }}"
         @endforeach
-    >
-        @if($placeholder)
-            <option value="">{{ $placeholder }}</option>
-        @endif
-        @foreach($options as $key => $option)
-            <option value="{{ $key }}" {{ $value == $key ? 'selected' : '' }}>{{ $option }}</option>
-        @endforeach
-    </select>
+    >{{ $value }}</textarea>
     @if($hint)
         <div class="field-hint">{{ $hint }}</div>
     @endif

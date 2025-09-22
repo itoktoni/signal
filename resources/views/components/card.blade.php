@@ -1,5 +1,4 @@
-<button
-    type="{{ $type }}"
+<div
     class="{{ $class }}"
     @if($id) id="{{ $id }}" @endif
     @foreach($attributes as $key => $value)
@@ -7,4 +6,4 @@
     @endforeach
 >
     {{ $slot }}
-</button>
+</div>
