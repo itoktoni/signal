@@ -64,7 +64,7 @@ trait ControllerHelper
      * @param string $successMessage
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    protected function create(array $data, string $redirectRoute = 'user.index', string $successMessage = 'created successfully')
+    protected function create(array $data, string $redirectRoute = 'user.getData', string $successMessage = 'User created successfully')
     {
         $validate = request()->validate($this->model->rules, $this->model->messages ?? []);
 
@@ -75,7 +75,7 @@ trait ControllerHelper
         return redirect()->route($redirectRoute)->with('success', $successMessage);
     }
 
-    protected function update(array $data, $model, string $redirectRoute = 'user.index', string $successMessage = 'updated successfully')
+    protected function update(array $data, $model, string $redirectRoute = 'user.getData', string $successMessage = 'User updated successfully')
     {
         $validate = request()->validate($this->model->rules, $this->model->messages ?? []);
 
