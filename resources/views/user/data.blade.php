@@ -76,7 +76,8 @@
                         </div>
                     </div>
                     <div class="form-actions">
-                        <button type="submit" class="button button secondary">
+                        <button type="button" class="button button secondary"
+                            onclick="window.location.href='{{ url()->current() }}'">
                             <span class="">Reset</span></button><button type="submit"
                             class="button button primary">
                             <span class="">Search</span>
@@ -90,11 +91,11 @@
                                 <tr>
                                     <th class="checkbox-column"><input type="checkbox" class="checkall" /></th>
                                     <th class="text-center action-table">Actions</th>
-                                    <th>ID</th>
-                                    <th>Username</th>
+                                    <th><a href="{{ sortUrl('id', 'user.getData') }}">ID</a></th>
+                                    <th><a href="{{ sortUrl('username', 'user.getData') }}">Username</a></th>
                                     <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
+                                    <th><a href="{{ sortUrl('email', 'user.getData') }}">Email</a></th>
+                                    <th><a href="{{ sortUrl('role', 'user.getData') }}">Role</a></th>
                                 </tr>
                             </thead>
                             <tbody>

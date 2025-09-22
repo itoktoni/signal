@@ -21,6 +21,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Load helpers
+        require_once app_path('Helpers/SortHelper.php');
+
         // Share controller context with all views
         Facades\View::composer('*', function (View $view) {
             $context = $this->getControllerContext();
