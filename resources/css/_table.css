@@ -2,7 +2,7 @@
     width: 100%;
     border-collapse: collapse;
     border-radius: 10px;
-    margin-top: 1.5rem;
+    margin: 1.5rem auto 0;
 }
 
 thead, tbody, tfoot, tr, td, th {
@@ -27,25 +27,32 @@ thead, tbody, tfoot, tr, td, th {
     width: 100%;
 }
 
-.action-header, .action-table {
-    width: 10rem;
+.checkbox-column {
+    width: 3rem;
+    text-align: center;
 }
 
 .action-table {
     margin: 0px auto;
     text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    border: none;
 }
 
-.action-table .button {
-    padding: 5px 10px;
+.action-table .button, .action-table a {
+    padding: 0.25rem 1.2rem;
     margin-top: 0.5rem;
-    margin-right: 0.5rem;
-    margin-left: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
 
 .action-table .button .bi {
-    font-size: 1.3rem;
-    width: 100%;
+    font-size: 1.5rem;
 }
 
 .form-table-pagination{
@@ -91,7 +98,12 @@ thead, tbody, tfoot, tr, td, th {
 
     .action-table {
         width: -webkit-fill-available;
-        text-align: right;
+        justify-content: flex-end;
+    }
+
+    .checkbox-column {
+        width: unset;
+        text-align: center;
     }
 
     /* Table Mobile Styles from _layout.css */

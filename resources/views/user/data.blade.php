@@ -76,8 +76,7 @@
                         </div>
                     </div>
                     <div class="form-actions">
-                        <button type="button" class="button button secondary"
-                            onclick="window.location.href='{{ route('user.index') }}'">
+                        <button type="submit" class="button button secondary">
                             <span class="">Reset</span></button><button type="submit"
                             class="button button primary">
                             <span class="">Search</span>
@@ -89,7 +88,7 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th><input type="checkbox" /></th>
+                                    <th class="checkbox-column"><input type="checkbox" class="checkall" /></th>
                                     <th class="text-center action-table">Actions</th>
                                     <th>ID</th>
                                     <th>Username</th>
@@ -100,23 +99,22 @@
                             </thead>
                             <tbody>
                                 <tr class="hide-lg">
-                                    <td data-label="Check All Data">
-                                        <input type="checkbox" />
+                                    <td data-label="Check All Data" class="checkbox-column">
+                                        <input type="checkbox" class="checkall" />
                                     </td>
                                 </tr>
                                 @forelse($data as $list)
                                     <tr>
-                                        <td><input type="checkbox" /></td>
+                                        <td class="checkbox-column"><input type="checkbox" class="row-checkbox" /></td>
                                         <td data-label="Actions">
                                             <div class="action-table">
-                                                <a href="{{ route('user.getUpdate', $list) }}"
-                                                    class="button button primary">
-                                                    <i class="bi bi-pencil-square"></i><span
-                                                        class=""></span></a><!-- Delete/Remove type --><button
-                                                    class="button button danger">
-                                                    <i class="bi bi-trash"></i><span
-                                                        class=""><span></span></span>
-                                                </button>
+                                                <a href="{{ route('user.getUpdate', $list) }}" class="button primary">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </a>
+
+                                                <a href="{{ route('user.getDelete', $list) }}" class="button danger">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
                                             </div>
                                         </td>
                                         <td data-label="ID">{{ $list->id }}</td>
