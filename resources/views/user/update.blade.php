@@ -8,7 +8,7 @@
         <form class="form-container" action="{{ route('user.postUpdate', $model) }}" method="POST">
             @csrf
 
-            <div class="form-group">
+            <div class="form-group col-6">
                 <label for="name" class="form-label">Name</label>
                 <input type="text" name="name" id="name" value="{{ old('name', $model->name) }}"
                     class="form-input" required>
@@ -17,7 +17,7 @@
                 @enderror
             </div>
 
-            <div class="form-group">
+            <div class="form-group col-6">
                 <label for="email" class="form-label">Email</label>
                 <input type="email" name="email" id="email" value="{{ old('email', $model->email) }}"
                     class="form-input" required>

@@ -1,11 +1,14 @@
 <x-layout>
     <div class="card">
-        <div class="page-header">
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
             <h2>Users</h2>
+            <button type="button" id="toggle-filters" class="button secondary">
+                <i class="bi bi-filter"></i> <span>Hide</span>
+            </button>
         </div>
         <div class="card-table">
             <div class="form-table-container">
-                <form class="form-table-filter" method="GET" action="{{ route('user.getData') }}">
+                <form id="filter-form" class="form-table-filter" method="GET" action="{{ route('user.getData') }}">
                     <div class="row">
                         <div class="form-group col-4">
                             <label for="username" class="form-label">Username </label><input id="username"
