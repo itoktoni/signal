@@ -44,52 +44,30 @@
                         </div>
                         <div class="form-group col-4">
                             <label for="role" class="form-label">Role </label>
-                            <div class="select-wrapper">
-                                <div id="role" class="select-display form-select" tabindex="0">
-                                    <span class="select-placeholder">Select role</span><i class="select-arrow"></i>
-                                </div>
-                                <div class="select-dropdown" style="display: none">
-                                    <div class="select-options">
-                                        <div class="select-option selected">All Roles</div>
-                                        <div class="select-option">Admin</div>
-                                        <div class="select-option">User</div>
-                                    </div>
-                                </div>
-                            </div>
+                            <select name="role" class="form-select">
+                                <option value="All Roles" {{ request('role', 'All Roles') == 'All Roles' ? 'selected' : '' }}>All Roles</option>
+                                <option value="Admin" {{ request('role') == 'Admin' ? 'selected' : '' }}>Admin</option>
+                                <option value="User" {{ request('role') == 'User' ? 'selected' : '' }}>User</option>
+                            </select>
                         </div>
                     </div>
                     <div class="row">
                         <div class="form-group col-2">
                             <label for="perpage" class="form-label">Per Page </label>
-                            <div class="select-wrapper">
-                                <div id="perpage" class="select-display form-select" tabindex="0">
-                                    <span class="select-text">{{ request('perpage', 10) }}</span><i
-                                        class="select-arrow"></i>
-                                </div>
-                                <div class="select-dropdown" style="display: none">
-                                    <div class="select-options">
-                                        <div class="select-option selected">10</div>
-                                        <div class="select-option">20</div>
-                                        <div class="select-option">50</div>
-                                        <div class="select-option">100</div>
-                                    </div>
-                                </div>
-                            </div>
+                            <select name="perpage" class="form-select">
+                                <option value="10" {{ request('perpage', 10) == 10 ? 'selected' : '' }}>10</option>
+                                <option value="20" {{ request('perpage') == 20 ? 'selected' : '' }}>20</option>
+                                <option value="50" {{ request('perpage') == 50 ? 'selected' : '' }}>50</option>
+                                <option value="100" {{ request('perpage') == 100 ? 'selected' : '' }}>100</option>
+                            </select>
                         </div>
                         <div class="form-group col-4">
                             <label for="filter" class="form-label">Filter </label>
-                            <div class="select-wrapper">
-                                <div id="filter" class="select-display form-select" tabindex="0">
-                                    <span class="select-placeholder">Select filter</span><i class="select-arrow"></i>
-                                </div>
-                                <div class="select-dropdown" style="display: none">
-                                    <div class="select-options">
-                                        <div class="select-option selected">All Filter</div>
-                                        <div class="select-option">Username</div>
-                                        <div class="select-option">Role</div>
-                                    </div>
-                                </div>
-                            </div>
+                            <select name="filter" class="form-select">
+                                <option value="All Filter" {{ request('filter', 'All Filter') == 'All Filter' ? 'selected' : '' }}>All Filter</option>
+                                <option value="Username" {{ request('filter') == 'Username' ? 'selected' : '' }}>Username</option>
+                                <option value="Role" {{ request('filter') == 'Role' ? 'selected' : '' }}>Role</option>
+                            </select>
                         </div>
                         <div class="form-group col-6">
                             <label for="search" class="form-label">Search </label><input id="search"
