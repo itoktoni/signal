@@ -1,4 +1,5 @@
 import './bootstrap';
+import Swal from 'sweetalert2';
 
 // Global functions for user data page
 function confirmDelete(url, name) {
@@ -45,7 +46,23 @@ function confirmBulkDelete() {
     });
 }
 
+// Make functions global
+window.confirmDelete = confirmDelete;
+window.confirmBulkDelete = confirmBulkDelete;
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Show success message if exists
+    const successElement = document.getElementById('success-message');
+    if (successElement && successElement.dataset.message) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: successElement.dataset.message,
+            timer: 2000,
+            showConfirmButton: false
+        });
+    }
+
     // Checkbox functionality
     const checkAlls = document.querySelectorAll('.checkall');
     const checkboxes = document.querySelectorAll('.row-checkbox');

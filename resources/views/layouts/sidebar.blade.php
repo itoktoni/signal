@@ -33,11 +33,13 @@
             <!-- Column 2: Sub Menu -->
             <div id="sub-menu-container" class="sub-menu-container">
                 <!-- Logo -->
-                <a href="/" class="logo">
-                    <h1>
-                        <img src="{{ asset('images/logo.png') }}" alt="logo" style="max-height: 40px" />
-                    </h1>
-                </a>
+                <div class="logo-container">
+                    <a href="/" class="logo">
+                        <h1>
+                            <img src="{{ asset('images/logo.png') }}" alt="logo"/>
+                        </h1>
+                    </a>
+                </div>
 
                 @foreach(config('sidebar.groups') as $groupKey => $group)
                     <div class="sub-menu" id="{{ $groupKey }}-submenu" style="display: {{ $groupKey === $activeGroup ? 'block' : 'none' }}">

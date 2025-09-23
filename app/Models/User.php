@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Validation\Rule;
 use App\Traits\Filterable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -33,10 +34,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
     ];
 
     protected $filterable = [
+        'username',
         'email',
         'role',
     ];
@@ -49,13 +50,16 @@ class User extends Authenticatable
     ];
 
     // define rules array
-    public $rules = [
-        'username' => 'required|string|max:255|unique:users',
-        'name' => 'required|string|max:255',
-        'email' => 'required|string|email|max:255|unique:users',
-        'password' => 'required|string|min:8|confirmed',
-        'role' => 'required|string|in:admin,user,manager',
-    ];
+    public function rules($id = null)
+    {
+        $rules = [
+            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($id)],
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($id)],
+        ];
+
+        return $rules;
+    }
 
     // messages are optional, only provide when want customize message
     public $messages = [

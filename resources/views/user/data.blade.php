@@ -1,4 +1,5 @@
 <x-layout>
+    <div id="success-message" data-message="{{ session('success') }}" style="display: none;"></div>
     <div class="card">
         <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
             <h2>Users</h2>

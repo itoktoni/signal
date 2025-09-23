@@ -38,6 +38,12 @@ body {
     padding: 1rem 0;
 }
 
+.logo-container{
+    width: 100%;
+    text-align: center;
+    height: 8.5rem;
+}
+
 .logo{
     margin-bottom: 10px;
     margin: 0px auto;
@@ -51,6 +57,7 @@ body {
 
 .logo img{
     width: unset;
+    max-height: 7rem;
 }
 
 /* Column 2: Sub Menu */

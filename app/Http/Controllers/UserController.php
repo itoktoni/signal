@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Models\User;
 use App\Traits\ControllerHelper;
 use Illuminate\Http\Request;
@@ -78,9 +77,7 @@ class UserController extends Controller
      */
     public function postUpdate(Request $request, User $user)
     {
-        app(UpdateUserProfileInformation::class)->update($user, $request->only(['name', 'email']));
-
-        return redirect()->route('user.index')->with('success', 'User updated successfully');
+        return $this->update($request->all(), $user);
     }
 
     /**
@@ -90,24 +87,24 @@ class UserController extends Controller
     {
         $user->delete();
 
-        return redirect()->route('user.index')->with('success', 'User deleted successfully');
+        return redirect()->route($this->module('getData'))->with('success', 'deleted successfully');
     }
 
     public function postDelete(User $user)
     {
         $user->delete();
 
-        return redirect()->route('user.index')->with('success', 'User deleted successfully');
+        return redirect()->route($this->module('getData'))->with('success', 'deleted successfully');
     }
 
     public function getProfile()
     {
-        return view('user.profile');
+        return view($this->module());
     }
 
     public function getSecurity()
     {
-        return view('user.profile');
+        return view($this->module());
     }
 
     public function postBulkDelete(Request $request)
@@ -115,6 +112,6 @@ class UserController extends Controller
         $ids = explode(',', $request->ids);
         User::whereIn('id', $ids)->delete();
 
-        return redirect()->route('user.getData')->with('success', 'Users deleted successfully');
+        return redirect()->route($this->module('getData'))->with('success', 'deleted successfully');
     }
 }

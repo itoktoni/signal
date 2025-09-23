@@ -2,7 +2,6 @@
 
 namespace App\Traits;
 
-use App\Models\User;
 use Illuminate\Http\Request;
 
 trait ControllerHelper
@@ -42,7 +41,8 @@ trait ControllerHelper
         // Remove 'get' or 'post' prefix and convert to lowercase
         $action = strtolower(preg_replace('/^(get|post)/', '', $method));
 
-        if ($function) {
+        if ($function)
+        {
             $action = $function;
         }
 
@@ -50,14 +50,21 @@ trait ControllerHelper
     }
 
     /**
-     * Create a new user with validation and return appropriate response
+     * Create a new record with validation and return appropriate response
      *
      * @param  Request  $request
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    protected function create(array $data, string $redirectRoute = 'user.getData', string $successMessage = 'User created successfully')
+    protected function create(array $data, $redirectRoute = null, $successMessage = null)
     {
-        $validate = request()->validate($this->model->rules, $this->model->messages ?? []);
+        if (!$redirectRoute) {
+            $redirectRoute = $this->module('getData');
+        }
+        if (!$successMessage) {
+            $successMessage = ucfirst($this->getModuleName()) . ' created successfully';
+        }
+
+        $validate = request()->validate($this->model->rules(null, 'create'), $this->model->messages ?? []);
 
         $data = $this->model->create(array_merge($data, $validate));
 
@@ -66,11 +73,25 @@ trait ControllerHelper
         return redirect()->route($redirectRoute)->with('success', $successMessage);
     }
 
-    protected function update(array $data, $model, string $redirectRoute = 'user.getData', string $successMessage = 'User updated successfully')
+    protected function update(array $data, $model, $redirectRoute = null, $successMessage = null)
     {
-        $validate = request()->validate($this->model->rules, $this->model->messages ?? []);
+        if (!$redirectRoute) {
+            $redirectRoute = $this->module('getData');
+        }
+        if (!$successMessage) {
+            $successMessage = ucfirst($this->getModuleName()) . ' updated successfully';
+        }
 
-        $model->update(array_merge($data, $validate));
+        $validate = request()->validate($this->model->rules($model->id, 'update'), $this->model->messages ?? []);
+
+        $updateData = array_merge($data, $validate);
+
+        // Remove password fields if empty
+        if (empty($updateData['password'])) {
+            unset($updateData['password'], $updateData['password_confirmation']);
+        }
+
+        $model->update($updateData);
 
         $this->json($model, $successMessage);
 
