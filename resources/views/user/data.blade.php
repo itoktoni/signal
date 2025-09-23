@@ -9,7 +9,7 @@
         </div>
         <div class="card-table">
             <div class="form-table-container">
-                <form id="filter-form" class="form-table-filter" method="GET" action="{{ route('user.getData') }}">
+                <form id="filter-form" class="form-table-filter" method="GET" action="{{ route(module('getData')) }}">
                     <div class="row">
                         <x-input name="username" type="text" placeholder="Search by username" :value="request('username')" col="4"/>
                         <x-input name="email" type="text" placeholder="Search by email" :value="request('email')" col="4"/>
@@ -32,11 +32,11 @@
                                 <tr>
                                     <th class="checkbox-column"><input type="checkbox" class="checkall" /></th>
                                     <th class="text-center actions">Actions</th>
-                                    <th><x-sort-link column="id" route="user.getData" text="ID" /></th>
-                                    <th><x-sort-link column="username" route="user.getData" text="Username" /></th>
+                                    <th><x-sort-link column="id" route="{{ module('getData') }}" text="ID" /></th>
+                                    <th><x-sort-link column="username" route="{{ module('getData') }}" text="Username" /></th>
                                     <th>Name</th>
-                                    <th><x-sort-link column="email" route="user.getData" text="Email" /></th>
-                                    <th><x-sort-link column="role" route="user.getData" text="Role" /></th>
+                                    <th><x-sort-link column="email" route="{{ module('getData') }}" text="Email" /></th>
+                                    <th><x-sort-link column="role" route="{{ module('getData') }}" text="Role" /></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -50,11 +50,11 @@
                                         <td class="checkbox-column"><input type="checkbox" class="row-checkbox" value="{{ $list->id }}" /></td>
                                         <td data-label="Actions">
                                             <div class="action-table">
-                                                <a href="{{ route('user.getUpdate', $list) }}" class="button primary">
+                                                <a href="{{ route(module('getUpdate'), $list) }}" class="button primary">
                                                     <i class="bi bi-pencil-square"></i>
                                                 </a>
 
-                                                <button type="button" class="button danger" onclick="confirmDelete('{{ route('user.getDelete', $list) }}', '{{ $list->name }}')">
+                                                <button type="button" class="button danger" onclick="confirmDelete('{{ route(module('getDelete'), $list) }}', '{{ $list->name }}')">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </div>
@@ -74,31 +74,7 @@
                         </table>
                     </div>
                 </div>
-                <div class="form-table-pagination">
-                    <nav class="pagination">
-                        @if ($data->onFirstPage())
-                            <button disabled="" class="button secondary">
-                                <i class="bi bi-arrow-left"></i>
-                            </button>
-                        @else
-                            <a href="{{ $data->previousPageUrl() }}" class="button secondary">
-                                <i class="bi bi-arrow-left"></i>
-                            </a>
-                        @endif
-                        <span class="pagination-info"> Page {{ $data->currentPage() }} of
-                            {{ $data->lastPage() }}
-                        </span>
-                        @if ($data->hasMorePages())
-                            <a href="{{ $data->nextPageUrl() }}" class="button secondary">
-                                <i class="bi bi-arrow-right"></i>
-                            </a>
-                        @else
-                            <button disabled="" class="button secondary">
-                                <i class="bi bi-arrow-right"></i>
-                            </button>
-                        @endif
-                    </nav>
-                </div>
+                <x-pagination :data="$data" />
             </div>
         </div>
         <x-footer>
