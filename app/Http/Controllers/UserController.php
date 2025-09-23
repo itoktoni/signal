@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use App\Facades\Settings;
+use Symfony\Component\Clock\Clock;
 
 class UserController extends Controller
 {
@@ -34,6 +36,7 @@ class UserController extends Controller
 
     public function getData()
     {
+        Settings::set('app_name', 'My Application');
         $perPage = request('perpage', 15);
         $data = User::filter(request())->paginate($perPage);
 
