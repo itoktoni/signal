@@ -431,6 +431,17 @@ button:active:not(:disabled) {
   color: #ffcccc;
 }
 
+/* SweetAlert Button Styles */
+.swal2-confirm {
+  background-color: var(--color-error) !important;
+  color: white !important;
+}
+
+.swal2-cancel {
+  background-color: var(--color-grey) !important;
+  color: white !important;
+}
+
 /* Form Media Queries */
 /* Mobile responsiveness */
 @media (max-width: 768px) {
