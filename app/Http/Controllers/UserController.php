@@ -6,7 +6,6 @@ use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Models\User;
 use App\Traits\ControllerHelper;
 use Illuminate\Http\Request;
-use App\Facades\Settings;
 
 class UserController extends Controller
 {
@@ -22,8 +21,6 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-
-
     public function index()
     {
         return redirect()->route($this->module('getData'));
@@ -35,7 +32,7 @@ class UserController extends Controller
         $data = User::filter(request())->paginate($perPage);
         $data->appends(request()->query());
 
-        return $this->views($this->module(),[
+        return $this->views($this->module(), [
             'data' => $data,
         ]);
     }
@@ -71,7 +68,7 @@ class UserController extends Controller
     {
         $model = User::find($code);
 
-        return $this->views($this->module(),$this->share([
+        return $this->views($this->module(), $this->share([
             'model' => $model,
         ]));
     }

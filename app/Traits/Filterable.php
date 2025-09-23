@@ -6,13 +6,10 @@ use Illuminate\Database\Eloquent\Builder;
 
 trait Filterable
 {
-
     /**
      * Apply filters based on request parameters.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  \Illuminate\Http\Request  $request
      */
     public function scopeFilter(Builder $query, $request): Builder
     {
@@ -32,7 +29,7 @@ trait Filterable
         // Filter by search term based on filter field
         if ($request->filled('search') && $request->filled('filter') && $request->filter !== 'All Filter') {
             $field = $this->mapFilterField($request->filter);
-            $query->where($field, 'like', '%' . $request->search . '%');
+            $query->where($field, 'like', '%'.$request->search.'%');
         }
 
         // Apply sorting
@@ -48,21 +45,20 @@ trait Filterable
      * Apply filter for a specific field.
      * Can be overridden in the model for custom logic.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $field
-     * @param mixed $value
+     * @param  string  $field
+     * @param  mixed  $value
      * @return void
      */
     protected function applyFieldFilter(Builder $query, $field, $value)
     {
         $column = $this->mapField($field);
-        $query->where($column, 'like', '%' . $value . '%');
+        $query->where($column, 'like', '%'.$value.'%');
     }
 
     /**
      * Map field names to database columns.
      *
-     * @param string $field
+     * @param  string  $field
      * @return string
      */
     protected function mapField($field)
@@ -78,7 +74,7 @@ trait Filterable
     /**
      * Map filter field names to database columns.
      *
-     * @param string $field
+     * @param  string  $field
      * @return string
      */
     protected function mapFilterField($field)

@@ -18,6 +18,7 @@ class User extends Authenticatable
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
+
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
@@ -47,7 +48,7 @@ class User extends Authenticatable
         'role',
     ];
 
-      // define rules array
+    // define rules array
     public $rules = [
         'username' => 'required|string|max:255|unique:users',
         'name' => 'required|string|max:255',

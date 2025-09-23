@@ -4,30 +4,24 @@ namespace App\Traits;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 trait ControllerHelper
 {
     /**
      * Return view or JSON response based on request type
      *
-     * @param string $view
-     * @param array $data
-     * @param int $status
      * @return \Illuminate\Http\Response|\Illuminate\View\View
      */
     protected function views(string $view, array $data = [], int $status = 200)
     {
         $request = app(Request::class);
 
-        if ($request->expectsJson())
-        {
+        if ($request->expectsJson()) {
             return response()->json($data, $status);
         }
 
         return view($view, $this->share($data));
     }
-
 
     /**
      * Get automatic view module from controller class and method names
@@ -48,21 +42,17 @@ trait ControllerHelper
         // Remove 'get' or 'post' prefix and convert to lowercase
         $action = strtolower(preg_replace('/^(get|post)/', '', $method));
 
-        if($function)
-        {
+        if ($function) {
             $action = $function;
         }
 
-        return $module . '.' . $action;
+        return $module.'.'.$action;
     }
-
 
     /**
      * Create a new user with validation and return appropriate response
      *
-     * @param Request $request
-     * @param string $redirectRoute
-     * @param string $successMessage
+     * @param  Request  $request
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     protected function create(array $data, string $redirectRoute = 'user.getData', string $successMessage = 'User created successfully')
@@ -92,7 +82,7 @@ trait ControllerHelper
         if (request()->expectsJson()) {
             return response()->json([
                 'data' => $data,
-                'message' => $message
+                'message' => $message,
             ], $status);
         }
     }
@@ -100,22 +90,19 @@ trait ControllerHelper
     protected function share(array $data = [])
     {
         return array_merge([
-            'model' => false
+            'model' => false,
         ], $data);
     }
 
-
     /**
      * Get current controller context
-     *
-     * @return array
      */
     protected function getContext(): array
     {
         $request = request();
         $route = $request->route();
 
-        if (!$route) {
+        if (! $route) {
             return $this->getDefaultContext();
         }
 
@@ -146,8 +133,6 @@ trait ControllerHelper
 
     /**
      * Get default context when no route is available
-     *
-     * @return array
      */
     private function getDefaultContext(): array
     {
@@ -168,8 +153,6 @@ trait ControllerHelper
 
     /**
      * Get current controller name
-     *
-     * @return string|null
      */
     protected function getControllerName(): ?string
     {
@@ -178,8 +161,6 @@ trait ControllerHelper
 
     /**
      * Get current controller short name (without Controller)
-     *
-     * @return string|null
      */
     protected function getControllerShortName(): ?string
     {
@@ -188,8 +169,6 @@ trait ControllerHelper
 
     /**
      * Get current module name
-     *
-     * @return string|null
      */
     protected function getModuleName(): ?string
     {
@@ -198,8 +177,6 @@ trait ControllerHelper
 
     /**
      * Get current action name
-     *
-     * @return string|null
      */
     protected function getActionName(): ?string
     {
@@ -208,8 +185,6 @@ trait ControllerHelper
 
     /**
      * Check if current action is create
-     *
-     * @return bool
      */
     protected function isCreateAction(): bool
     {
@@ -218,8 +193,6 @@ trait ControllerHelper
 
     /**
      * Check if current action is edit
-     *
-     * @return bool
      */
     protected function isEditAction(): bool
     {
@@ -228,8 +201,6 @@ trait ControllerHelper
 
     /**
      * Check if current action is index
-     *
-     * @return bool
      */
     protected function isIndexAction(): bool
     {
@@ -238,8 +209,6 @@ trait ControllerHelper
 
     /**
      * Check if current action is show
-     *
-     * @return bool
      */
     protected function isShowAction(): bool
     {
@@ -248,8 +217,6 @@ trait ControllerHelper
 
     /**
      * Get route parameters
-     *
-     * @return array
      */
     protected function getRouteParameters(): array
     {
@@ -258,19 +225,15 @@ trait ControllerHelper
 
     /**
      * Simple pluralization function
-     *
-     * @param string $word
-     * @return string
      */
     private function pluralize(string $word): string
     {
         if (substr($word, -1) === 'y') {
-            return substr($word, 0, -1) . 'ies';
+            return substr($word, 0, -1).'ies';
         } elseif (substr($word, -1) === 's' || substr($word, -2) === 'es') {
             return $word;
         } else {
-            return $word . 's';
+            return $word.'s';
         }
     }
-
 }

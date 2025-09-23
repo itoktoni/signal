@@ -33,10 +33,11 @@ class BulkBladeUpdate extends Command
 
         if (empty($files)) {
             $this->error('No Blade files found in the specified path.');
+
             return;
         }
 
-        $this->info("Found " . count($files) . " Blade files to process.");
+        $this->info('Found '.count($files).' Blade files to process.');
 
         $updated = 0;
 
@@ -68,15 +69,15 @@ class BulkBladeUpdate extends Command
 
                 if ($content !== $original) {
                     File::put($file, $content);
-                    $this->line("Updated: " . str_replace(base_path() . '/', '', $file));
+                    $this->line('Updated: '.str_replace(base_path().'/', '', $file));
                     $updated++;
                 }
             } catch (\Exception $e) {
-                $this->error("Error processing {$file}: " . $e->getMessage());
+                $this->error("Error processing {$file}: ".$e->getMessage());
             }
         }
 
-        $this->info("Processed " . count($files) . " files, updated {$updated} files.");
+        $this->info('Processed '.count($files)." files, updated {$updated} files.");
     }
 
     /**

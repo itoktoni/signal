@@ -16,7 +16,7 @@ class Settings
 
     public function get($key, $default = null)
     {
-        $cacheKey = 'settings.' . $key;
+        $cacheKey = 'settings.'.$key;
 
         if (config('settings.cache')) {
             return Cache::rememberForever($cacheKey, function () use ($key, $default) {
@@ -32,7 +32,7 @@ class Settings
         $this->driver->set($key, $value);
 
         if (config('settings.cache')) {
-            Cache::forget('settings.' . $key);
+            Cache::forget('settings.'.$key);
         }
     }
 
@@ -41,7 +41,7 @@ class Settings
         $this->driver->forget($key);
 
         if (config('settings.cache')) {
-            Cache::forget('settings.' . $key);
+            Cache::forget('settings.'.$key);
         }
     }
 

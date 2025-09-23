@@ -4,16 +4,12 @@ namespace App\Traits;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 trait ResponseTrait
 {
     /**
      * Return view or JSON response based on request type
      *
-     * @param string $view
-     * @param array $data
-     * @param int $status
      * @return \Illuminate\Http\Response|\Illuminate\View\View
      */
     protected function views(string $view, array $data = [], int $status = 200)
@@ -26,7 +22,6 @@ trait ResponseTrait
 
         return view($view, $this->share($data));
     }
-
 
     /**
      * Get automatic view module from controller class and method names
@@ -47,21 +42,17 @@ trait ResponseTrait
         // Remove 'get' or 'post' prefix and convert to lowercase
         $action = strtolower(preg_replace('/^(get|post)/', '', $method));
 
-        if($function)
-        {
+        if ($function) {
             $action = $function;
         }
 
-        return $module . '.' . $action;
+        return $module.'.'.$action;
     }
-
 
     /**
      * Create a new user with validation and return appropriate response
      *
-     * @param Request $request
-     * @param string $redirectRoute
-     * @param string $successMessage
+     * @param  Request  $request
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     protected function create(array $data, string $redirectRoute = 'user.index', string $successMessage = 'created successfully')
@@ -73,7 +64,7 @@ trait ResponseTrait
         if (request()->expectsJson()) {
             return response()->json([
                 'data' => $data,
-                'message' => $successMessage
+                'message' => $successMessage,
             ], 201);
         }
 
@@ -92,7 +83,7 @@ trait ResponseTrait
         if (request()->expectsJson()) {
             return response()->json([
                 'data' => $model,
-                'message' => $successMessage
+                'message' => $successMessage,
             ]);
         }
 
@@ -102,8 +93,7 @@ trait ResponseTrait
     protected function share(array $data = [])
     {
         return array_merge([
-            'model' => false
+            'model' => false,
         ], $data);
     }
-
 }

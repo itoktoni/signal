@@ -16,6 +16,7 @@ class DatabaseDriver implements DriverInterface
     public function get($key, $default = null)
     {
         $row = DB::table($this->table)->where('key', $key)->first();
+
         return $row ? unserialize($row->value) : $default;
     }
 

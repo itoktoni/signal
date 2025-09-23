@@ -15,9 +15,10 @@ class FileDriver implements DriverInterface
 
     protected function load()
     {
-        if (!File::exists($this->path)) {
+        if (! File::exists($this->path)) {
             return [];
         }
+
         return json_decode(File::get($this->path), true) ?? [];
     }
 
@@ -29,6 +30,7 @@ class FileDriver implements DriverInterface
     public function get($key, $default = null)
     {
         $data = $this->load();
+
         return $data[$key] ?? $default;
     }
 

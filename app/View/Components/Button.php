@@ -7,8 +7,11 @@ use Illuminate\View\Component;
 class Button extends Component
 {
     public $type;
+
     public $class;
+
     public $id;
+
     public $attributes;
 
     public function __construct(

@@ -7,8 +7,7 @@ trait FilterTrait
     /**
      * Apply filters to the query based on request parameters.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array $filters
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return void
      */
     public function applyFilters($query, array $filters)
@@ -18,7 +17,7 @@ trait FilterTrait
                 // Simple filter: field name
                 $value = request($field);
                 if ($value) {
-                    $query->where($field, 'like', '%' . $value . '%');
+                    $query->where($field, 'like', '%'.$value.'%');
                 }
             } else {
                 // Advanced filter: key is param, field is the column or special
@@ -26,7 +25,7 @@ trait FilterTrait
                     $filterField = request('filter');
                     $searchValue = request('search');
                     if ($filterField && $searchValue && $filterField !== 'All Filter') {
-                        $query->where($this->mapFilterField($filterField), 'like', '%' . $searchValue . '%');
+                        $query->where($this->mapFilterField($filterField), 'like', '%'.$searchValue.'%');
                     }
                 }
             }
@@ -36,7 +35,7 @@ trait FilterTrait
     /**
      * Map filter field names to database columns.
      *
-     * @param string $field
+     * @param  string  $field
      * @return string
      */
     protected function mapFilterField($field)

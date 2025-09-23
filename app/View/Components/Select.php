@@ -7,19 +7,33 @@ use Illuminate\View\Component;
 class Select extends Component
 {
     public $name;
+
     public $options;
+
     public $value;
+
     public $placeholder;
+
     public $required;
+
     public $class;
+
     public $id;
+
     public $label;
+
     public $hint;
+
     public $col;
+
     public $searchable;
+
     public $multiple;
+
     public $optionKey;
+
     public $optionValue;
+
     public $attributes;
 
     public function __construct(
@@ -61,13 +75,14 @@ class Select extends Component
             return $options->pluck($value, $key)->toArray();
         }
 
-        if (is_array($options) && !empty($options)) {
+        if (is_array($options) && ! empty($options)) {
             $first = reset($options);
             if (is_object($first) && isset($first->$key) && isset($first->$value)) {
                 $result = [];
                 foreach ($options as $option) {
                     $result[$option->$key] = $option->$value;
                 }
+
                 return $result;
             }
         }

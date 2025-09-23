@@ -67,17 +67,6 @@
                 />
             </div>
 
-            <!-- Intraday Chart -->
-            <div class="card">
-                <div class="page-header">
-                    <h2>Intraday Chart</h2>
-                </div>
-                <x-charts.intraday
-                    id="intradayChart"
-                    title="Stock Price Movement"
-                    color="#91cc75"
-                />
-            </div>
 
             <!-- Basic Bar Chart -->
             <div class="card">
@@ -93,44 +82,8 @@
                 />
             </div>
 
-            <!-- Bar Label Rotation -->
-            <div class="card">
-                <div class="page-header">
-                    <h2>Bar Label Rotation</h2>
-                </div>
-                <x-charts.bar-label-rotation
-                    id="barLabelRotationChart"
-                    title="Department Performance"
-                    :categories="$chartData['assetRanking']['categories']"
-                    :data="$chartData['assetRanking']['data']"
-                    color="#ee6666"
-                />
-            </div>
 
-            <!-- Stacked Horizontal Bar -->
-            <div class="card">
-                <div class="page-header">
-                    <h2>Stacked Horizontal Bar</h2>
-                </div>
-                <x-charts.bar-stacked-horizontal
-                    id="stackedHorizontalBarChart"
-                    title="Project Progress"
-                    :categories="$chartData['assetPerformance']['categories']"
-                    :series="$chartData['assetPerformance']['series']"
-                />
-            </div>
 
-            <!-- Referer of a Website -->
-            <div class="card">
-                <div class="page-header">
-                    <h2>Referer of a Website</h2>
-                </div>
-                <x-charts.referer-website
-                    id="refererWebsiteChart"
-                    title="Traffic Sources"
-                    :data="$chartData['departmentDistribution']['data']"
-                />
-            </div>
 
             <!-- Half Doughnut Chart -->
             <div class="card">
@@ -210,43 +163,54 @@
                 />
             </div>
 
-            <!-- Basic Candlestick -->
+
+            <!-- Dataset Vertical -->
             <div class="card">
                 <div class="page-header">
-                    <h2>Basic Candlestick</h2>
+                    <h2>Dataset Vertical</h2>
                 </div>
-                <x-charts.candlestick
-                    id="basicCandlestickChart"
-                    title="Stock Performance"
-                    :categories="$chartData['stockData']['categories']"
-                    :data="$chartData['stockData']['data']"
+                <x-charts.dataset-vertical
+                    id="datasetVerticalChart"
+                    title="Product Sales Vertical"
+                    :source="$chartData['productSales']"
                 />
             </div>
 
-            <!-- Candlestick Brush -->
+            <!-- Dataset Horizontal -->
             <div class="card">
                 <div class="page-header">
-                    <h2>Candlestick Brush</h2>
+                    <h2>Dataset Horizontal</h2>
                 </div>
-                <x-charts.candlestick-brush
-                    id="candlestickBrushChart"
-                    title="Interactive Stock Chart"
-                    :categories="$chartData['stockData']['categories']"
-                    :data="$chartData['stockData']['data']"
+                <x-charts.dataset-simple
+                    id="datasetHorizontalChart"
+                    title="Product Sales Horizontal"
+                    :source="$chartData['productSales']"
                 />
             </div>
 
-            <!-- Stage Speed Gauge -->
+            <!-- Dataset Encode -->
             <div class="card">
                 <div class="page-header">
-                    <h2>Stage Speed Gauge</h2>
+                    <h2>Dataset Encode</h2>
                 </div>
-                <x-charts.gauge-stage-speed
-                    id="stageSpeedGaugeChart"
-                    title="Vehicle Speed"
-                    :value="120"
-                    :max="240"
-                    unit="km/h"
+                <x-charts.dataset-encode
+                    id="datasetEncodeChart"
+                    title="Sales Trends"
+                    :source="$chartData['productSales']"
+                />
+            </div>
+
+            <!-- Simple Gauge -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Simple Gauge</h2>
+                </div>
+                <x-charts.gauge
+                    id="simpleGaugeChart"
+                    title="System Health"
+                    :value="$chartData['systemHealth']['value']"
+                    :max="100"
+                    unit="{{ $chartData['systemHealth']['unit'] }}"
                 />
             </div>
         </div>

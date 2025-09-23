@@ -7,9 +7,13 @@ use Illuminate\View\Component;
 class Label extends Component
 {
     public $for;
+
     public $class;
+
     public $id;
+
     public $attributes;
+
     public $slot;
 
     public function __construct(

@@ -39,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
         $request = request();
         $route = $request->route();
 
-        if (!$route) {
+        if (! $route) {
             return [
                 'controller' => null,
                 'controller_short' => null,
@@ -56,7 +56,7 @@ class AppServiceProvider extends ServiceProvider
 
         $controller = $route->getController();
 
-        if (!$controller) {
+        if (! $controller) {
             return [
                 'controller' => null,
                 'controller_short' => null,
@@ -100,11 +100,11 @@ class AppServiceProvider extends ServiceProvider
     private function pluralize(string $word): string
     {
         if (substr($word, -1) === 'y') {
-            return substr($word, 0, -1) . 'ies';
+            return substr($word, 0, -1).'ies';
         } elseif (substr($word, -1) === 's' || substr($word, -2) === 'es') {
             return $word;
         } else {
-            return $word . 's';
+            return $word.'s';
         }
     }
 }

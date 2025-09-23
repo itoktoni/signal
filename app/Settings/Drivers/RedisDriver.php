@@ -15,18 +15,19 @@ class RedisDriver implements DriverInterface
 
     public function get($key, $default = null)
     {
-        $value = Redis::connection($this->connection)->get('settings:' . $key);
+        $value = Redis::connection($this->connection)->get('settings:'.$key);
+
         return $value ? unserialize($value) : $default;
     }
 
     public function set($key, $value)
     {
-        Redis::connection($this->connection)->set('settings:' . $key, serialize($value));
+        Redis::connection($this->connection)->set('settings:'.$key, serialize($value));
     }
 
     public function forget($key)
     {
-        Redis::connection($this->connection)->del('settings:' . $key);
+        Redis::connection($this->connection)->del('settings:'.$key);
     }
 
     public function all()
@@ -37,6 +38,7 @@ class RedisDriver implements DriverInterface
             $k = str_replace('settings:', '', $key);
             $data[$k] = unserialize(Redis::connection($this->connection)->get($key));
         }
+
         return $data;
     }
 }

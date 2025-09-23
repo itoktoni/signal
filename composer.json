@@ -11,7 +11,6 @@
     "require": {
         "php": "^8.2",
         "bensampo/laravel-enum": "^6.12",
-        "itsgoingd/clockwork": "^5.3",
         "izniburak/laravel-auto-routes": "^2.1",
         "kirschbaum-development/eloquent-power-joins": "^4.2",
         "laravel/framework": "^12.0",

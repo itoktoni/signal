@@ -10,24 +10,25 @@ class MemcacheDriver implements DriverInterface
 
     public function __construct($config)
     {
-        $this->memcache = new Memcache();
+        $this->memcache = new Memcache;
         $this->memcache->addServer($config['host'] ?? '127.0.0.1', $config['port'] ?? 11211);
     }
 
     public function get($key, $default = null)
     {
-        $value = $this->memcache->get('settings:' . $key);
+        $value = $this->memcache->get('settings:'.$key);
+
         return $value !== false ? unserialize($value) : $default;
     }
 
     public function set($key, $value)
     {
-        $this->memcache->set('settings:' . $key, serialize($value));
+        $this->memcache->set('settings:'.$key, serialize($value));
     }
 
     public function forget($key)
     {
-        $this->memcache->delete('settings:' . $key);
+        $this->memcache->delete('settings:'.$key);
     }
 
     public function all()

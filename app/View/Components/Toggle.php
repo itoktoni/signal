@@ -7,10 +7,15 @@ use Illuminate\View\Component;
 class Toggle extends Component
 {
     public $name;
+
     public $value;
+
     public $checked;
+
     public $class;
+
     public $id;
+
     public $attributes;
 
     public function __construct(

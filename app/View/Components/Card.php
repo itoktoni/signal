@@ -7,8 +7,11 @@ use Illuminate\View\Component;
 class Card extends Component
 {
     public $class;
+
     public $id;
+
     public $attributes;
+
     public $slot;
 
     public function __construct(

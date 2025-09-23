@@ -7,15 +7,25 @@ use Illuminate\View\Component;
 class Textarea extends Component
 {
     public $name;
+
     public $value;
+
     public $placeholder;
+
     public $required;
+
     public $class;
+
     public $id;
+
     public $rows;
+
     public $label;
+
     public $hint;
+
     public $col;
+
     public $attributes;
 
     public function __construct(
