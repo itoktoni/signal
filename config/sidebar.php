@@ -2,6 +2,17 @@
 
 return [
     'groups' => [
+        'dashboard' => [
+            'name' => 'Home',
+            'icon' => 'bi-house',
+            'menus' => [
+                'dashboard' => [
+                    'name' => 'Dashboard',
+                    'route' => 'dashboard',
+                    'icon' => 'bi-house',
+                ],
+            ],
+        ],
         'system' => [
             'name' => 'System',
             'icon' => 'bi-gear',
@@ -17,11 +28,6 @@ return [
             'name' => 'Content',
             'icon' => 'bi-file-earmark-text',
             'menus' => [
-                'dashboard' => [
-                    'name' => 'Dashboard',
-                    'route' => 'dashboard',
-                    'icon' => 'bi-house',
-                ],
                 'profile' => [
                     'name' => 'Profile',
                     'route' => 'profile',
