@@ -6,14 +6,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/logout', function () {
-    auth()->logout();
-    request()->session()->invalidate();
-    request()->session()->regenerateToken();
-
-    return redirect('/');
-})->name('logout');
-
 Route::middleware([
     'auth',
     config('jetstream.auth_session'),
