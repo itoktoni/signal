@@ -4,14 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Models\User;
-use App\Traits\ContextHelper;
 use App\Traits\ControllerHelper;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 use App\Facades\Settings;
-use Symfony\Component\Clock\Clock;
 
 class UserController extends Controller
 {
@@ -36,9 +31,9 @@ class UserController extends Controller
 
     public function getData()
     {
-        Settings::set('app_name', 'My Application');
-        $perPage = request('perpage', 15);
+        $perPage = request('perpage', 10);
         $data = User::filter(request())->paginate($perPage);
+        $data->appends(request()->query());
 
         return $this->views($this->module(),[
             'data' => $data,

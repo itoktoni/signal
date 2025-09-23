@@ -1,14 +1,60 @@
 import './bootstrap';
- import './bootstrap';
+
+// Global functions for user data page
+function confirmDelete(url, name) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to delete user "${name}". This action cannot be undone!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = url;
+        }
+    });
+}
+
+function confirmBulkDelete() {
+    const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+    if (checkedBoxes.length === 0) {
+        Swal.fire('No Selection', 'Please select at least one user to delete.', 'warning');
+        return;
+    }
+
+    const ids = Array.from(checkedBoxes).map(cb => cb.value);
+    const count = ids.length;
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to delete ${count} user(s). This action cannot be undone!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete them!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('bulk-delete-ids').value = ids.join(',');
+            document.getElementById('bulk-delete-form').submit();
+        }
+    });
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Checkbox functionality
     const checkAlls = document.querySelectorAll('.checkall');
     const checkboxes = document.querySelectorAll('.row-checkbox');
+    const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
 
     checkAlls.forEach(checkAll => {
         checkAll.addEventListener('change', function() {
             checkboxes.forEach(cb => cb.checked = this.checked);
+            updateBulkDeleteButton();
         });
     });
 
@@ -21,8 +67,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 checkAll.checked = allChecked;
                 checkAll.indeterminate = someChecked && !allChecked;
             });
+            updateBulkDeleteButton();
         });
     });
+
+    function updateBulkDeleteButton() {
+        if (bulkDeleteBtn) {
+            const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
+            bulkDeleteBtn.disabled = checkedCount === 0;
+            bulkDeleteBtn.classList.toggle('disabled', checkedCount === 0);
+        }
+    }
 
     // Sidebar and menu functionality
     let sidebarOpen = false;
@@ -143,6 +198,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 form.style.display = 'none';
                 buttonText.textContent = 'Show';
             }
+        });
+    }
+
+    // Handle perpage change
+    const perpageSelect = document.getElementById('perpage-select');
+    if (perpageSelect) {
+        perpageSelect.addEventListener('change', function() {
+            const url = new URL(window.location);
+            url.searchParams.set('perpage', this.value);
+            window.location.href = url.toString();
         });
     }
 });

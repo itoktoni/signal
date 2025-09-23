@@ -18,7 +18,7 @@
                 <x-input type="password" name="password_confirmation" required/>
 
                 <x-select name="st" :options="['' => 'Select Role', 'admin' => 'Admin', 'user' => 'User', 'manager' => 'Manager']" required/>
-                <x-select name="role" multiple :options="['' => 'Select Role', 'admin' => 'Admin', 'user' => 'User', 'manager' => 'Manager']" required/>
+                <x-select name="role" searchable :options="['' => 'Select Role', 'admin' => 'Admin', 'user' => 'User', 'manager' => 'Manager']" required/>
 
                 <x-footer>
                     <a href="{{ route('user.index') }}" class="button secondary">Back</a>

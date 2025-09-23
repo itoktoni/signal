@@ -20,7 +20,8 @@ trait ControllerHelper
     {
         $request = app(Request::class);
 
-        if ($request->expectsJson()) {
+        if ($request->expectsJson())
+        {
             return response()->json($data, $status);
         }
 

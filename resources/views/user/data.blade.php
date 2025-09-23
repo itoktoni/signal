@@ -15,7 +15,7 @@
                         <x-select name="role" :options="['All Roles' => 'All Roles', 'Admin' => 'Admin', 'User' => 'User']" :value="request('role', 'All Roles')" col="4"/>
                     </div>
                     <div class="row">
-                        <x-select name="perpage" :options="['10' => '10', '20' => '20', '50' => '50', '100' => '100']" :value="request('perpage', 10)" col="2"/>
+                        <x-select name="perpage" :options="['10' => '10', '20' => '20', '50' => '50', '100' => '100']" :value="request('perpage', 10)" col="2" id="perpage-select"/>
                         <x-select name="filter" :options="['All Filter' => 'All Filter', 'Username' => 'Username', 'Role' => 'Role']" :value="request('filter', 'All Filter')" col="4"/>
                         <x-input name="search" type="text" placeholder="Enter search term" :value="request('search')" col="6"/>
                     </div>
@@ -30,12 +30,12 @@
                             <thead>
                                 <tr>
                                     <th class="checkbox-column"><input type="checkbox" class="checkall" /></th>
-                                    <th class="text-center action-table">Actions</th>
-                                    <th><a href="{{ sortUrl('id', 'user.getData') }}">ID</a></th>
-                                    <th><a href="{{ sortUrl('username', 'user.getData') }}">Username</a></th>
+                                    <th class="text-center actions">Actions</th>
+                                    <th><x-sort-link column="id" route="user.getData" text="ID" /></th>
+                                    <th><x-sort-link column="username" route="user.getData" text="Username" /></th>
                                     <th>Name</th>
-                                    <th><a href="{{ sortUrl('email', 'user.getData') }}">Email</a></th>
-                                    <th><a href="{{ sortUrl('role', 'user.getData') }}">Role</a></th>
+                                    <th><x-sort-link column="email" route="user.getData" text="Email" /></th>
+                                    <th><x-sort-link column="role" route="user.getData" text="Role" /></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -108,71 +108,4 @@
         </form>
     </div>
 
-    <script>
-        function confirmDelete(url, name) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: `You are about to delete user "${name}". This action cannot be undone!`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = url;
-                }
-            });
-        }
-
-        function confirmBulkDelete() {
-            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
-            if (checkedBoxes.length === 0) {
-                Swal.fire('No Selection', 'Please select at least one user to delete.', 'warning');
-                return;
-            }
-
-            const ids = Array.from(checkedBoxes).map(cb => cb.value);
-            const count = ids.length;
-
-            Swal.fire({
-                title: 'Are you sure?',
-                text: `You are about to delete ${count} user(s). This action cannot be undone!`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete them!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('bulk-delete-ids').value = ids.join(',');
-                    document.getElementById('bulk-delete-form').submit();
-                }
-            });
-        }
-
-        // Handle checkall functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const checkall = document.querySelector('.checkall');
-            const rowCheckboxes = document.querySelectorAll('.row-checkbox');
-            const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
-
-            checkall.addEventListener('change', function() {
-                rowCheckboxes.forEach(cb => cb.checked = this.checked);
-                updateBulkDeleteButton();
-            });
-
-            rowCheckboxes.forEach(cb => {
-                cb.addEventListener('change', updateBulkDeleteButton);
-            });
-
-            function updateBulkDeleteButton() {
-                const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
-                bulkDeleteBtn.disabled = checkedCount === 0;
-                bulkDeleteBtn.classList.toggle('disabled', checkedCount === 0);
-            }
-        });
-    </script>
 </x-layout>
