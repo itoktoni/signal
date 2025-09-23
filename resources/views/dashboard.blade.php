@@ -51,6 +51,206 @@
             </div>
         </div>
 
+        <!-- Charts Section -->
+        <div class="charts-grid">
+            <!-- Basic Line Chart -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Basic Line Chart</h2>
+                </div>
+                <x-charts.line-basic
+                    id="basicLineChart"
+                    title="User Registrations"
+                    :categories="$chartData['userRegistrations']['categories']"
+                    :data="$chartData['userRegistrations']['data']"
+                    color="#5470c6"
+                />
+            </div>
+
+            <!-- Intraday Chart -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Intraday Chart</h2>
+                </div>
+                <x-charts.intraday
+                    id="intradayChart"
+                    title="Stock Price Movement"
+                    color="#91cc75"
+                />
+            </div>
+
+            <!-- Basic Bar Chart -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Basic Bar Chart</h2>
+                </div>
+                <x-charts.bar-basic
+                    id="basicBarChart"
+                    title="Monthly Sales"
+                    :categories="$chartData['monthlyRevenue']['categories']"
+                    :data="$chartData['monthlyRevenue']['series'][0]['data']"
+                    color="#fac858"
+                />
+            </div>
+
+            <!-- Bar Label Rotation -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Bar Label Rotation</h2>
+                </div>
+                <x-charts.bar-label-rotation
+                    id="barLabelRotationChart"
+                    title="Department Performance"
+                    :categories="$chartData['assetRanking']['categories']"
+                    :data="$chartData['assetRanking']['data']"
+                    color="#ee6666"
+                />
+            </div>
+
+            <!-- Stacked Horizontal Bar -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Stacked Horizontal Bar</h2>
+                </div>
+                <x-charts.bar-stacked-horizontal
+                    id="stackedHorizontalBarChart"
+                    title="Project Progress"
+                    :categories="$chartData['assetPerformance']['categories']"
+                    :series="$chartData['assetPerformance']['series']"
+                />
+            </div>
+
+            <!-- Referer of a Website -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Referer of a Website</h2>
+                </div>
+                <x-charts.referer-website
+                    id="refererWebsiteChart"
+                    title="Traffic Sources"
+                    :data="$chartData['departmentDistribution']['data']"
+                />
+            </div>
+
+            <!-- Half Doughnut Chart -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Half Doughnut Chart</h2>
+                </div>
+                <x-charts.donut-half
+                    id="halfDonutChart"
+                    title="System Usage"
+                    :data="$chartData['assetStatus']['data']"
+                />
+            </div>
+
+            <!-- Smoothed Line Chart -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Smoothed Line Chart</h2>
+                </div>
+                <x-charts.line-smoothed
+                    id="smoothedLineChart"
+                    title="Asset Performance Trends"
+                    :categories="$chartData['assetPerformance']['categories']"
+                    :data="$chartData['assetPerformance']['series'][0]['data']"
+                    color="#91cc75"
+                />
+            </div>
+
+            <!-- Basic Area Chart -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Basic Area Chart</h2>
+                </div>
+                <x-charts.area-basic
+                    id="basicAreaChart"
+                    title="Revenue Growth"
+                    :categories="$chartData['monthlyRevenue']['categories']"
+                    :data="$chartData['monthlyRevenue']['series'][0]['data']"
+                    color="#fac858"
+                />
+            </div>
+
+            <!-- Stacked Line Chart -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Stacked Line Chart</h2>
+                </div>
+                <x-charts.line-stacked
+                    id="stackedLineChart"
+                    title="Department Performance"
+                    :categories="$chartData['assetPerformance']['categories']"
+                    :series="$chartData['assetPerformance']['series']"
+                    :colors="['#5470c6', '#91cc75']"
+                />
+            </div>
+
+            <!-- Nightingale Chart -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Nightingale Chart</h2>
+                </div>
+                <x-charts.nightingale
+                    id="nightingaleChart"
+                    title="Sales by Region"
+                    :data="$chartData['departmentDistribution']['data']"
+                />
+            </div>
+
+            <!-- Pie Special Label -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Pie Special Label</h2>
+                </div>
+                <x-charts.pie-special-label
+                    id="pieSpecialLabelChart"
+                    title="Market Share"
+                    :data="$chartData['assetStatus']['data']"
+                />
+            </div>
+
+            <!-- Basic Candlestick -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Basic Candlestick</h2>
+                </div>
+                <x-charts.candlestick
+                    id="basicCandlestickChart"
+                    title="Stock Performance"
+                    :categories="$chartData['stockData']['categories']"
+                    :data="$chartData['stockData']['data']"
+                />
+            </div>
+
+            <!-- Candlestick Brush -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Candlestick Brush</h2>
+                </div>
+                <x-charts.candlestick-brush
+                    id="candlestickBrushChart"
+                    title="Interactive Stock Chart"
+                    :categories="$chartData['stockData']['categories']"
+                    :data="$chartData['stockData']['data']"
+                />
+            </div>
+
+            <!-- Stage Speed Gauge -->
+            <div class="card">
+                <div class="page-header">
+                    <h2>Stage Speed Gauge</h2>
+                </div>
+                <x-charts.gauge-stage-speed
+                    id="stageSpeedGaugeChart"
+                    title="Vehicle Speed"
+                    :value="120"
+                    :max="240"
+                    unit="km/h"
+                />
+            </div>
+        </div>
+
         <!-- Recent Activity -->
         <div class="card">
             <div class="page-header">
@@ -230,6 +430,17 @@
             text-align: center;
         }
 
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+        }
+
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: 1fr;
@@ -240,4 +451,5 @@
             }
         }
     </style>
+
 </x-layout>
