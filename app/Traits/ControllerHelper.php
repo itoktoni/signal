@@ -27,7 +27,7 @@ trait ControllerHelper
      *
      * @return string
      */
-    protected function module($function = null)
+    public function module($function = null)
     {
         // Get the class name (e.g., UserController)
         $className = class_basename(get_class($this));
@@ -112,6 +112,7 @@ trait ControllerHelper
     {
         return array_merge([
             'model' => false,
+            'context' => $this->getContext(),
         ], $data);
     }
 

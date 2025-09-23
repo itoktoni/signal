@@ -78,19 +78,24 @@
                     <nav class="pagination">
                         @if ($data->onFirstPage())
                             <button disabled="" class="button secondary">
-                                <i class="bi bi-arrow-left"></i></button>
+                                <i class="bi bi-arrow-left"></i>
+                            </button>
                         @else
                             <a href="{{ $data->previousPageUrl() }}" class="button secondary">
-                                <i class="bi bi-arrow-left"></i></a>
+                                <i class="bi bi-arrow-left"></i>
+                            </a>
                         @endif
                         <span class="pagination-info"> Page {{ $data->currentPage() }} of
-                            {{ $data->lastPage() }}</span>
+                            {{ $data->lastPage() }}
+                        </span>
                         @if ($data->hasMorePages())
                             <a href="{{ $data->nextPageUrl() }}" class="button secondary">
-                                <i class="bi bi-arrow-right"></i></a>
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
                         @else
                             <button disabled="" class="button secondary">
                                 <i class="bi bi-arrow-right"></i>
+                            </button>
                         @endif
                     </nav>
                 </div>
@@ -98,12 +103,12 @@
         </div>
         <x-footer>
             <button type="button" class="button danger" id="bulk-delete-btn" disabled onclick="confirmBulkDelete()">Delete</button>
-            <a href="{{ route('user.getCreate') }}" class="button success">
+            <a href="{{ route(module('getCreate')) }}" class="button success">
                 <i class="bi bi-plus"></i>Create
             </a>
         </x-footer>
 
-        <form id="bulk-delete-form" method="POST" action="{{ route('user.postBulkDelete') }}" style="display: none;">
+        <form id="bulk-delete-form" method="POST" action="{{ route(module('postBulkDelete')) }}" style="display: none;">
             @csrf
             <input type="hidden" name="ids" id="bulk-delete-ids">
         </form>

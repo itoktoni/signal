@@ -1,11 +1,6 @@
 <x-layout>
-
-        <div class="card">
-            <div class="page-header">
-                <h2>Create Form </h2>
-            </div>
-
-            <x-form action="{{ route('user.postCreate') }}">
+        <x-card title="Create Form">
+            <x-form action="{{ route(module('postCreate')) }}">
                 <x-input name="username" hint="Username cannot be changed" required/>
 
                 <x-input name="name" required/>
@@ -19,9 +14,10 @@
                 <x-select name="role" :options="['' => 'Select Role', 'admin' => 'Admin', 'user' => 'User', 'manager' => 'Manager']" required/>
 
                 <x-footer>
-                    <a href="{{ route('user.index') }}" class="button secondary">Back</a>
+                    <a href="{{ route(module('getData')) }}" class="button secondary">Back</a>
                     <x-button type="submit" class="primary">Create</x-button>
                 </x-footer>
+
             </x-form>
-    </div>
+        </x-card>
 </x-layout>

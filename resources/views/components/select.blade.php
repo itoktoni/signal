@@ -1,3 +1,33 @@
+@props(['col' => 12, 'name' => '', 'value' => '', 'model' => null, 'options' => [], 'placeholder' => '', 'required' => false, 'multiple' => false, 'searchable' => false, 'class' => 'form-select', 'id' => '', 'attributes' => [], 'label' => '', 'hint' => ''])
+
+@php
+    $selectValue = $value;
+    $currentModel = null;
+
+    // Try to get model from props
+    if ($model) {
+        $currentModel = $model;
+    } else {
+        // Try to get from route parameters (for update forms)
+        $route = request()->route();
+        if ($route) {
+            $parameters = $route->parameters();
+            foreach ($parameters as $param) {
+                if (is_object($param) && method_exists($param, 'getAttributes')) {
+                    $currentModel = $param;
+                    break;
+                }
+            }
+        }
+    }
+
+    if ($currentModel && $name && property_exists($currentModel, $name)) {
+        $selectValue = old($name, $currentModel->$name);
+    } elseif ($name) {
+        $selectValue = old($name, $value);
+    }
+@endphp
+
 <div class="form-group col-{{ $col }}">
     <label for="{{ $id }}" class="form-label">
         {{ $label }}@if($required)<span class="required-asterisk">*</span>@endif
@@ -19,7 +49,7 @@
                 @if($searchable)<input type="text" class="custom-select-search" placeholder="Search...">@endif
                 <div class="custom-select-options">
                     @foreach($options as $key => $option)
-                        <div class="custom-select-option" data-value="{{ $key }}" {{ ($multiple && is_array($value) && in_array($key, $value)) || (!$multiple && $value == $key) ? 'data-selected="true"' : '' }}>
+                        <div class="custom-select-option" data-value="{{ $key }}" {{ ($multiple && is_array($selectValue) && in_array($key, $selectValue)) || (!$multiple && $selectValue == $key) ? 'data-selected="true"' : '' }}>
                             {{ $option }}
                         </div>
                     @endforeach
@@ -40,7 +70,7 @@
                 <option value="">{{ $placeholder }}</option>
             @endif
             @foreach($options as $key => $option)
-                <option value="{{ $key }}" {{ $value == $key ? 'selected' : '' }}>{{ $option }}</option>
+                <option value="{{ $key }}" {{ $selectValue == $key ? 'selected' : '' }}>{{ $option }}</option>
             @endforeach
         </select>
     @endif
