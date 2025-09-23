@@ -394,6 +394,7 @@
                 const dropdown = wrapper.querySelector('.custom-select-dropdown');
                 const searchInput = wrapper.querySelector('.custom-select-search');
                 const options = wrapper.querySelectorAll('.custom-select-option');
+                const hiddenContainer = wrapper.querySelector('.custom-select-hidden-inputs');
                 const hiddenInput = wrapper.querySelector('input[type="hidden"]');
                 const placeholder = wrapper.querySelector('.custom-select-placeholder');
                 const isMultiple = wrapper.dataset.multiple === 'true';
@@ -423,27 +424,32 @@
                     if (!isOpen) {
                         dropdown.style.display = 'block';
                         input.classList.add('open');
-                        searchInput.value = '';
+                        if (searchInput) {
+                            searchInput.value = '';
+                            searchInput.focus();
+                        }
                         // Show all options
                         options.forEach(option => option.style.display = 'block');
-                        searchInput.focus();
                     }
                 });
 
                 // Search functionality
-                searchInput.addEventListener('input', function() {
-                    const searchTerm = this.value.toLowerCase();
-                    options.forEach(option => {
-                        const text = option.textContent.toLowerCase();
-                        option.style.display = text.includes(searchTerm) ? 'block' : 'none';
+                if (searchInput) {
+                    searchInput.addEventListener('input', function() {
+                        const searchTerm = this.value.toLowerCase();
+                        options.forEach(option => {
+                            const text = option.textContent.toLowerCase();
+                            option.style.display = text.includes(searchTerm) ? 'block' : 'none';
+                        });
                     });
-                });
+                }
 
                 // Option selection
                 options.forEach(option => {
                     option.addEventListener('click', function() {
                         const value = this.dataset.value;
                         const text = this.textContent.trim();
+                        if (value === '') return; // Don't select placeholder option
 
                         if (isMultiple) {
                             const index = selectedValues.indexOf(value);
@@ -479,39 +485,62 @@
                 });
 
                 function updateDisplay() {
+                    const selectedItemsContainer = wrapper.querySelector('.custom-select-selected-items');
                     if (isMultiple) {
                         if (selectedTexts.length > 0) {
-                            placeholder.innerHTML = `<div class="custom-select-tags">
-                                ${selectedTexts.map(text => `<span class="custom-select-tag">${text} <span class="custom-select-tag-remove" data-value="${selectedValues[selectedTexts.indexOf(text)]}">×</span></span>`).join('')}
-                            </div>`;
+                            placeholder.textContent = `${selectedTexts.length} selected`;
                             placeholder.classList.remove('empty');
+                            if (selectedItemsContainer) {
+                                selectedItemsContainer.innerHTML = selectedTexts.map(text => `<span class="custom-select-tag">${text} <span class="custom-select-tag-remove" data-value="${selectedValues[selectedTexts.indexOf(text)]}">×</span></span>`).join('');
+                            }
                         } else {
                             placeholder.textContent = wrapper.querySelector('.custom-select-placeholder').dataset.placeholder || 'Select options';
                             placeholder.classList.add('empty');
+                            if (selectedItemsContainer) {
+                                selectedItemsContainer.innerHTML = '';
+                            }
                         }
                     } else {
                         placeholder.textContent = selectedTexts.length > 0 ? selectedTexts[0] : (wrapper.querySelector('.custom-select-placeholder').dataset.placeholder || 'Select an option');
                         placeholder.classList.toggle('empty', selectedTexts.length === 0);
                     }
 
-                    hiddenInput.value = isMultiple ? selectedValues.join(',') : (selectedValues[0] || '');
+                    if (isMultiple) {
+                        if (hiddenContainer) {
+                            hiddenContainer.innerHTML = '';
+                            selectedValues.forEach(value => {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = hiddenContainer.dataset.name;
+                                input.value = value;
+                                hiddenContainer.appendChild(input);
+                            });
+                        }
+                    } else {
+                        if (hiddenInput) {
+                            hiddenInput.value = selectedValues[0] || '';
+                        }
+                    }
                 }
 
                 // Handle tag removal for multiple select
                 if (isMultiple) {
-                    placeholder.addEventListener('click', function(e) {
-                        if (e.target.classList.contains('custom-select-tag-remove')) {
-                            e.stopPropagation();
-                            const value = e.target.dataset.value;
-                            const index = selectedValues.indexOf(value);
-                            if (index > -1) {
-                                selectedValues.splice(index, 1);
-                                selectedTexts.splice(index, 1);
-                                wrapper.querySelector(`[data-value="${value}"]`).classList.remove('selected');
-                                updateDisplay();
+                    const selectedItemsContainer = wrapper.querySelector('.custom-select-selected-items');
+                    if (selectedItemsContainer) {
+                        selectedItemsContainer.addEventListener('click', function(e) {
+                            if (e.target.classList.contains('custom-select-tag-remove')) {
+                                e.stopPropagation();
+                                const value = e.target.dataset.value;
+                                const index = selectedValues.indexOf(value);
+                                if (index > -1) {
+                                    selectedValues.splice(index, 1);
+                                    selectedTexts.splice(index, 1);
+                                    wrapper.querySelector(`[data-value="${value}"]`).classList.remove('selected');
+                                    updateDisplay();
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             });
 
