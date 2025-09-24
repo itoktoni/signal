@@ -67,6 +67,8 @@ class CoinController extends Controller
      */
     public function getUpdate($code)
     {
+        $code = request('coin_code', $code);
+
         $model = $this->model->find($code);
 
         // Available analyst methods

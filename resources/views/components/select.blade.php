@@ -33,26 +33,61 @@
         {{ $label }}@if($required)<span class="required-asterisk">*</span>@endif
     </label>
     @if($multiple || $searchable)
-        <div class="custom-select-wrapper {{ $multiple ? 'custom-select-multiple' : '' }}" data-multiple="{{ $multiple ? 'true' : 'false' }}">
-            <button type="button" class="custom-select-input">
-                <div class="custom-select-placeholder">{{ $multiple ? ($placeholder ?: 'Select options') : ($placeholder ?: (isset($options['']) ? $options[''] : 'Select an option')) }}</div>
-                <div class="custom-select-arrow">▼</div>
-            </button>
-            @if(!$multiple)<input type="hidden" name="{{ $name }}" id="{{ $id }}" @if($required) required @endif />@endif
-            @if($multiple)<div class="custom-select-hidden-inputs" data-name="{{ $name }}[]"></div>@endif
-            @if($multiple)
-            <div class="custom-select-selected-items">
-                <!-- Selected items will be populated by JS -->
-            </div>
-            @endif
-            <div class="custom-select-dropdown">
-                @if($searchable)<input type="text" class="custom-select-search" placeholder="Search...">@endif
-                <div class="custom-select-options">
-                    @foreach($options as $key => $option)
-                        <div class="custom-select-option" data-value="{{ $key }}" {{ ($multiple && is_array($selectValue) && in_array($key, $selectValue)) || (!$multiple && $selectValue == $key) ? 'data-selected="true"' : '' }}>
-                            {{ $option }}
+        @php
+            $initialPlaceholder = $placeholder ?: (isset($options['']) ? $options[''] : 'Select an option');
+            $selectedText = '';
+
+            // Get the text of the selected option
+            if (!$multiple && $selectValue && isset($options[$selectValue])) {
+                $selectedText = $options[$selectValue];
+                $initialPlaceholder = $selectedText;
+            }
+        @endphp
+        <div class="modern-select-wrapper {{ $multiple ? 'modern-select-multiple' : '' }}" data-multiple="{{ $multiple ? 'true' : 'false' }}" data-placeholder="{{ $placeholder ?: (isset($options['']) ? $options[''] : 'Select an option') }}">
+            <div class="modern-select-container">
+                <div class="modern-select-display">
+                    <span class="modern-select-text {{ $selectedText ? 'has-value' : 'empty' }}" data-placeholder="{{ $placeholder ?: (isset($options['']) ? $options[''] : 'Select an option') }}">{{ $initialPlaceholder }}</span>
+                    <div class="modern-select-icons">
+                        @if($searchable)
+                            <svg class="modern-select-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                        @endif
+                        <svg class="modern-select-arrow {{ $selectedText ? 'rotated' : '' }}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                    </div>
+                </div>
+                @if(!$multiple)<input type="hidden" name="{{ $name }}" id="{{ $id }}" @if($required) required @endif value="{{ $selectValue }}"/>@endif
+                @if($multiple)<div class="modern-select-hidden-inputs" data-name="{{ $name }}[]"></div>@endif
+                @if($multiple)
+                <div class="modern-select-tags">
+                    <!-- Selected items will be populated by JS -->
+                </div>
+                @endif
+                <div class="modern-select-dropdown">
+                    @if($searchable)
+                        <div class="modern-select-search-container">
+                            <svg class="modern-select-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                            <input type="text" class="modern-select-search" placeholder="Search options...">
                         </div>
-                    @endforeach
+                    @endif
+                    <div class="modern-select-options">
+                        @foreach($options as $key => $option)
+                            <div class="modern-select-option {{ ($multiple && is_array($selectValue) && in_array($key, $selectValue)) || (!$multiple && $selectValue == $key) ? 'selected' : '' }}" data-value="{{ $key }}">
+                                <span class="modern-select-option-text">{{ $option }}</span>
+                                @if(($multiple && is_array($selectValue) && in_array($key, $selectValue)) || (!$multiple && $selectValue == $key))
+                                    <svg class="modern-select-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="20,6 9,17 4,12"></polyline>
+                                    </svg>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
         </div>

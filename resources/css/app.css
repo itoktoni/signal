@@ -1,5 +1,4 @@
 @import "_variables.css";
-@import "_variables.css";
 @import "_base.css";
 @import "_grid.css";
 @import "_form.css";
@@ -14,3 +13,4 @@
 @import "_layout.css";
 @import "_footer.css";
 @import "_nav.css";
+@import "_modern-select.css";

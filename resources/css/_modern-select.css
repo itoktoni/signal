@@ -1,0 +1,196 @@
+/* Modern Select Component Styles */
+@import url("./_variables.css");
+
+.modern-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.modern-select-container {
+    position: relative;
+    width: 100%;
+}
+
+.modern-select-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-white);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 42px;
+}
+
+.modern-select-container.open .modern-select-display {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--shadow-primary);
+}
+
+.modern-select-text {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text-dark);
+    line-height: 1.5;
+}
+
+.modern-select-text.empty {
+    color: var(--text-muted);
+}
+
+.modern-select-text.has-value {
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+.modern-select-icons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+}
+
+.modern-select-search-icon,
+.modern-select-arrow {
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.modern-select-container.open .modern-select-arrow {
+    transform: rotate(180deg);
+}
+
+.modern-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px var(--shadow-color-dark), 0 4px 6px -2px var(--shadow-color-medium);
+    z-index: 1000;
+    max-height: 300px;
+    overflow: hidden;
+    display: none;
+    margin-top: 4px;
+}
+
+.modern-select-search-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--bg-light);
+    background: var(--bg-light-secondary);
+}
+
+.modern-select-search {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: var(--text-dark);
+}
+
+.modern-select-search::placeholder {
+    color: var(--text-muted);
+}
+
+.modern-select-options {
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.modern-select-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-bottom: 1px solid var(--bg-light);
+}
+
+.modern-select-option:last-child {
+    border-bottom: none;
+}
+
+.modern-select-option:hover {
+    background: var(--bg-light);
+}
+
+.modern-select-option.selected {
+    background: var(--notification-unread-bg);
+    color: var(--color-primary);
+}
+
+.modern-select-option-text {
+    flex: 1;
+    font-size: 14px;
+}
+
+.modern-select-check-icon {
+    color: var(--color-primary);
+    display: none;
+}
+
+.modern-select-option.selected .modern-select-check-icon {
+    display: block;
+}
+
+.modern-select-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--bg-light);
+    background: var(--bg-light-secondary);
+}
+
+.modern-select-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--notification-unread-bg);
+    color: var(--color-primary);
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.modern-select-tag-remove {
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 2px;
+    transition: background-color 0.15s ease;
+}
+
+.modern-select-tag-remove:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .modern-select-display {
+        padding: 5px 12px;
+        min-height: 44px;
+    }
+
+    .modern-select-text {
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+
+    .modern-select-dropdown {
+        max-height: 250px;
+    }
+
+    .modern-select-options {
+        max-height: 200px;
+    }
+}
