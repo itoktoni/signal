@@ -25,6 +25,6 @@ class DatabaseSeeder extends Seeder
 
         // Seed crypto symbols from Binance
         $this->command->info('🌱 Seeding crypto symbols from Binance...');
-        $this->call(CryptoSymbolSeeder::class);
+        // $this->call(CryptoSymbolSeeder::class);
     }
 }

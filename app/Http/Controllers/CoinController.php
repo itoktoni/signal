@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\Coin;
 use App\Traits\ControllerHelper;
 use Illuminate\Http\Request;
 
-class UserController extends Controller
+class CoinController extends Controller
 {
     use ControllerHelper;
 
     protected $model;
 
-    public function __construct(User $model)
+    public function __construct(Coin $model)
     {
         $this->model = $model;
     }

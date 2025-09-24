@@ -25,13 +25,13 @@ return [
             ],
         ],
         'content' => [
-            'name' => 'Content',
-            'icon' => 'bi-file-earmark-text',
+            'name' => 'Cypto',
+            'icon' => 'bi-currency-exchange',
             'menus' => [
-                'profile' => [
-                    'name' => 'Profile',
-                    'route' => 'profile',
-                    'icon' => 'bi-person',
+                'coin' => [
+                    'name' => 'Crypto',
+                    'route' => 'coin.getData',
+                    'icon' => 'bi-currency-bitcoin',
                 ],
             ],
         ],
