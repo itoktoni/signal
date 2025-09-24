@@ -1,0 +1,120 @@
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 10px;
+    margin: 2rem auto 0;
+}
+
+thead, tbody, tfoot, tr, td, th {
+    border-color: inherit;
+    border-style: solid;
+    border-width: 2px;
+}
+
+.data-table th,
+.data-table td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+}
+
+.data-table th {
+    font-weight: 600;
+    background-color: var(--bg-light);
+}
+
+.no-users {
+    padding-top: 2rem;
+    width: 100%;
+}
+
+.checkbox-column {
+    width: 3rem;
+    text-align: center;
+}
+
+.action-table {
+    margin: 0px auto;
+    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.7rem;
+    border: none;
+}
+
+.actions {
+    width: 12rem;
+}
+
+.action-table .button, .action-table a {
+    padding: 0.25rem 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.action-table .button .bi {
+    font-size: 1.5rem;
+}
+
+.form-table-pagination{
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.pagination{
+    display: flex;
+    justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+    /* Responsive Table-to-Card */
+    .data-table thead {
+        display: none;
+    }
+
+    .data-table tr {
+        display: block;
+        margin-bottom: 1.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-white);
+    }
+
+    .data-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--bg-light);
+    }
+
+    .data-table td:last-child {
+        border-bottom: 1px solid var(--color-lightGrey);
+    }
+
+    .data-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        margin-right: 1rem;
+    }
+
+    .action-table {
+        width: -webkit-fill-available;
+        justify-content: flex-end;
+    }
+
+    .checkbox-column {
+        width: unset;
+        text-align: center;
+    }
+
+    /* Table Mobile Styles from _layout.css */
+    table{
+        border: unset;
+    }
+
+    table tbody{
+        border-style: none;
+    }
+}
