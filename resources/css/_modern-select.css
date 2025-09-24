@@ -15,13 +15,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 5px 16px;
+    padding: 0 16px;
     border: 2px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 3px;
     background: var(--bg-white);
     cursor: pointer;
     transition: all 0.2s ease;
-    min-height: 42px;
+    min-height: 35px;
 }
 
 .modern-select-container.open .modern-select-display {
@@ -49,7 +49,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-left: 12px;
+    margin-right: -10px;
 }
 
 .modern-select-search-icon,

@@ -74,7 +74,8 @@ class CoinController extends Controller
         // Available analyst methods
         $analystMethods = [
             'sniper_entry' => 'Sniper Entry Analysis',
-            'basic' => 'Basic Analysis'
+            'basic' => 'Basic Analysis',
+            'dynamic_rr' => 'Dynamic RR Analysis'
         ];
 
         // Get analysis method from query parameter
@@ -89,6 +90,8 @@ class CoinController extends Controller
         try {
             if ($analystMethod === 'sniper_entry') {
                 $analysis = $this->performSniperEntryAnalysis($model);
+            } elseif ($analystMethod === 'dynamic_rr') {
+                $analysis = $this->performDynamicRRAnalysis($model);
             } else {
                 $analysis = $this->performBasicAnalysis($model);
             }
@@ -496,15 +499,35 @@ class CoinController extends Controller
         $signal = 'NEUTRAL';
         $confidence = 50;
 
-        // Sniper BUY conditions
-        if ($price > $ema9 && $ema9 > $ema21 && $ema21 > $ema50 && $rsi > 40 && $rsi < 70) {
+        // Enhanced Sniper BUY conditions (LONG)
+        $buyConditions = 0;
+        if ($price > $ema9) $buyConditions++;
+        if ($ema9 > $ema21) $buyConditions++;
+        if ($ema21 > $ema50) $buyConditions++;
+        if ($rsi > 45 && $rsi < 75) $buyConditions++; // More flexible RSI range
+        if ($price > $support) $buyConditions++; // Price above support
+
+        // Enhanced Sniper SELL conditions (SHORT)
+        $sellConditions = 0;
+        if ($price < $ema9) $sellConditions++;
+        if ($ema9 < $ema21) $sellConditions++;
+        if ($ema21 < $ema50) $sellConditions++;
+        if ($rsi < 55 && $rsi > 25) $sellConditions++; // More flexible RSI range
+        if ($price < $resistance) $sellConditions++; // Price below resistance
+
+        // Determine signal based on conditions met
+        if ($buyConditions >= 4) {
             $signal = 'BUY';
-            $confidence = 80;
-        }
-        // Sniper SELL conditions
-        elseif ($price < $ema9 && $ema9 < $ema21 && $ema21 < $ema50 && $rsi < 60 && $rsi > 30) {
+            $confidence = 75 + ($buyConditions * 5); // 75-95% confidence
+        } elseif ($sellConditions >= 4) {
             $signal = 'SELL';
-            $confidence = 80;
+            $confidence = 75 + ($sellConditions * 5); // 75-95% confidence
+        } elseif ($buyConditions >= 3) {
+            $signal = 'BUY';
+            $confidence = 60 + ($buyConditions * 3); // 60-75% confidence
+        } elseif ($sellConditions >= 3) {
+            $signal = 'SELL';
+            $confidence = 60 + ($sellConditions * 3); // 60-75% confidence
         }
 
         // Calculate optimal entry, stop loss, and take profit
@@ -670,6 +693,252 @@ class CoinController extends Controller
         ];
     }
 
+    /**
+     * Perform dynamic RR analysis with Fibonacci and support/resistance levels
+     */
+    private function performDynamicRRAnalysis($model)
+    {
+        try {
+            $symbol = $model->coin_code ?? 'BTCUSDT';
+
+            // Get current price using BinanceService
+            $binanceService = new \App\Services\BinanceService();
+            $priceData = $binanceService->getTickerPriceWithFallback($symbol);
+
+            if (!$priceData || !isset($priceData['price'])) {
+                throw new \Exception('Unable to fetch current price data for ' . $symbol);
+            }
+
+            $currentPrice = (float) $priceData['price'];
+
+            // Get candle data for analysis (use 1h for dynamic RR)
+            $candles = $binanceService->fetchKlines($symbol, '1h', 100);
+
+            if (!$candles || empty($candles)) {
+                throw new \Exception('Unable to fetch candle data for ' . $symbol . '. Binance API may be unavailable.');
+            }
+
+            // Perform dynamic RR analysis
+            $analysis = $this->performDynamicRRTechnicalAnalysis($currentPrice, $candles);
+
+            return [
+                'symbol' => $symbol,
+                'current_price' => $currentPrice,
+                'analysis' => $analysis,
+                'price_data' => $priceData,
+                'last_updated' => now()->format('Y-m-d H:i:s'),
+                'analysis_type' => 'dynamic_rr'
+            ];
+
+        } catch (\Exception $e) {
+            throw new \Exception('Dynamic RR analysis failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Perform dynamic RR technical analysis with Fibonacci and support/resistance levels
+     */
+    private function performDynamicRRTechnicalAnalysis($price, $candles)
+    {
+        if (empty($candles) || count($candles) < 50) {
+            return [
+                'signal' => 'INSUFFICIENT_DATA',
+                'confidence' => 0,
+                'entry' => $price,
+                'stop_loss' => null,
+                'take_profit' => null,
+                'rr_ratio' => null
+            ];
+        }
+
+        // Extract closing prices for analysis
+        $closes = array_map(fn($c) => (float)$c[4], $candles);
+        $highs = array_map(fn($c) => (float)$c[2], $candles);
+        $lows = array_map(fn($c) => (float)$c[3], $candles);
+
+        // Calculate EMAs
+        $ema20 = array_sum(array_slice($closes, -20)) / 20;
+        $ema50 = array_sum(array_slice($closes, -50)) / 50;
+
+        // Calculate RSI (14-period)
+        $rsi = $this->calculateRSI($closes, 14);
+
+        // Get support and resistance levels from recent candles
+        $recentCandles = array_slice($candles, -30);
+        $recentHighs = array_map(fn($c) => (float)$c[2], $recentCandles);
+        $recentLows = array_map(fn($c) => (float)$c[3], $recentCandles);
+
+        $resistance = max($recentHighs);
+        $support = min($recentLows);
+
+        // Calculate ATR for volatility
+        $atr = $this->calculateATR($candles, 14);
+
+        // Calculate Fibonacci levels
+        $fibLevels = $this->calculateFibonacciLevels($support, $resistance);
+
+        // Determine signal
+        $signal = 'NEUTRAL';
+        $confidence = 50;
+
+        // BUY conditions
+        $buyConditions = 0;
+        if ($price > $ema20 && $price > $ema50) $buyConditions++;
+        if ($rsi > 40 && $rsi < 60) $buyConditions++; // RSI in middle range
+        if ($price > $support) $buyConditions++; // Price above support
+        if ($price < $ema50 * 1.02) $buyConditions++; // Not too far above EMA50
+
+        // SELL conditions
+        $sellConditions = 0;
+        if ($price < $ema20 && $price < $ema50) $sellConditions++;
+        if ($rsi > 40 && $rsi < 60) $sellConditions++; // RSI in middle range
+        if ($price < $resistance) $sellConditions++; // Price below resistance
+        if ($price > $ema50 * 0.98) $sellConditions++; // Not too far below EMA50
+
+        // Determine signal based on conditions met
+        if ($buyConditions >= 3) {
+            $signal = 'BUY';
+            $confidence = 65 + ($buyConditions * 5); // 65-85% confidence
+        } elseif ($sellConditions >= 3) {
+            $signal = 'SELL';
+            $confidence = 65 + ($sellConditions * 5); // 65-85% confidence
+        }
+
+        // Calculate entry, stop loss, and take profit with dynamic RR
+        $entry = $price;
+
+        // Calculate stop loss using ATR
+        if ($signal === 'BUY') {
+            $stopLoss = $entry - ($atr * 1.5); // Stop loss below entry using ATR
+        } else {
+            $stopLoss = $entry + ($atr * 1.5); // Stop loss above entry using ATR
+        }
+
+        // Calculate dynamic take profit using Fibonacci levels or support/resistance
+        $takeProfit = $this->calculateDynamicTakeProfit($entry, $stopLoss, $fibLevels, $support, $resistance, $signal);
+
+        // Ensure take profit is different from entry
+        if (abs($takeProfit - $entry) < ($entry * 0.001)) { // Less than 0.1% difference
+            $riskAmount = abs($entry - $stopLoss);
+            if ($signal === 'BUY') {
+                $takeProfit = $entry + ($riskAmount * 1.5); // At least 1.5:1 ratio
+            } else {
+                $takeProfit = $entry - ($riskAmount * 1.5); // At least 1.5:1 ratio
+            }
+        }
+
+        // Calculate risk-reward ratio
+        $risk = abs($entry - $stopLoss);
+        $reward = abs($takeProfit - $entry);
+        $rrRatio = $risk > 0 ? round($reward / $risk, 2) : null;
+
+        return [
+            'signal' => $signal,
+            'confidence' => min(100, $confidence), // Cap at 100%
+            'entry' => round($entry, 8),
+            'stop_loss' => $stopLoss ? round($stopLoss, 8) : null,
+            'take_profit' => $takeProfit ? round($takeProfit, 8) : null,
+            'rr_ratio' => $rrRatio,
+            'indicators' => [
+                'ema20' => round($ema20, 8),
+                'ema50' => round($ema50, 8),
+                'rsi' => round($rsi, 2),
+                'atr' => round($atr, 8),
+                'support' => round($support, 8),
+                'resistance' => round($resistance, 8)
+            ]
+        ];
+    }
+
+    /**
+     * Calculate ATR (Average True Range) for volatility
+     */
+    private function calculateATR($candles, $period = 14)
+    {
+        if (count($candles) < $period + 1) {
+            return 0;
+        }
+
+        $trs = [];
+        for ($i = 1; $i < count($candles); $i++) {
+            $high = (float)$candles[$i][2];
+            $low = (float)$candles[$i][3];
+            $prevClose = (float)$candles[$i-1][4];
+
+            $tr = max(
+                $high - $low,           // High - Low
+                abs($high - $prevClose), // |High - Previous Close|
+                abs($low - $prevClose)   // |Low - Previous Close|
+            );
+
+            $trs[] = $tr;
+        }
+
+        // Calculate simple moving average of TRs
+        $slice = array_slice($trs, -$period);
+        return array_sum($slice) / count($slice);
+    }
+
+    /**
+     * Calculate Fibonacci retracement levels
+     */
+    private function calculateFibonacciLevels($low, $high)
+    {
+        $range = $high - $low;
+
+        return [
+            '23.6%' => $high - ($range * 0.236),
+            '38.2%' => $high - ($range * 0.382),
+            '50.0%' => $high - ($range * 0.5),
+            '61.8%' => $high - ($range * 0.618),
+            '78.6%' => $high - ($range * 0.786),
+        ];
+    }
+
+    /**
+     * Calculate dynamic take profit based on Fibonacci levels or support/resistance
+     */
+    private function calculateDynamicTakeProfit($entry, $stopLoss, $fibLevels, $support, $resistance, $signal)
+    {
+        // Calculate minimum risk
+        $risk = abs($entry - $stopLoss);
+
+        // Try to find a suitable Fibonacci level that gives at least 1.5:1 RR
+        if (!empty($fibLevels)) {
+            foreach ($fibLevels as $ratio => $level) {
+                $reward = abs($entry - $level);
+                $rr = $risk > 0 ? $reward / $risk : 0;
+
+                // If this level gives us at least 1.5:1 RR, use it
+                if ($rr >= 1.5) {
+                    if ($signal === 'BUY' && $level > $entry) {
+                        return $level;
+                    } elseif ($signal === 'SELL' && $level < $entry) {
+                        return $level;
+                    }
+                }
+            }
+        }
+
+        // Fallback to support/resistance levels with minimum 1.5:1 RR
+        if ($signal === 'BUY') {
+            // For BUY signals, look for resistance or calculate target
+            $minReward = $risk * 1.5;
+            if ($resistance > $entry && abs($resistance - $entry) >= $minReward) {
+                return $resistance;
+            } else {
+                return $entry + $minReward;
+            }
+        } else {
+            // For SELL signals, look for support or calculate target
+            $minReward = $risk * 1.5;
+            if ($support < $entry && abs($entry - $support) >= $minReward) {
+                return $support;
+            } else {
+                return $entry - $minReward;
+            }
+        }
+    }
 
     /**
      * Show the form for editing the specified resource.
