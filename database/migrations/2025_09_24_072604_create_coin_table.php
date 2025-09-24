@@ -12,10 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('coin', function (Blueprint $table) {
-            $table->id();
+            $table->integer('coin_id')->primary()->autoIncrement();
             $table->string('coin_code')->unique();
-            $table->string('coin_base');
-            $table->string('coin_asset');
+            $table->enum('coin_watch', ['watch'])->nullable();
+            $table->enum('coin_plan', ['long', 'short'])->nullable();
+            $table->double('coin_price_usd')->nullable();
+            $table->double('coin_price_idr')->nullable();
+            $table->double('coin_entry_usd')->nullable();
+            $table->double('coin_entry_idr')->nullable();
             $table->timestamps();
         });
     }

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Helpers\CurrencyHelper;
 use App\Models\Coin;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Http;
@@ -14,7 +15,7 @@ class CryptoSymbolSeeder extends Seeder
         ini_set('memory_limit', '512M');
         ini_set('max_execution_time', '120');
 
-        $url = env('BINANCE_API', 'https://api.binance.com') . '/api/v3/exchangeInfo';
+        $url = 'https://api.binance.com/api/v3/ticker/price';
 
         $response = Http::withOptions([
             'curl' => [
@@ -29,19 +30,26 @@ class CryptoSymbolSeeder extends Seeder
 
         $data = $response->json();
 
-        if (!isset($data['symbols'])) {
+        if (!isset($data)) {
             $this->command->error("Invalid response from Binance API");
             return;
         }
 
-        foreach ($data['symbols'] as $symbol) {
-            Coin::updateOrCreate(
-                ['coin_code' => $symbol['symbol']],
-                [
-                    'coin_base' => $symbol['baseAsset'],
-                    'coin_asset' => $symbol['quoteAsset'],
-                ]
-            );
+        $rateService = new \App\Services\CurrencyRateService();
+        $newRate = $rateService->getUSDToIDRRate();
+
+        foreach ($data as $symbol) {
+            if(str_contains($symbol['symbol'], 'USDT') && $symbol['price'] > 0)
+            {
+                Coin::updateOrCreate(
+                    ['coin_code' => $symbol['symbol']],
+                    [
+                        'coin_price_usd' => $symbol['price'],
+                        'coin_price_idr' => $symbol['price'] * $newRate,
+                    ]
+                );
+            }
+
         }
 
         $this->command->info("✅ Crypto symbols successfully seeded from Binance API");

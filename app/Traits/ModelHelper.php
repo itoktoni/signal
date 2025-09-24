@@ -7,7 +7,7 @@ trait ModelHelper
     /**
      * Get the display field for options
      */
-    public static function getDisplayField(): string
+    public static function field_name(): string
     {
         return 'name';
     }
@@ -17,7 +17,7 @@ trait ModelHelper
      */
     public static function getOptions(?string $valueField = null, ?string $keyField = null): \Illuminate\Support\Collection
     {
-        $valueField = $valueField ?: static::getDisplayField();
+        $valueField = $valueField ?: static::field_name();
         $keyField = $keyField ?: (new static)->getKeyName();
 
         return self::pluck($valueField, $keyField);

@@ -1,5 +1,5 @@
 <x-layout>
-        <x-card title="Create Form">
+        <x-card title="Create Coin">
             <x-form action="{{ route(module('postCreate')) }}">
 
                 <x-input name="coin_code" hint="Coin cannot be changed" required/>

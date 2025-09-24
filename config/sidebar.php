@@ -25,11 +25,11 @@ return [
             ],
         ],
         'content' => [
-            'name' => 'Cypto',
+            'name' => 'Crypto',
             'icon' => 'bi-currency-exchange',
             'menus' => [
                 'coin' => [
-                    'name' => 'Crypto',
+                    'name' => 'Coin',
                     'route' => 'coin.getData',
                     'icon' => 'bi-currency-bitcoin',
                 ],

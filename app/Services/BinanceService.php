@@ -83,66 +83,19 @@ class BinanceService
     }
 
     /**
-     * Get ticker price with fallback to demo data
+     * Get ticker price - throws error if API fails
      */
     public function getTickerPriceWithFallback($symbol)
     {
         $priceData = $this->fetchTickerPrice($symbol);
 
-        if ($priceData) {
-            return $priceData;
+        if (!$priceData) {
+            throw new \Exception("Unable to fetch price data for symbol: {$symbol}. Binance API may be unavailable or symbol may not exist.");
         }
 
-        // Return demo/fallback price data
-        Log::info("Using fallback price data for {$symbol}");
-
-        return [
-            'symbol' => strtoupper($symbol),
-            'price' => $this->getDemoPrice($symbol),
-            'priceChange' => '0.00',
-            'priceChangePercent' => '0.00',
-            'weightedAvgPrice' => $this->getDemoPrice($symbol),
-            'prevClosePrice' => $this->getDemoPrice($symbol),
-            'lastPrice' => $this->getDemoPrice($symbol),
-            'bidPrice' => $this->getDemoPrice($symbol),
-            'askPrice' => $this->getDemoPrice($symbol),
-            'openPrice' => $this->getDemoPrice($symbol),
-            'highPrice' => $this->getDemoPrice($symbol),
-            'lowPrice' => $this->getDemoPrice($symbol),
-            'volume' => '1000000.00',
-            'quoteAssetVolume' => '1000000.00',
-            'openTime' => now()->timestamp * 1000,
-            'closeTime' => now()->timestamp * 1000,
-            'count' => 1000,
-            'is_fallback' => true
-        ];
+        return $priceData;
     }
 
-    /**
-     * Get demo price for common symbols
-     */
-    private function getDemoPrice($symbol)
-    {
-        $demoPrices = [
-            'HYPEUSDT' => '0.00000123',
-            'BTCUSDT' => '60000.00',
-            'ETHUSDT' => '3000.00',
-            'BNBUSDT' => '400.00',
-            'ADAUSDT' => '0.35',
-            'SOLUSDT' => '150.00',
-            'XRPUSDT' => '0.50',
-            'DOTUSDT' => '5.00',
-            'AVAXUSDT' => '25.00',
-            'MATICUSDT' => '0.80',
-            'LINKUSDT' => '10.00',
-            'UNIUSDT' => '8.00',
-            'LTCUSDT' => '70.00',
-            'ALGOUSDT' => '0.15',
-            'ATOMUSDT' => '7.00',
-        ];
-
-        return $demoPrices[strtoupper($symbol)] ?? '1.00';
-    }
 
     /**
      * Fetch klines (candlestick) data
