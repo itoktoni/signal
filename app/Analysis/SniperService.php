@@ -365,4 +365,5 @@ class SniperService extends AnalysisService
         return array_sum($slice) / count($slice);
     }
 
+
 }

@@ -76,7 +76,7 @@ class DynamicRRService extends AnalysisService
             $levels['take_profit'],
             $levels['risk_reward'] !== '1:1' ? floatval(str_replace('1:', '', $levels['risk_reward'])) : 1.0,
             $amount, // dynamic position size in USD
-            'dynamic_rr', // analyst method parameter
+            'dynamic_rr', // analyst method
             $displayIndicators // pass indicators
         );
     }

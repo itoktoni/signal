@@ -27,8 +27,7 @@ interface AnalysisInterface
      *   - potential_loss_usd: float - Potential loss in USD
      *   - potential_loss_idr: float - Potential loss in Rupiah
      *   - indicators: array - Technical indicators for display
-     *   - indicator_config: array - Configuration for displaying indicators
-     *   - conclusion: array - Analysis conclusion and recommendations
+     *   - indicators: array - Technical indicators used in the analysis
      */
     public function analyze(string $symbol, float $amount = 100): object;
 

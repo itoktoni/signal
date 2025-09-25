@@ -233,8 +233,6 @@ abstract class AnalysisService implements AnalysisInterface
             'potential_loss_usd' => $pl['potential_loss'],
             'potential_loss_idr' => abs($pl['potential_loss']) * $this->usdToIdr,
             'indicators' => $indicators,
-            'indicator_config' => [], // Empty indicator config - should be provided by specific service implementations
-            'conclusion' => [] // Empty conclusion - should be provided by specific service implementations
         ];
     }
 

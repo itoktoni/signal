@@ -67,8 +67,7 @@ The service will always and mandatory to return an object containing:
 | **potential_loss_usd** | Potential loss in USD after fees |
 | **potential_loss_idr** | Potential loss in Rupiah after fees |
 | **indicators** | Technical indicators used in the analysis |
-| **indicator_config** | Configuration for displaying indicators |
-| **conclusion** | Analysis conclusion and recommendations |
+| **indicators** | Technical indicators used in the analysis |
 
 ### Fee Structure (Pluang PRO - Kripto Futures)
 Based on the correct fee structure for Kripto Futures on Pluang PRO:

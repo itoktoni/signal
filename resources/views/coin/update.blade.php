@@ -201,25 +201,6 @@
             color: var(--crypto-danger);
         }
 
-        .crypto-conclusion-card {
-            background: #eff6ff;
-            border-left: 4px solid var(--crypto-primary);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .crypto-conclusion-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--crypto-dark);
-            margin-bottom: 12px;
-        }
-
-        .crypto-conclusion-content {
-            color: #334155;
-            line-height: 1.6;
-        }
 
         .crypto-alert {
             border-radius: 8px;
@@ -245,6 +226,78 @@
         .crypto-alert-info {
             background-color: #dbeafe;
             border-left: 4px solid var(--crypto-primary);
+        }
+
+        /* Table Styling */
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .table thead th {
+            border-top: none;
+            font-weight: 600;
+            color: var(--crypto-dark);
+            background-color: #f8fafc;
+        }
+
+        .table td {
+            vertical-align: middle;
+            border-color: var(--crypto-border);
+        }
+
+        .table-responsive {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* List Group Styling */
+        .list-group-item {
+            background: transparent;
+            border: none;
+            padding-left: 0;
+        }
+
+        .list-group-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Badge Enhancements */
+        .badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.success {
+            background-color: var(--crypto-success);
+        }
+
+        .status-dot.danger {
+            background-color: var(--crypto-danger);
+        }
+
+        .status-dot.warning {
+            background-color: var(--crypto-warning);
+        }
+
+        .status-dot.neutral {
+            background-color: #6b7280;
         }
 
 
@@ -470,8 +523,6 @@
                                 $indicators = $crypto_analysis['indicators'];
                                 $hasIndicators = !empty($indicators);
                             }
-
-                            $currentConfig = $crypto_analysis['indicator_config'] ?? [];
                         @endphp
 
                         @if($hasIndicators)
@@ -482,82 +533,45 @@
                                 </h3>
                             </div>
                             <div class="crypto-card-body">
-                                <div class="crypto-indicator-grid">
-                                    @foreach($currentConfig as $key => $config)
-                                        @if(isset($indicators[$key]))
-                                        <div class="crypto-indicator-card">
-                                            <div class="crypto-indicator-label">{{ $config['label'] }}</div>
-                                            <div class="crypto-indicator-value">
-                                                @if($config['format'] === 'price')
-                                                    ${{ number_format($indicators[$key], 3) }}
-                                                @else
-                                                    {{ $indicators[$key] }}
-                                                @endif
-                                            </div>
-                                        </div>
-                                        @endif
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                        @endif
-
-                        <!-- Analysis Conclusion -->
-                        @if(isset($crypto_analysis['conclusion']) && !empty($crypto_analysis['conclusion']))
-                        <div class="crypto-card">
-                            <div class="crypto-card-header">
-                                <h3 class="crypto-card-title">
-                                    <i class="bi bi-clipboard-data"></i> Analysis Conclusion
-                                </h3>
-                            </div>
-                            <div class="crypto-card-body">
-                                @if(isset($crypto_analysis['conclusion']['recommendations']['title']))
-                                <div class="crypto-conclusion-card">
-                                    <h4 class="crypto-conclusion-title">{{ $crypto_analysis['conclusion']['recommendations']['title'] }}</h4>
-                                    <div class="crypto-conclusion-content">
-                                        @if(isset($crypto_analysis['conclusion']['recommendations']['description']))
-                                            <p>{{ $crypto_analysis['conclusion']['recommendations']['description'] }}</p>
-                                        @endif
-
-                                        @if(isset($crypto_analysis['conclusion']['recommendations']['trading_advice']))
-                                            <ul class="mt-3">
-                                                @foreach($crypto_analysis['conclusion']['recommendations']['trading_advice'] as $advice)
-                                                    <li>{{ $advice }}</li>
-                                                @endforeach
-                                            </ul>
-                                        @endif
-                                    </div>
-                                </div>
-                                @endif
-
-                                @if(isset($crypto_analysis['conclusion']['method_descriptions']['description']))
-                                <div class="crypto-alert crypto-alert-info">
-                                    <h5>Method Description</h5>
-                                    <p>{{ $crypto_analysis['conclusion']['method_descriptions']['description'] }}</p>
-
-                                    @if(isset($crypto_analysis['conclusion']['method_descriptions']['details']))
-                                        <ul class="mb-0">
-                                            @foreach($crypto_analysis['conclusion']['method_descriptions']['details'] as $detail)
-                                                <li>{{ $detail }}</li>
+                                <!-- Indicators Table -->
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Indicator</th>
+                                                <th>Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($indicators as $key => $value)
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ ucwords(str_replace('_', ' ', $key)) }}</strong>
+                                                </td>
+                                                <td>
+                                                    <span class="crypto-indicator-value">
+                                                        @if(is_numeric($value))
+                                                            @if(str_contains(strtolower($key), 'price') || str_contains(strtolower($key), 'usd'))
+                                                                ${{ number_format($value, 3) }}
+                                                            @elseif(str_contains(strtolower($key), 'percentage') || str_contains(strtolower($key), 'percent'))
+                                                                {{ number_format($value, 2) }}%
+                                                            @else
+                                                                {{ number_format($value, 4) }}
+                                                            @endif
+                                                        @else
+                                                            {{ $value }}
+                                                        @endif
+                                                    </span>
+                                                </td>
+                                            </tr>
                                             @endforeach
-                                        </ul>
-                                    @endif
+                                        </tbody>
+                                    </table>
                                 </div>
-                                @endif
-
-                                @if(isset($crypto_analysis['conclusion']['general_advice']))
-                                <div class="crypto-alert crypto-alert-warning">
-                                    <h5>General Trading Advice</h5>
-                                    <ul class="mb-0">
-                                        @foreach($crypto_analysis['conclusion']['general_advice'] as $advice)
-                                            <li>{{ $advice }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                                @endif
                             </div>
                         </div>
                         @endif
+
                     @else
                         <div class="alert alert-warning">
                             <i class="bi bi-exclamation-triangle"></i>

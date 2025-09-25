@@ -204,6 +204,13 @@ class CoinController extends Controller
             $signal = 'NEUTRAL';
         }
 
+        // Extract indicators
+        $indicators = [];
+
+        if (isset($result->indicators) && is_array($result->indicators)) {
+            $indicators = $result->indicators;
+        }
+
         return [
             'symbol' => $symbol,
             'title' => $result->title ?? 'Analysis',
@@ -222,11 +229,10 @@ class CoinController extends Controller
             'potential_profit_idr' => safeNumericValue($result, 'potential_profit_idr'),
             'potential_loss_usd' => safeNumericValue($result, 'potential_loss_usd'),
             'potential_loss_idr' => safeNumericValue($result, 'potential_loss_idr'),
-            'indicators' => [],
-            'indicator_config' => [],
-            'conclusion' => [],
+            'indicators' => $indicators,
             'last_updated' => now()->format('Y-m-d H:i:s'),
             'analysis_type' => safeValue($result, 'title', 'Analysis')
         ];
     }
+
 }
