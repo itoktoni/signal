@@ -51,6 +51,7 @@ The service will always and mandatory to return an object containing:
 | Property | Description |
 |----------|-------------|
 | **title** | Title of the analysis |
+| **description** | technology that used in the analysis with flow to reach the conclusion |
 | **signal** | Long or short |
 | **confidence** | 95% (calculated percentage from analysis functions) |
 | **entry_usd** | Entry price in USD |
@@ -67,7 +68,7 @@ The service will always and mandatory to return an object containing:
 | **potential_loss_usd** | Potential loss in USD after fees |
 | **potential_loss_idr** | Potential loss in Rupiah after fees |
 | **indicators** | Technical indicators used in the analysis |
-| **indicators** | Technical indicators used in the analysis |
+| **notes** | any notes or result or suggestion from any calculation and analysis |
 
 ### Fee Structure (Pluang PRO - Kripto Futures)
 Based on the correct fee structure for Kripto Futures on Pluang PRO:

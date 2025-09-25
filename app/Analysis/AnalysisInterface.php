@@ -11,6 +11,7 @@ interface AnalysisInterface
      * @param float $amount The trading amount in USD
      * @return object Standardized result object containing:
      *   - title: string - Analysis title
+     *   - description: string - technology that used in the analysis with flow to reach the conclusion
      *   - signal: string - Trading signal ('BUY', 'SELL', or 'NEUTRAL')
      *   - confidence: float - Confidence percentage (0-100)
      *   - entry_usd: float - Entry price in USD
@@ -26,8 +27,7 @@ interface AnalysisInterface
      *   - potential_profit_idr: float - Potential profit in Rupiah
      *   - potential_loss_usd: float - Potential loss in USD
      *   - potential_loss_idr: float - Potential loss in Rupiah
-     *   - indicators: array - Technical indicators for display
-     *   - indicators: array - Technical indicators used in the analysis
+     *   - notes: string - any notes or result or suggestion from any calculation and analysis
      */
     public function analyze(string $symbol, float $amount = 100): object;
 
