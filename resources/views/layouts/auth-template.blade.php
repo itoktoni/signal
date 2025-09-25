@@ -1,3 +1,7 @@
+@php
+    use Illuminate\Support\Facades\Route;
+@endphp
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -74,9 +78,6 @@
 
         <div class="auth-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
             <div class="auth-links" style="display: flex; gap: 1rem;">
-                @if (Route::has('register') && !request()->routeIs('register'))
-                    <a href="{{ route('register') }}" style="color: #667eea; text-decoration: none; font-size: 0.9rem;">Create Account</a>
-                @endif
                 @if (Route::has('login') && !request()->routeIs('login'))
                     <a href="{{ route('login') }}" style="color: #667eea; text-decoration: none; font-size: 0.9rem;">Sign In</a>
                 @endif

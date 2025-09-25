@@ -3,7 +3,7 @@
         :root {
             --crypto-primary: #2563eb;
             --crypto-secondary: #7c3aed;
-            --crypto-success: #10b981;
+            --crypto-success: #00b963;
             --crypto-danger: #ef4444;
             --crypto-warning: #f59e0b;
             --crypto-dark: #1e293b;
@@ -26,6 +26,10 @@
             padding: 24px;
             margin-bottom: 24px;
             box-shadow: var(--crypto-shadow);
+        }
+
+        .description {
+            font-size: 2rem;
         }
 
         .crypto-card {
@@ -204,7 +208,6 @@
 
         .crypto-alert {
             border-radius: 8px;
-            padding: 16px;
             margin-bottom: 16px;
         }
 
@@ -242,11 +245,13 @@
             font-weight: 600;
             color: var(--crypto-dark);
             background-color: #f8fafc;
+            padding: 1rem;
         }
 
         .table td {
             vertical-align: middle;
             border-color: var(--crypto-border);
+            padding: 1rem;
         }
 
         .table-responsive {
@@ -300,8 +305,13 @@
             background-color: #6b7280;
         }
 
+        .card{
+            padding-bottom: 1rem !important;
+        }
+
 
         @media (max-width: 768px) {
+
             .crypto-grid-cols-2,
             .crypto-grid-cols-3 {
                 grid-template-columns: 1fr;
@@ -324,7 +334,7 @@
                 <div class="col-12 col-md-8">
                     <h1 class="mb-2">
                         <i class="bi bi-graph-up"></i>
-                        {{ $crypto_analysis['analysis_type'] ?? (AnalysisType::{strtoupper($analyst_method)}()->getAnalysisDescription()) ?? 'Basic Analysis' }}
+                        {{ $crypto_analysis['analysis_type'] ?? (AnalysisType::{strtoupper($analyst_method)}()->getAnalysisDescription() ?? 'Basic Analysis') }}
                     </h1>
                     <p class="mb-0">
                         <i class="bi bi-currency-bitcoin"></i>
@@ -334,11 +344,12 @@
                     </p>
                 </div>
                 <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
-                    @if(isset($crypto_analysis) && !isset($crypto_analysis['error']))
+                    @if (isset($crypto_analysis) && !isset($crypto_analysis['error']))
                         @php
                             $signal = $crypto_analysis['signal'] ?? 'NEUTRAL';
                             $signalClass = $signal === 'BUY' ? 'buy' : ($signal === 'SELL' ? 'sell' : 'neutral');
-                            $signalText = $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
+                            $signalText =
+                                $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
                         @endphp
                         <span class="signal-badge {{ $signalClass }}">
                             {{ $signalText }}
@@ -352,7 +363,7 @@
         <div class="row">
             <div class="col-12">
                 <x-card title="📊 Crypto Analysis Results">
-                    @if(isset($crypto_analysis) && !isset($crypto_analysis['error']))
+                    @if (isset($crypto_analysis) && !isset($crypto_analysis['error']))
                         @php
                             // Standardized analysis result structure from all analysis services
                             $signal = $crypto_analysis['signal'] ?? 'NEUTRAL';
@@ -374,49 +385,37 @@
                             $potentialLossIdr = $crypto_analysis['potential_loss_idr'] ?? 0;
 
                             $signalClass = $signal === 'BUY' ? 'buy' : ($signal === 'SELL' ? 'sell' : 'neutral');
-                            $signalText = $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
+                            $signalText =
+                                $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
                         @endphp
 
                         <!-- Key Metrics Overview -->
-                        <div class="crypto-grid crypto-grid-cols-3 mb-4">
-                            <div class="crypto-card">
-                                <div class="crypto-card-body">
-                                    <div class="crypto-metric">
-                                        <div class="crypto-metric-label">Confidence Level</div>
-                                        <div class="crypto-metric-value">{{ $confidence }}%</div>
-                                        <div class="mt-2">
-                                            <div class="progress" style="height: 8px;">
-                                                <div class="progress-bar bg-{{ $confidence >= 70 ? 'success' : ($confidence >= 50 ? 'warning' : 'danger') }}"
-                                                     role="progressbar"
-                                                     style="width: {{ $confidence }}%"
-                                                     aria-valuenow="{{ $confidence }}"
-                                                     aria-valuemin="0"
-                                                     aria-valuemax="100"></div>
-                                            </div>
+                        <div class="crypto-card">
+                            <div class="crypto-card-header">
+                                <h3 class="crypto-card-title">
+                                    <i class="bi bi-speedometer2"></i> Key Metrics Overview
+                                </h3>
+                            </div>
+                            <div class="crypto-card-body">
+                                <div class="crypto-grid crypto-grid-cols-3">
+                                    <div class="crypto-data-item">
+                                        <div class="crypto-data-label">Confidence Level</div>
+                                        <div class="crypto-data-value" style="font-size: 3rem">{{ $confidence }}%</div>
+                                    </div>
+
+                                    <div class="crypto-data-item">
+                                        <div class="crypto-data-label">Risk:Reward Ratio</div>
+                                        <div class="crypto-data-value">{{ $rrRatio }}:1</div>
+                                        <div class="crypto-price-idr">
+                                            {{ $rrRatio >= 2 ? 'GOOD' : 'MODERATE' }}
                                         </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <div class="crypto-card">
-                                <div class="crypto-card-body">
-                                    <div class="crypto-metric">
-                                        <div class="crypto-metric-label">Risk-Reward Ratio</div>
-                                        <div class="crypto-metric-value">{{ $rrRatio }}:1</div>
-                                        <div class="mt-2">
-                                            <span class="badge bg-{{ $rrRatio >= 2 ? 'success' : 'warning' }}">
-                                                {{ $rrRatio >= 2 ? 'GOOD' : 'MODERATE' }}
-                                            </span>
+                                    <div class="crypto-data-item">
+                                        <div class="crypto-data-label">Current Price</div>
+                                        <div class="crypto-data-value crypto-price-usd">
+                                            ${{ number_format($entryUsd, 3) }}
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="crypto-card">
-                                <div class="crypto-card-body">
-                                    <div class="crypto-metric">
-                                        <div class="crypto-metric-label">Current Price</div>
-                                        <div class="crypto-price">${{ number_format($entryUsd, 3) }}</div>
                                         <div class="crypto-price-idr">Rp {{ number_format($entryIdr, 0) }}</div>
                                     </div>
                                 </div>
@@ -434,18 +433,23 @@
                                 <div class="crypto-data-grid">
                                     <div class="crypto-data-item">
                                         <div class="crypto-data-label">Entry Point</div>
-                                        <div class="crypto-data-value crypto-price-usd">${{ number_format($entryUsd, 3) }}</div>
+                                        <div class="crypto-data-value crypto-price-usd">
+                                            ${{ number_format($entryUsd, 3) }}</div>
                                         <div class="crypto-price-idr">Rp {{ number_format($entryIdr, 0) }}</div>
                                     </div>
                                     <div class="crypto-data-item">
                                         <div class="crypto-data-label">Stop Loss</div>
-                                        <div class="crypto-data-value text-danger">${{ number_format($stopLossUsd, 3) }}</div>
-                                        <div class="crypto-price-idr text-danger">Rp {{ number_format($stopLossIdr, 0) }}</div>
+                                        <div class="crypto-data-value text-error">
+                                            ${{ number_format($stopLossUsd, 3) }}</div>
+                                        <div class="crypto-price-idr text-error">Rp
+                                            {{ number_format($stopLossIdr, 0) }}</div>
                                     </div>
                                     <div class="crypto-data-item">
                                         <div class="crypto-data-label">Take Profit</div>
-                                        <div class="crypto-data-value text-success">${{ number_format($takeProfitUsd, 3) }}</div>
-                                        <div class="crypto-price-idr text-success">Rp {{ number_format($takeProfitIdr, 0) }}</div>
+                                        <div class="crypto-data-value text-success">
+                                            ${{ number_format($takeProfitUsd, 3) }}</div>
+                                        <div class="crypto-price-idr text-success">Rp
+                                            {{ number_format($takeProfitIdr, 0) }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -463,19 +467,25 @@
                                     <div class="crypto-data-item">
                                         <div class="crypto-data-label">Total Fee (USD)</div>
                                         <div class="crypto-data-value">${{ number_format($feeUsd, 4) }}</div>
-                                        @if($amount > 0)
-                                            <div class="crypto-price-idr">({{ number_format(($feeUsd / $amount) * 100, 2) }}% of trade)</div>
+                                        @if ($amount > 0)
+                                            <div class="crypto-price-idr">
+                                                ({{ number_format(($feeUsd / $amount) * 100, 2) }}% of
+                                                trade)</div>
                                         @endif
                                     </div>
                                     <div class="crypto-data-item">
                                         <div class="crypto-data-label">Total Fee (IDR)</div>
                                         <div class="crypto-data-value">Rp {{ number_format($feeIdr, 0) }}</div>
-                                        @if($amount > 0)
-                                            <div class="crypto-price-idr">({{ number_format(($feeIdr / ($amount * 16000)) * 100, 2) }}% of trade)</div>
+                                        @if ($amount > 0)
+                                            <div class="crypto-price-idr">
+                                                ({{ number_format(($feeIdr / ($amount * 16000)) * 100, 2) }}% of trade)
+                                            </div>
                                         @endif
                                     </div>
                                 </div>
-                                @if(isset($crypto_analysis['fee']) && is_array($crypto_analysis['fee']) && isset($crypto_analysis['fee']['description']))
+                                @if (isset($crypto_analysis['fee']) &&
+                                        is_array($crypto_analysis['fee']) &&
+                                        isset($crypto_analysis['fee']['description']))
                                     <div class="mt-3 p-3 bg-light rounded">
                                         <small class="text-muted">{{ $crypto_analysis['fee']['description'] }}</small>
                                     </div>
@@ -494,23 +504,37 @@
                                 <div class="crypto-data-grid">
                                     <div class="crypto-data-item">
                                         <div class="crypto-data-label">Potential Profit</div>
-                                        <div class="crypto-data-value crypto-profit-positive">${{ number_format($potentialProfitUsd, 2) }}</div>
-                                        <div class="crypto-price-idr crypto-profit-positive">Rp {{ number_format($potentialProfitIdr, 0) }}</div>
-                                        @if($amount > 0)
-                                            <div class="crypto-price-idr">({{ number_format(($potentialProfitUsd / $amount) * 100, 1) }}%)</div>
+                                        <div class="crypto-data-value crypto-profit-positive">
+                                            ${{ number_format($potentialProfitUsd, 2) }}</div>
+                                        <div class="crypto-price-idr crypto-profit-positive">Rp
+                                            {{ number_format($potentialProfitIdr, 0) }}</div>
+                                        @if ($amount > 0)
+                                            <div class="crypto-price-idr">
+                                                ({{ number_format(($potentialProfitUsd / $amount) * 100, 1) }}%)</div>
                                         @endif
+                                        <div class="mt-2 p-2 bg-light rounded">
+                                            <small class="text-muted d-block">Breakdown:</small>
+                                            <small class="text-success d-block">Gross Profit: ${{ number_format(($takeProfitUsd - $entryUsd) * ($amount / $entryUsd), 2) }}</small>
+                                            <small class="text-danger d-block">Less Fees: -${{ number_format($feeUsd, 2) }}</small>
+                                            <small class="text-muted d-block">Net Profit: ${{ number_format($potentialProfitUsd, 2) }}</small>
+                                        </div>
                                     </div>
                                     <div class="crypto-data-item">
                                         <div class="crypto-data-label">Potential Loss</div>
-                                        @php
-                                            $displayLossUsd = abs($potentialLossUsd);
-                                            $displayLossIdr = abs($potentialLossIdr);
-                                        @endphp
-                                        <div class="crypto-data-value crypto-profit-negative">${{ number_format($displayLossUsd, 2) }}</div>
-                                        <div class="crypto-price-idr crypto-profit-negative">Rp {{ number_format($displayLossIdr, 0) }}</div>
-                                        @if($amount > 0)
-                                            <div class="crypto-price-idr">({{ number_format(($displayLossUsd / $amount) * 100, 1) }}%)</div>
+                                        <div class="crypto-data-value crypto-profit-negative">
+                                            ${{ number_format($potentialLossUsd, 2) }}</div>
+                                        <div class="crypto-price-idr crypto-profit-negative">Rp
+                                            {{ number_format($potentialLossIdr, 0) }}</div>
+                                        @if ($amount > 0)
+                                            <div class="crypto-price-idr">
+                                                ({{ number_format((abs($potentialLossUsd) / $amount) * 100, 1) }}%)</div>
                                         @endif
+                                        <div class="mt-2 p-2 bg-light rounded">
+                                            <small class="text-muted d-block">Breakdown:</small>
+                                            <small class="text-danger d-block">Gross Loss: ${{ number_format(-($entryUsd - $stopLossUsd) * ($amount / $entryUsd), 2) }}</small>
+                                            <small class="text-danger d-block">Plus Fees: -${{ number_format($feeUsd, 2) }}</small>
+                                            <small class="text-muted d-block">Net Loss: ${{ number_format($potentialLossUsd, 2) }}</small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -525,57 +549,97 @@
                             }
                         @endphp
 
-                        @if($hasIndicators)
-                        <div class="crypto-card">
-                            <div class="crypto-card-header">
-                                <h3 class="crypto-card-title">
-                                    <i class="bi bi-activity"></i> Technical Indicators
-                                </h3>
-                            </div>
-                            <div class="crypto-card-body">
-                                <!-- Indicators Table -->
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Indicator</th>
-                                                <th>Value</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($indicators as $key => $value)
-                                            <tr>
-                                                <td>
-                                                    <strong>{{ ucwords(str_replace('_', ' ', $key)) }}</strong>
-                                                </td>
-                                                <td>
-                                                    <span class="crypto-indicator-value">
-                                                        @if(is_numeric($value))
-                                                            @if(str_contains(strtolower($key), 'price') || str_contains(strtolower($key), 'usd'))
-                                                                ${{ number_format($value, 3) }}
-                                                            @elseif(str_contains(strtolower($key), 'percentage') || str_contains(strtolower($key), 'percent'))
-                                                                {{ number_format($value, 2) }}%
-                                                            @else
-                                                                {{ number_format($value, 4) }}
-                                                            @endif
-                                                        @else
-                                                            {{ $value }}
-                                                        @endif
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+                        <!-- Analysis Description -->
+                        @if (isset($crypto_analysis['description']) && !empty($crypto_analysis['description']))
+                            <div class="crypto-card">
+                                <div class="crypto-card-header">
+                                    <h3 class="crypto-card-title">
+                                        <i class="bi bi-card-text"></i> Analysis Description
+                                    </h3>
+                                </div>
+                                <div class="crypto-card-body">
+                                    <div class="crypto-alert">
+                                        <div class="d-flex align-items-start">
+                                            <p class="mb-0" style="font-size: 1.5rem; line-height: 1.6;">
+                                                {{ $crypto_analysis['description'] }}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
                         @endif
 
+                        <!-- Analysis Notes -->
+                        @if (isset($crypto_analysis['notes']) && !empty($crypto_analysis['notes']))
+                            <div class="crypto-card">
+                                <div class="crypto-card-header">
+                                    <h3 class="crypto-card-title">
+                                        <i class="bi bi-sticky"></i> Analysis Notes
+                                    </h3>
+                                </div>
+                                <div class="crypto-card-body">
+                                    <div class="crypto-alert">
+                                        <div class="d-flex align-items-start">
+                                            <div>
+                                               {{ $crypto_analysis['notes'] }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if ($hasIndicators)
+                            <div class="crypto-card">
+                                <div class="crypto-card-header">
+                                    <h3 class="crypto-card-title">
+                                        <i class="bi bi-activity"></i> Technical Indicators
+                                    </h3>
+                                </div>
+                                <div class="crypto-card-body">
+                                    <!-- Indicators Table -->
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Indicator</th>
+                                                    <th>Value</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($indicators as $key => $value)
+                                                    <tr>
+                                                        <td>
+                                                            <strong>{{ ucwords(str_replace('_', ' ', $key)) }}</strong>
+                                                        </td>
+                                                        <td>
+                                                            <span class="crypto-indicator-value">
+                                                                @if (is_numeric($value))
+                                                                    @if (str_contains(strtolower($key), 'price') || str_contains(strtolower($key), 'usd'))
+                                                                        ${{ number_format($value, 3) }}
+                                                                    @elseif(str_contains(strtolower($key), 'percentage') || str_contains(strtolower($key), 'percent'))
+                                                                        {{ number_format($value, 2) }}%
+                                                                    @else
+                                                                        {{ number_format($value, 4) }}
+                                                                    @endif
+                                                                @else
+                                                                    {{ $value }}
+                                                                @endif
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     @else
                         <div class="alert alert-warning">
                             <i class="bi bi-exclamation-triangle"></i>
-                            <strong>Analysis Error:</strong> {{ $crypto_analysis['error'] ?? 'Unable to perform analysis' }}
+                            <strong>Analysis Error:</strong>
+                            {{ $crypto_analysis['error'] ?? 'Unable to perform analysis' }}
                         </div>
                     @endif
                 </x-card>
@@ -587,9 +651,10 @@
             <div class="col-12">
                 <x-card title="🎯 Konfigurasi Analisis">
                     <x-form method="GET" action="{{ route(module('getUpdate'), $model) }}">
-                        <x-select searchable name="coin_code" :value="$model->coin_code" :options="$coin" label="Select Coin" required/>
-                        <x-select name="analyst" :options="$analyst_methods" label="Metode Analisis" :value="request('analyst', 'sniper')" required/>
-                        <x-input type="number" name="amount" :value="request('amount', 100)" label="Trading Amount (USD)" step="0.01" min="1" placeholder="Enter amount to trade"/>
+                        <x-select searchable name="coin_code" :value="$model->coin_code" :options="$coin" label="Select Coin"
+                            required />
+                        <x-input type="number" name="amount" :value="request('amount', 100)" label="Trading Amount (USD)"
+                            step="0.01" min="1" placeholder="Enter amount to trade" />
 
                         <x-footer>
                             <a href="{{ route(module('getData')) }}" class="button secondary">Back</a>

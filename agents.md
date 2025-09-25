@@ -50,8 +50,6 @@ The service will always and mandatory to return an object containing:
 
 | Property | Description |
 |----------|-------------|
-| **title** | Title of the analysis |
-| **description** | technology that used in the analysis with flow to reach the conclusion |
 | **signal** | Long or short |
 | **confidence** | 95% (calculated percentage from analysis functions) |
 | **entry_usd** | Entry price in USD |
@@ -60,7 +58,7 @@ The service will always and mandatory to return an object containing:
 | **stop_loss_idr** | Stop loss price in Rupiah |
 | **take_profit_usd** | Take profit price in USD |
 | **take_profit_idr** | Take profit price in Rupiah |
-| **risk_reward** | Risk-reward ratio e.g. 1:3 |
+| **risk_reward** | Risk:reward ratio e.g. 1:3 |
 | **fee_usd** | Fees in USD (slippage 0.5%, transaction fee 0.10% + PPN 0.011% + CFX 0.15% + PPN on CFX 0.0165% for taker, CFX 0.05% + PPN on CFX 0.0055% for maker) |
 | **fee_idr** | Fees in Rupiah (slippage 0.5%, transaction fee 0.10% + PPN 0.011% + CFX 0.15% + PPN on CFX 0.0165% for taker, CFX 0.05% + PPN on CFX 0.0055% for maker) |
 | **potential_profit_usd** | Potential profit in USD after fees |
@@ -68,7 +66,6 @@ The service will always and mandatory to return an object containing:
 | **potential_loss_usd** | Potential loss in USD after fees |
 | **potential_loss_idr** | Potential loss in Rupiah after fees |
 | **indicators** | Technical indicators used in the analysis |
-| **notes** | any notes or result or suggestion from any calculation and analysis |
 
 ### Fee Structure (Pluang PRO - Kripto Futures)
 Based on the correct fee structure for Kripto Futures on Pluang PRO:

@@ -22,6 +22,21 @@ class IndicatorConfigTest extends TestCase
                 return 'test';
             }
 
+            public function getDescription(): string
+            {
+                return 'Test analysis service';
+            }
+
+            public function getIndicators(): array
+            {
+                return [];
+            }
+
+            public function getNotes(): string
+            {
+                return 'Test notes';
+            }
+
             public function analyze(string $symbol, float $amount = 1000): object
             {
                 // Not needed for this test
@@ -39,9 +54,10 @@ class IndicatorConfigTest extends TestCase
                 float $riskReward,
                 float $positionSize,
                 string $analystMethod = 'basic',
-                array $indicators = []
+                array $indicators = [],
+                string $orderType = 'taker'
             ): object {
-                return $this->formatResult($title, $signal, $confidence, $entry, $stopLoss, $takeProfit, $riskReward, $positionSize, $analystMethod, $indicators);
+                return $this->formatResult($title, $signal, $confidence, $entry, $stopLoss, $takeProfit, $riskReward, $positionSize, $analystMethod, $indicators, $orderType);
             }
         };
 
@@ -55,7 +71,8 @@ class IndicatorConfigTest extends TestCase
             2.0,
             1000,
             'test',
-            []
+            [],
+            'taker'
         );
 
         // Check that the result contains the expected structure

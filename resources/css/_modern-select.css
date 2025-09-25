@@ -21,7 +21,7 @@
     background: var(--bg-white);
     cursor: pointer;
     transition: all 0.2s ease;
-    min-height: 35px;
+    min-height: 40px;
 }
 
 .modern-select-container.open .modern-select-display {

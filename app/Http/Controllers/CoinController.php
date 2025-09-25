@@ -130,35 +130,22 @@ class CoinController extends Controller
 
         $model = $this->model->find($code);
 
-        // Available analyst methods from the factory
-        $analystMethods = AnalysisServiceFactory::getAvailableMethods();
-
-        // Get analysis method from query parameter
-        $analystMethod = request('analyst', 'sniper');
-
-        // Get trading amount from query parameter (default to 1000)
-        $amount = floatval(request('amount', 1000));
-
-        // Validate analyst method
-        if (!array_key_exists($analystMethod, $analystMethods)) {
-            $analystMethod = AnalysisType::SNIPER;
-        }
+        // Get trading amount from query parameter (default to 100)
+        $amount = floatval(request('amount', 100));
 
         // Validate amount
         if ($amount <= 0) {
-            $amount = 1000;
+            $amount = 100;
         }
 
-        // Perform analysis using the new service architecture
+        // Perform analysis using MA Analysis only
         try {
-            if (in_array($analystMethod, [AnalysisType::SNIPER, AnalysisType::DYNAMIC_RR])) {
-                // Use new analysis services with dynamic amount
-                $analysisService = AnalysisServiceFactory::create($analystMethod);
-                $result = $analysisService->analyze($model->coin_code ?? 'BTCUSDT', $amount);
+            // Use MA Analysis service with dynamic amount
+            $analysisService = AnalysisServiceFactory::create(AnalysisType::MA_20_50);
+            $result = $analysisService->analyze($model->coin_code ?? 'BTCUSDT', $amount);
 
-                // Convert the new result structure to match the existing view expectations
-                $cryptoAnalysis = $this->convertAnalysisResult($result, $model->coin_code ?? 'BTCUSDT');
-            }
+            // Convert the new result structure to match the existing view expectations
+            $cryptoAnalysis = $this->convertAnalysisResult($result, $model->coin_code ?? 'BTCUSDT');
 
         } catch (\Exception $e) {
             // Log the error and return error response
@@ -183,8 +170,6 @@ class CoinController extends Controller
             'model' => $model,
             'coin' => $coin->toArray(),
             'crypto_analysis' => $cryptoAnalysis,
-            'analyst_method' => $analystMethod,
-            'analyst_methods' => $analystMethods,
             'amount' => $amount,
         ]));
     }
@@ -214,9 +199,10 @@ class CoinController extends Controller
         return [
             'symbol' => $symbol,
             'title' => $result->title ?? 'Analysis',
+            'description' => $result->description ?? '',
             'signal' => $signal,
             'confidence' => safeNumericValue($result, 'confidence', 50),
-            'risk_reward' => safeNumericValue($result, 'risk_reward'),
+            'risk_reward' => safeValue($result, 'risk_reward'),
             'entry_usd' => safeNumericValue($result, 'entry_usd'),
             'entry_idr' => safeNumericValue($result, 'entry_idr'),
             'stop_loss_usd' => safeNumericValue($result, 'stop_loss_usd'),
@@ -230,6 +216,7 @@ class CoinController extends Controller
             'potential_loss_usd' => safeNumericValue($result, 'potential_loss_usd'),
             'potential_loss_idr' => safeNumericValue($result, 'potential_loss_idr'),
             'indicators' => $indicators,
+            'notes' => safeValue($result, 'notes', ''),
             'last_updated' => now()->format('Y-m-d H:i:s'),
             'analysis_type' => safeValue($result, 'title', 'Analysis')
         ];

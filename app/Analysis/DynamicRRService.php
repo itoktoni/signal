@@ -4,37 +4,63 @@ namespace App\Analysis;
 
 use App\Analysis\AnalysisService;
 use App\Enums\AnalysisType;
-use App\Enums\TimeIntervalType;
 use App\Enums\SignalType;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class DynamicRRService extends AnalysisService
 {
+    public function getCode(): string
+    {
+        return 'dynamic_rr';
+    }
+
     public function getName(): string
     {
         return AnalysisType::DYNAMIC_RR;
     }
 
-    public function analyze(string $symbol, float $amount = 100): object
+    public function getDescription(): string
     {
-        // Get market data for multiple timeframes
-        $klines1h = $this->getKlines($symbol, TimeIntervalType::ONE_HOUR, 100);
-        $klines4h = $this->getKlines($symbol, TimeIntervalType::FOUR_HOURS, 100);
-        $klines1d = $this->getKlines($symbol, TimeIntervalType::ONE_DAY, 100);
+        return 'Dynamic Risk-Reward strategy calculates risk-reward ratios dynamically based on ATR, Fibonacci levels, and support/resistance levels to optimize position sizing and trade management.';
+    }
+
+    public function getIndicators(): array
+    {
+        return [
+            'atr' => 'Average True Range for volatility measurement',
+            'ema20' => 'Exponential Moving Average 20 periods',
+            'ema50' => 'Exponential Moving Average 50 periods',
+            'rsi' => 'Relative Strength Index',
+            'support' => 'Key support level',
+            'resistance' => 'Key resistance level'
+        ];
+    }
+
+    public function getNotes(): string
+    {
+        return 'This strategy dynamically adjusts risk-reward ratios based on market volatility and key technical levels. It uses ATR for volatility measurement, Fibonacci levels for profit targets, and support/resistance for stop loss placement.';
+    }
+
+    public function analyze(string $symbol, float $amount = 1000): object
+    {
+        // Get market data for different timeframes
+        $klines1h = $this->getKlines($symbol, '1h', 200);
+        $klines4h = $this->getKlines($symbol, '4h', 100);
+        $klines1d = $this->getKlines($symbol, '1d', 100);
 
         if (!$klines1h || !$klines4h || !$klines1d) {
             throw new \Exception("Failed to fetch market data for {$symbol}");
         }
 
-        // Calculate ATR for volatility-based stop loss
+        // Calculate ATR for volatility measurement
         $atr = $this->calculateATR($klines1h, 14);
 
         // Calculate Fibonacci retracement levels
         $fibLevels = $this->calculateFibonacciLevels($klines1d);
 
-        // Identify support and resistance levels
-        $srLevels = $this->identifySupportResistance($klines1d);
+        // Identify key support and resistance levels
+        $srLevels = $this->identifySupportResistance($klines4h);
 
         // Determine market trend
         $trend = $this->determineTrend($klines1d);
@@ -69,15 +95,18 @@ class DynamicRRService extends AnalysisService
         // Format the result with dynamic amount
         return $this->formatResult(
             "Dynamic RR Analysis for {$symbol}",
+            $this->getDescription(),
             $signal,
             $confidence,
             $levels['entry'],
             $levels['stop_loss'],
             $levels['take_profit'],
-            $levels['risk_reward'] !== '1:1' ? floatval(str_replace('1:', '', $levels['risk_reward'])) : 1.0,
+            $levels['risk_reward'],
             $amount, // dynamic position size in USD
             'dynamic_rr', // analyst method
-            $displayIndicators // pass indicators
+            $displayIndicators, // pass indicators
+            'taker', // order type (default to taker)
+            $this->getNotes() // pass notes
         );
     }
 
@@ -511,5 +540,4 @@ class DynamicRRService extends AnalysisService
         $rs = $avgGain / $avgLoss;
         return 100 - (100 / (1 + $rs));
     }
-
 }

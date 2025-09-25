@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 // Versi Lengkap Final dengan Fallback & URL Spesifik
-class AnalyzeCrypto_backup extends Command
+class AnalyzeMaster extends Command
 {
     protected $signature = 'crypto:analyze1 {symbol=BTCUSDT} {position=100}';
     protected $description = 'Analyze crypto coin with TA and send to Telegram';

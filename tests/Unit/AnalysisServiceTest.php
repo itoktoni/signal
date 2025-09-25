@@ -6,6 +6,7 @@ use Tests\TestCase;
 use App\Analysis\AnalysisServiceFactory;
 use App\Analysis\SniperService;
 use App\Analysis\DynamicRRService;
+use App\Analysis\SupportResistanceService;
 
 class AnalysisServiceTest extends TestCase
 {
@@ -19,6 +20,9 @@ class AnalysisServiceTest extends TestCase
 
         $dynamicRRService = AnalysisServiceFactory::create('dynamic_rr');
         $this->assertInstanceOf(\App\Analysis\DynamicRRService::class, $dynamicRRService);
+
+        $supportResistanceService = AnalysisServiceFactory::create('support_resistance');
+        $this->assertInstanceOf(SupportResistanceService::class, $supportResistanceService);
     }
 
     /**
@@ -30,9 +34,11 @@ class AnalysisServiceTest extends TestCase
 
         $this->assertArrayHasKey('sniper', $methods);
         $this->assertArrayHasKey('dynamic_rr', $methods);
+        $this->assertArrayHasKey('support_resistance', $methods);
 
         $this->assertEquals('Sniper Analysis', $methods['sniper']);
         $this->assertEquals('Dynamic Risk-Reward Analysis', $methods['dynamic_rr']);
+        $this->assertEquals('Support/Resistance Analysis', $methods['support_resistance']);
     }
 
     /**
@@ -45,6 +51,9 @@ class AnalysisServiceTest extends TestCase
 
         $dynamicRRDescription = AnalysisServiceFactory::getMethodDescription('dynamic_rr');
         $this->assertEquals('Dynamic risk-reward calculation using ATR, Fibonacci levels, and support/resistance', $dynamicRRDescription);
+
+        $supportResistanceDescription = AnalysisServiceFactory::getMethodDescription('support_resistance');
+        $this->assertEquals('Classic support and resistance level analysis', $supportResistanceDescription);
     }
 
     /**
@@ -81,6 +90,29 @@ class AnalysisServiceTest extends TestCase
     public function test_dynamic_rr_service_returns_correct_structure()
     {
         $service = new DynamicRRService();
+        $result = $service->analyze('BTCUSDT');
+
+        $this->assertTrue(isset($result->title));
+        $this->assertTrue(isset($result->signal));
+        $this->assertTrue(isset($result->confidence));
+        $this->assertTrue(isset($result->entry));
+        $this->assertTrue(isset($result->stop_loss));
+        $this->assertTrue(isset($result->take_profit));
+        $this->assertTrue(isset($result->risk_reward));
+        $this->assertTrue(isset($result->fee));
+        $this->assertTrue(isset($result->potential_profit));
+        $this->assertTrue(isset($result->potential_loss));
+
+        // Check signal is valid
+        $this->assertContains($result->signal, ['long', 'short', 'hold', 'neutral']);
+    }
+
+    /**
+     * Test that support resistance service returns correct structure.
+     */
+    public function test_support_resistance_service_returns_correct_structure()
+    {
+        $service = new SupportResistanceService();
         $result = $service->analyze('BTCUSDT');
 
         $this->assertTrue(isset($result->title));

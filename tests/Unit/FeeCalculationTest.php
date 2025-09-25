@@ -20,7 +20,22 @@ class FeeCalculationTest extends TestCase
             {
                 return 'test';
             }
-            
+
+            public function getDescription(): string
+            {
+                return 'Test analysis service';
+            }
+
+            public function getIndicators(): array
+            {
+                return [];
+            }
+
+            public function getNotes(): string
+            {
+                return 'Test notes';
+            }
+
             public function analyze(string $symbol, float $amount = 1000): object
             {
                 // Not needed for this test
@@ -33,7 +48,7 @@ class FeeCalculationTest extends TestCase
 
         // Test taker fees
         $takerFees = $this->invokeMethod($analysisService, 'calculateFees', [$positionSize, 'taker']);
-        
+
         // Expected values based on Pluang PRO structure:
         // Base fee: 0.10% of $1000 = $1.00
         // PPN on base: 0.011% of $1000 = $0.11
@@ -41,16 +56,16 @@ class FeeCalculationTest extends TestCase
         // PPN on CFX (taker): 0.0165% of $1000 = $0.165
         // Slippage: 0.5% of $1000 = $5.00
         // Total: $1.00 + $0.11 + $1.50 + $0.165 + $5.00 = $7.775
-        
+
         $this->assertEqualsWithDelta(1.00, $takerFees['base_fee'], 0.01);
         $this->assertEqualsWithDelta(0.11, $takerFees['ppn_on_base'], 0.01);
         $this->assertEqualsWithDelta(1.50, $takerFees['cfx_fee'], 0.01);
         $this->assertEqualsWithDelta(0.165, $takerFees['ppn_on_cfx'], 0.01);
         $this->assertEqualsWithDelta(7.775, $takerFees['total'], 0.01);
-        
+
         // Test maker fees
         $makerFees = $this->invokeMethod($analysisService, 'calculateFees', [$positionSize, 'maker']);
-        
+
         // Expected values based on Pluang PRO structure:
         // Base fee: 0.10% of $1000 = $1.00
         // PPN on base: 0.011% of $1000 = $0.11
@@ -58,14 +73,14 @@ class FeeCalculationTest extends TestCase
         // PPN on CFX (maker): 0.0055% of $1000 = $0.055
         // Slippage: 0.5% of $1000 = $5.00
         // Total: $1.00 + $0.11 + $0.50 + $0.055 + $5.00 = $6.665
-        
+
         $this->assertEqualsWithDelta(1.00, $makerFees['base_fee'], 0.01);
         $this->assertEqualsWithDelta(0.11, $makerFees['ppn_on_base'], 0.01);
         $this->assertEqualsWithDelta(0.50, $makerFees['cfx_fee'], 0.01);
         $this->assertEqualsWithDelta(0.055, $makerFees['ppn_on_cfx'], 0.01);
         $this->assertEqualsWithDelta(6.665, $makerFees['total'], 0.01);
     }
-    
+
     /**
      * Call protected/private method of a class.
      *

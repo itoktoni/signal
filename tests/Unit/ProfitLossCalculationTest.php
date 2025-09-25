@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Services\AnalysisService;
+use App\Analysis\AnalysisService;
 use Tests\TestCase;
 
 class ProfitLossCalculationTest extends TestCase

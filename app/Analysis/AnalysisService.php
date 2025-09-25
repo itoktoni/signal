@@ -114,6 +114,11 @@ abstract class AnalysisService implements AnalysisInterface
         $risk = abs($entryPrice - $stopLoss);
         $reward = abs($entryPrice - $takeProfit);
 
+        // Ensure risk is never exactly 0 to avoid division issues
+        if ($risk == 0) {
+            $risk = $entryPrice * 0.001; // Use 0.1% of entry price as minimum risk
+        }
+
         $fees = $this->calculateFees($positionSize);
 
         // Calculate profit/loss without fees first
@@ -121,16 +126,26 @@ abstract class AnalysisService implements AnalysisInterface
             $potentialLoss = -$risk * ($positionSize / $entryPrice);
             $potentialProfit = ($takeProfit - $entryPrice) * ($positionSize / $entryPrice);
         } else { // short
-            $potentialLoss = -$risk * ($positionSize / $entryPrice);
+            // For short positions: loss when price goes UP from entry
+            // Example: Short at $100, price goes to $110 = $10 loss per unit
+            // You sold at $100, buy back at $110 = lose $10
+            $potentialLoss = $risk * ($positionSize / $entryPrice);
+
+            // For short positions: profit when price goes DOWN from entry
+            // Example: Short at $100, price goes to $90 = $10 profit per unit
+            // You sold at $100, buy back at $90 = gain $10
             $potentialProfit = ($entryPrice - $takeProfit) * ($positionSize / $entryPrice);
         }
 
         // Apply fees to both profit and loss (more realistic)
+        // For profits: fees are subtracted (you get less profit)
         $potentialProfit = $potentialProfit - $fees['total'];
+        // For losses: fees are added (you lose more money)
         $potentialLoss = $potentialLoss - $fees['total'];
 
-        // Ensure loss is always negative (but not more negative than position size)
-        $potentialLoss = min($potentialLoss, 0);
+        // Ensure loss is always negative and includes at least the fee amount
+        // Even if risk is 0, you still pay fees on trade exit
+        $potentialLoss = min($potentialLoss, -$fees['total']);
 
         // Debug logging
         if (config('app.debug')) {
@@ -143,9 +158,13 @@ abstract class AnalysisService implements AnalysisInterface
                 'risk' => $risk,
                 'reward' => $reward,
                 'fees_total' => $fees['total'],
+                'calculation_method' => $positionType === 'long' ? 'LONG: loss = -risk * (size/price), profit = (TP - entry) * (size/price)' : 'SHORT: loss = risk * (size/price), profit = (entry - TP) * (size/price)',
+                'potential_loss_before_fees' => $positionType === 'long' ? -$risk * ($positionSize / $entryPrice) : $risk * ($positionSize / $entryPrice),
+                'potential_profit_before_fees' => $positionType === 'long' ? ($takeProfit - $entryPrice) * ($positionSize / $entryPrice) : ($entryPrice - $takeProfit) * ($positionSize / $entryPrice),
                 'potential_loss' => $potentialLoss,
                 'potential_profit' => $potentialProfit,
-                'raw_profit' => $positionType === 'long' ? ($takeProfit - $entryPrice) * ($positionSize / $entryPrice) : ($entryPrice - $takeProfit) * ($positionSize / $entryPrice)
+                'minimum_loss_should_be' => -$fees['total'],
+                'short_position_explanation' => 'For SHORT: loss when price UP (buy back higher), profit when price DOWN (buy back lower)'
             ]);
         }
 
@@ -198,6 +217,7 @@ abstract class AnalysisService implements AnalysisInterface
      */
     protected function formatResult(
         string $title,
+        string $description,
         string $signal,
         float $confidence,
         float $entry,
@@ -206,26 +226,35 @@ abstract class AnalysisService implements AnalysisInterface
         float $riskReward,
         float $positionSize,
         string $analystMethod = 'basic',
-        array $indicators = [] // Add indicators parameter
+        array $indicators = [], // Add indicators parameter
+        string $orderType = 'taker', // Add order type parameter
+        string $notes = '' // Add notes parameter
     ): object {
         $entryPrices = $this->formatPrice($entry);
         $stopLossPrices = $this->formatPrice($stopLoss);
         $takeProfitPrices = $this->formatPrice($takeProfit);
-        $fees = $this->calculateFees($positionSize); // Use default taker order type
+        $fees = $this->calculateFees($positionSize, $orderType); // Pass order type to calculateFees
         $pl = $this->calculatePotentialPL($entry, $stopLoss, $takeProfit, $positionSize, $signal);
 
         // Return standardized result object as specified in AnalysisInterface and agents.md
         return (object) [
             'title' => $title,
+            'description' => $description,
             'signal' => $signal,
             'confidence' => $confidence,
+            'entry' => $entry,
+            'stop_loss' => $stopLoss,
+            'take_profit' => $takeProfit,
+            'risk_reward' => $riskReward,
+            'fee' => $fees, // Return the full fees array
+            'potential_profit' => $pl['potential_profit'],
+            'potential_loss' => $pl['potential_loss'],
             'entry_usd' => $entryPrices['usd'],
             'entry_idr' => $entryPrices['rupiah'],
             'stop_loss_usd' => $stopLossPrices['usd'],
             'stop_loss_idr' => $stopLossPrices['rupiah'],
             'take_profit_usd' => $takeProfitPrices['usd'],
             'take_profit_idr' => $takeProfitPrices['rupiah'],
-            'risk_reward' => $riskReward,
             'fee_usd' => $fees['total'],
             'fee_idr' => $fees['total'] * $this->usdToIdr,
             'potential_profit_usd' => $pl['potential_profit'],
@@ -233,10 +262,9 @@ abstract class AnalysisService implements AnalysisInterface
             'potential_loss_usd' => $pl['potential_loss'],
             'potential_loss_idr' => abs($pl['potential_loss']) * $this->usdToIdr,
             'indicators' => $indicators,
+            'notes' => $notes,
         ];
     }
-
-
 
     /**
      * Abstract method that must be implemented by all analysis services

@@ -20,13 +20,28 @@ class FormatResultTest extends TestCase
             {
                 return 'test';
             }
-            
+
+            public function getDescription(): string
+            {
+                return 'Test analysis service';
+            }
+
+            public function getIndicators(): array
+            {
+                return [];
+            }
+
+            public function getNotes(): string
+            {
+                return 'Test notes';
+            }
+
             public function analyze(string $symbol, float $amount = 1000): object
             {
                 // Not needed for this test
                 return (object)[];
             }
-            
+
             // Make formatResult public for testing
             public function publicFormatResult(
                 string $title,
@@ -59,10 +74,10 @@ class FormatResultTest extends TestCase
             [],
             'taker'
         );
-        
+
         // Check that the fee description contains "taker"
         $this->assertStringContainsString('taker', $result->fee['description']);
-        
+
         // Test with maker order type
         $result = $analysisService->publicFormatResult(
             'Test Analysis',
@@ -77,7 +92,7 @@ class FormatResultTest extends TestCase
             [],
             'maker'
         );
-        
+
         // Check that the fee description contains "maker"
         $this->assertStringContainsString('maker', $result->fee['description']);
     }

@@ -3,6 +3,7 @@
 namespace App\Analysis;
 
 use App\Analysis\AnalysisInterface;
+use App\Analysis\MaAnalysis;
 use App\Enums\AnalysisType;
 use InvalidArgumentException;
 
@@ -14,9 +15,8 @@ class AnalysisServiceFactory
     public static function create(string $method): AnalysisInterface
     {
         return match ($method) {
-            AnalysisType::SNIPER => new SniperService(),
-            AnalysisType::DYNAMIC_RR => new DynamicRRService(),
-            default => throw new InvalidArgumentException("Unknown analysis method: {$method}")
+            AnalysisType::MA_20_50 => new MaAnalysis(),
+            default => new MaAnalysis() // Default to MA Analysis only
         };
     }
 
@@ -25,7 +25,9 @@ class AnalysisServiceFactory
      */
     public static function getAvailableMethods(): array
     {
-        return AnalysisType::getAvailableTypes();
+        return [
+            AnalysisType::MA_20_50 => AnalysisType::MA_20_50()->getAnalysisDescription(),
+        ];
     }
 
     /**
@@ -35,7 +37,7 @@ class AnalysisServiceFactory
     {
         try {
             $analysisType = AnalysisType::fromValue($method);
-            return $analysisType->getDetailedDescription();
+            return $analysisType->getAnalysisDescription();
         } catch (\Exception $e) {
             return 'Unknown method';
         }
