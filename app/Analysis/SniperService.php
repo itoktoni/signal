@@ -16,7 +16,7 @@ class SniperService extends AnalysisService
         return AnalysisType::SNIPER;
     }
 
-    public function analyze(string $symbol, float $amount = 1000): object
+    public function analyze(string $symbol, float $amount = 100): object
     {
         // Get market data
         $klines = $this->getKlines($symbol, TimeIntervalType::ONE_HOUR, 100);
@@ -39,6 +39,28 @@ class SniperService extends AnalysisService
         // Calculate risk-reward ratio
         $riskReward = $this->calculateRiskReward($levels['entry'], $levels['stop_loss'], $levels['take_profit']);
 
+        // Calculate additional indicators for display
+        $closes = array_map(fn($k) => floatval($k[4]), $klines);
+        $ema50 = $this->calculateEMA($closes, 50);
+
+        // For support and resistance, we'll use the levels from the calculated levels
+        // or derive them from recent price action
+        $support = $levels['stop_loss']; // Using stop loss as support for sniper
+        $resistance = $levels['take_profit']; // Using take profit as resistance for sniper
+
+        $displayIndicators = [
+            'ema9' => $indicators['ema9'],
+            'ema21' => $indicators['ema21'],
+            'ema50' => $ema50,
+            'rsi' => $indicators['rsi'],
+            'current_price' => $indicators['current_price'],
+            'support' => $support,
+            'resistance' => $resistance
+        ];
+
+        // Get indicator configuration for this analysis method
+        $indicatorConfig = $this->getIndicatorConfig('sniper');
+
         // Format the result with dynamic amount
         return $this->formatResult(
             "Sniper Analysis for {$symbol}",
@@ -48,7 +70,11 @@ class SniperService extends AnalysisService
             $levels['stop_loss'],
             $levels['take_profit'],
             $levels['risk_reward'] !== '1:1' ? floatval(str_replace('1:', '', $levels['risk_reward'])) : 1.0,
-            $amount // dynamic position size in USD
+            $amount, // dynamic position size in USD
+            'sniper', // analyst method
+            $displayIndicators, // pass indicators
+            'taker', // order type (sniper typically uses taker orders)
+            $indicatorConfig // pass indicator configuration
         );
     }
 

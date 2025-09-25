@@ -67,7 +67,7 @@ class AnalysisServiceTest extends TestCase
         $this->assertTrue(isset($result->potential_loss));
 
         // Check signal is valid
-        $this->assertContains($result->signal, ['long', 'short', 'hold']);
+        $this->assertContains($result->signal, ['long', 'short', 'hold', 'neutral']);
 
         // Check confidence is between 0 and 100
         $this->assertGreaterThanOrEqual(0, $result->confidence);
@@ -95,6 +95,6 @@ class AnalysisServiceTest extends TestCase
         $this->assertTrue(isset($result->potential_loss));
 
         // Check signal is valid
-        $this->assertContains($result->signal, ['long', 'short', 'hold']);
+        $this->assertContains($result->signal, ['long', 'short', 'hold', 'neutral']);
     }
 }

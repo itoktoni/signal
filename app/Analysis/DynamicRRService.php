@@ -16,7 +16,7 @@ class DynamicRRService extends AnalysisService
         return AnalysisType::DYNAMIC_RR;
     }
 
-    public function analyze(string $symbol, float $amount = 1000): object
+    public function analyze(string $symbol, float $amount = 100): object
     {
         // Get market data for multiple timeframes
         $klines1h = $this->getKlines($symbol, TimeIntervalType::ONE_HOUR, 100);
@@ -51,6 +51,24 @@ class DynamicRRService extends AnalysisService
         // Calculate dynamic risk-reward ratio
         $riskReward = $this->calculateDynamicRR($levels['entry'], $levels['stop_loss'], $levels['take_profit']);
 
+        // Calculate additional indicators for display
+        $closes = array_map(fn($k) => floatval($k[4]), $klines1h);
+        $ema20 = $this->calculateEMA($closes, 20);
+        $ema50 = $this->calculateEMA($closes, 50);
+        $rsi = $this->calculateRSI($closes, 14);
+
+        $displayIndicators = [
+            'ema20' => $ema20,
+            'ema50' => $ema50,
+            'rsi' => $rsi,
+            'atr' => $atr,
+            'support' => $srLevels['support'],
+            'resistance' => $srLevels['resistance']
+        ];
+
+        // Get indicator configuration for this analysis method
+        $indicatorConfig = $this->getIndicatorConfig('dynamic_rr');
+
         // Format the result with dynamic amount
         return $this->formatResult(
             "Dynamic RR Analysis for {$symbol}",
@@ -60,7 +78,11 @@ class DynamicRRService extends AnalysisService
             $levels['stop_loss'],
             $levels['take_profit'],
             $levels['risk_reward'] !== '1:1' ? floatval(str_replace('1:', '', $levels['risk_reward'])) : 1.0,
-            $amount // dynamic position size in USD
+            $amount, // dynamic position size in USD
+            'dynamic_rr', // analyst method parameter
+            $displayIndicators, // pass indicators
+            'taker', // order type (dynamic RR typically uses taker orders)
+            $indicatorConfig // pass indicator configuration
         );
     }
 

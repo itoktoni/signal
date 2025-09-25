@@ -6,26 +6,14 @@
             <x-card title="🔍 {{ $crypto_analysis['analysis_type'] ?? (isset($crypto_analysis['title']) ? $crypto_analysis['title'] : (AnalysisType::{strtoupper($analyst_method)}()->getAnalysisDescription() ?? 'Basic Analysis')) }} - {{ $model->coin_code ?? 'Tidak Diketahui' }}">
                 @if(isset($crypto_analysis) && !isset($crypto_analysis['error']))
                     @php
-                        // Handle both old and new analysis result structures
-                        if (isset($crypto_analysis['analysis'])) {
-                            // Old structure (backward compatibility)
-                            $signal = $crypto_analysis['analysis']['signal'] ?? 'NEUTRAL';
-                            $confidence = $crypto_analysis['analysis']['confidence'] ?? 0;
-                            $rrRatio = $crypto_analysis['analysis']['rr_ratio'] ?? 0;
-                            $entry = $crypto_analysis['analysis']['entry'] ?? 0;
-                            $stopLoss = $crypto_analysis['analysis']['stop_loss'] ?? 0;
-                            $takeProfit = $crypto_analysis['analysis']['take_profit'] ?? 0;
-                            $title = $crypto_analysis['analysis_type'] ?? 'Analysis';
-                        } else {
-                            // New structure from analysis services
-                            $signal = $crypto_analysis['signal'] ?? 'NEUTRAL';
-                            $confidence = $crypto_analysis['confidence'] ?? 0;
-                            $rrRatio = $crypto_analysis['risk_reward'] ?? 0;
-                            $entry = $crypto_analysis['entry'] ?? ['usd' => 0, 'rupiah' => 0];
-                            $stopLoss = $crypto_analysis['stop_loss'] ?? ['usd' => 0, 'rupiah' => 0];
-                            $takeProfit = $crypto_analysis['take_profit'] ?? ['usd' => 0, 'rupiah' => 0];
-                            $title = $crypto_analysis['title'] ?? 'Analysis';
-                        }
+                        // Standardized analysis result structure from all analysis services
+                        $signal = $crypto_analysis['signal'] ?? 'NEUTRAL';
+                        $confidence = $crypto_analysis['confidence'] ?? 0;
+                        $rrRatio = $crypto_analysis['risk_reward'] ?? 0;
+                        $entry = $crypto_analysis['entry'] ?? ['usd' => 0, 'rupiah' => 0];
+                        $stopLoss = $crypto_analysis['stop_loss'] ?? ['usd' => 0, 'rupiah' => 0];
+                        $takeProfit = $crypto_analysis['take_profit'] ?? ['usd' => 0, 'rupiah' => 0];
+                        $title = $crypto_analysis['title'] ?? 'Analysis';
 
                         $direction = $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
                         $directionIcon = $signal === 'BUY' ? '🚀' : ($signal === 'SELL' ? '⚠️' : '⏳');
@@ -144,19 +132,22 @@
                                 <div class="info-card">
                                     <h4>💰 Informasi Biaya</h4>
                                     <div class="row">
-                                        @if(isset($crypto_analysis['fee']['usd']) && $crypto_analysis['fee']['usd'] > 0)
                                         <div class="col-6">
-                                            <p><strong>Total Fee (USD):</strong></p>
-                                            <div class="fee-info">
-                                                <span class="price-value">${{ number_format($crypto_analysis['fee']['usd'], 4) }}</span>
-                                                @if($amount > 0)
-                                                <span class="percentage">
-                                                    ({{ number_format(($crypto_analysis['fee']['usd'] / $amount) * 100, 2) }}%)
-                                                </span>
-                                                @endif
+                                            <p><strong>Biaya Transaksi:</strong> {{ $fee['breakdown']['description'] ?? 'Biaya transaksi dan pajak' }}</p>
+                                            @if(isset($fee['breakdown']))
+                                            <div class="fee-breakdown">
+                                                <p><strong>Detail Biaya:</strong></p>
+                                                <ul class="mb-0">
+                                                    <li>Biaya Dasar: {{ $fee['breakdown']['base_fee'] ? '$' . number_format($fee['breakdown']['base_fee'], 2) : 'N/A' }}</li>
+                                                    <li>PPN pada Biaya Dasar: {{ $fee['breakdown']['ppn_on_base'] ? '$' . number_format($fee['breakdown']['ppn_on_base'], 2) : 'N/A' }}</li>
+                                                    <li>Biaya CFX: {{ $fee['breakdown']['cfx_fee'] ? '$' . number_format($fee['breakdown']['cfx_fee'], 2) : 'N/A' }}</li>
+                                                    <li>PPN pada CFX: {{ $fee['breakdown']['ppn_on_cfx'] ? '$' . number_format($fee['breakdown']['ppn_on_cfx'], 2) : 'N/A' }}</li>
+                                                    <li>Slippage (Estimasi): {{ $fee['breakdown']['slippage'] ? '$' . number_format($fee['breakdown']['slippage'], 2) : 'N/A' }}</li>
+                                                    <li><strong>Total Biaya: {{ $fee['formatted']['both'] }}</strong></li>
+                                                </ul>
                                             </div>
+                                            @endif
                                         </div>
-                                        @endif
                                         @if(isset($crypto_analysis['fee']['rupiah']) && $crypto_analysis['fee']['rupiah'] > 0)
                                         <div class="col-6">
                                             <p><strong>Total Fee (Rupiah):</strong></p>
@@ -170,12 +161,22 @@
                                             </div>
                                         </div>
                                         @endif
-                                        @if(isset($crypto_analysis['fee']['breakdown']['tax_and_third_party']))
+                                        @if(isset($crypto_analysis['fee']['base_fee']) || isset($crypto_analysis['fee']['ppn']) || isset($crypto_analysis['fee']['slippage']) || isset($crypto_analysis['fee']['trading_fee']))
                                         <div class="col-12 mt-3">
                                             <h6>Rincian Biaya:</h6>
                                             <div class="row">
-                                                <div class="col-6"><small>Pajak & Biaya Pihak Ketiga (0.0332%): ${{ number_format($crypto_analysis['fee']['breakdown']['tax_and_third_party'], 4) }}</small></div>
-                                                <div class="col-6"><small>Biaya Trading (0.1%): ${{ number_format($crypto_analysis['fee']['breakdown']['trading_fee'], 4) }}</small></div>
+                                                @if(isset($crypto_analysis['fee']['base_fee']))
+                                                <div class="col-6"><small>Biaya Transaksi: ${{ number_format($crypto_analysis['fee']['base_fee'], 4) }}</small></div>
+                                                @endif
+                                                @if(isset($crypto_analysis['fee']['ppn']))
+                                                <div class="col-6"><small>PPN: ${{ number_format($crypto_analysis['fee']['ppn'], 4) }}</small></div>
+                                                @endif
+                                                @if(isset($crypto_analysis['fee']['slippage']))
+                                                <div class="col-6"><small>Slippage (0.5%): ${{ number_format($crypto_analysis['fee']['slippage'], 4) }}</small></div>
+                                                @endif
+                                                @if(isset($crypto_analysis['fee']['trading_fee']))
+                                                <div class="col-6"><small>Total Biaya Trading: ${{ number_format($crypto_analysis['fee']['trading_fee'], 4) }}</small></div>
+                                                @endif
                                             </div>
                                             @if(isset($crypto_analysis['fee']['description']))
                                             <div class="mt-2">
@@ -185,10 +186,10 @@
                                             <div class="mt-2">
                                                 <small class="text-info">
                                                     <strong>Contoh:</strong> Kamu melakukan transaksi pembelian BTC senilai ${{ number_format($amount, 0) }}
-                                                    menggunakan limit order. Tambahan pajak dan biaya pihak ketiga sebesar 0,0332% juga dikenakan
-                                                    dan dihitung dari total jumlah transaksi ( ${{ number_format($amount, 0) }} x 0,0332% = ${{ number_format($amount * 0.000332, 2) }} ).
-                                                    Dengan begitu, kamu akan menerima BTC senilai ${{ number_format($amount - ($amount * 0.001332), 2) }},
-                                                    dengan total pembayaran sebesar ${{ number_format($amount, 2) }} (termasuk pajak).
+                                                    sebagai taker. Biaya taker 0,15% ditambah PPN 0,011% juga dikenakan
+                                                    dan dihitung dari total jumlah transaksi ( ${{ number_format($amount, 0) }} x 0,161% = ${{ number_format($amount * 0.00161, 2) }} ).
+                                                    Dengan begitu, kamu akan menerima BTC senilai ${{ number_format($amount - ($amount * 0.00161), 2) }},
+                                                    dengan total pembayaran sebesar ${{ number_format($amount, 2) }} (termasuk semua biaya).
                                                 </small>
                                             </div>
                                         </div>
@@ -263,10 +264,13 @@
                         @php
                             // Check if indicators exist in the analysis data
                             $hasIndicators = false;
-                            if (isset($crypto_analysis['analysis']['indicators']) && is_array($crypto_analysis['analysis']['indicators'])) {
-                                $indicators = $crypto_analysis['analysis']['indicators'];
+                            if (isset($crypto_analysis['indicators']) && is_array($crypto_analysis['indicators'])) {
+                                $indicators = $crypto_analysis['indicators'];
                                 $hasIndicators = !empty($indicators);
                             }
+
+                            // Get indicator configuration from the analysis result
+                            $currentConfig = $crypto_analysis['indicator_config'] ?? [];
                         @endphp
 
                         @if($hasIndicators)
@@ -275,109 +279,24 @@
                                 <div class="info-card">
                                     <h4>📊 Technical Indicators</h4>
                                     <div class="row">
-                                        @if($analyst_method === AnalysisType::SNIPER)
-                                            <!-- Sniper Entry Indicators -->
-                                            @if(isset($indicators['ema9']))
-                                            <div class="col-2">
-                                                <p><strong>EMA 9:</strong></p>
-                                                <span>${{ number_format($indicators['ema9'], 3) }}</span>
+                                        @foreach($currentConfig as $key => $config)
+                                            @if(isset($indicators[$key]))
+                                            <div class="{{ $config['class'] }}">
+                                                <p><strong>{{ $config['label'] }}:</strong></p>
+                                                @if(isset($config['text_class']))
+                                                <span class="{{ $config['text_class'] }}">
+                                                @else
+                                                <span>
+                                                @endif
+                                                    @if($config['format'] === 'price')
+                                                        ${{ number_format($indicators[$key], 3) }}
+                                                    @else
+                                                        {{ $indicators[$key] }}
+                                                    @endif
+                                                </span>
                                             </div>
                                             @endif
-                                            @if(isset($indicators['ema21']))
-                                            <div class="col-2">
-                                                <p><strong>EMA 21:</strong></p>
-                                                <span>${{ number_format($indicators['ema21'], 3) }}</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($indicators['ema50']))
-                                            <div class="col-2">
-                                                <p><strong>EMA 50:</strong></p>
-                                                <span>${{ number_format($indicators['ema50'], 3) }}</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($indicators['rsi']))
-                                            <div class="col-2">
-                                                <p><strong>RSI 14:</strong></p>
-                                                <span>{{ $indicators['rsi'] }}</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($indicators['support']))
-                                            <div class="col-2">
-                                                <p><strong>Support:</strong></p>
-                                                <span class="text-success">${{ number_format($indicators['support'], 3) }}</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($indicators['resistance']))
-                                            <div class="col-2">
-                                                <p><strong>Resistance:</strong></p>
-                                                <span class="text-danger">${{ number_format($indicators['resistance'], 3) }}</span>
-                                            </div>
-                                            @endif
-                                        @elseif($analyst_method === AnalysisType::DYNAMIC_RR)
-                                            <!-- Dynamic RR Indicators -->
-                                            @if(isset($indicators['ema20']))
-                                            <div class="col-2">
-                                                <p><strong>EMA 20:</strong></p>
-                                                <span>${{ number_format($indicators['ema20'], 3) }}</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($indicators['ema50']))
-                                            <div class="col-2">
-                                                <p><strong>EMA 50:</strong></p>
-                                                <span>${{ number_format($indicators['ema50'], 3) }}</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($indicators['rsi']))
-                                            <div class="col-2">
-                                                <p><strong>RSI 14:</strong></p>
-                                                <span>{{ $indicators['rsi'] }}</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($indicators['atr']))
-                                            <div class="col-2">
-                                                <p><strong>ATR:</strong></p>
-                                                <span>${{ number_format($indicators['atr'], 3) }}</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($indicators['support']))
-                                            <div class="col-2">
-                                                <p><strong>Support:</strong></p>
-                                                <span class="text-success">${{ number_format($indicators['support'], 3) }}</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($indicators['resistance']))
-                                            <div class="col-2">
-                                                <p><strong>Resistance:</strong></p>
-                                                <span class="text-danger">${{ number_format($indicators['resistance'], 3) }}</span>
-                                            </div>
-                                            @endif
-                                        @else
-                                            <!-- Basic Analysis Indicators -->
-                                            @if(isset($indicators['ema20']))
-                                            <div class="col-3">
-                                                <p><strong>EMA 20:</strong></p>
-                                                <span>${{ number_format($indicators['ema20'], 3) }}</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($indicators['rsi']))
-                                            <div class="col-3">
-                                                <p><strong>RSI 14:</strong></p>
-                                                <span>{{ $indicators['rsi'] }}</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($indicators['support']))
-                                            <div class="col-3">
-                                                <p><strong>Support:</strong></p>
-                                                <span class="text-success">${{ number_format($indicators['support'], 3) }}</span>
-                                            </div>
-                                            @endif
-                                            @if(isset($indicators['resistance']))
-                                            <div class="col-3">
-                                                <p><strong>Resistance:</strong></p>
-                                                <span class="text-danger">${{ number_format($indicators['resistance'], 3) }}</span>
-                                            </div>
-                                            @endif
-                                        @endif
+                                        @endforeach
                                     </div>
                                 </div>
                             </div>
@@ -498,74 +417,67 @@
                 @endif
 
                 <!-- Analysis Conclusion -->
-                @if(isset($crypto_analysis) && !isset($crypto_analysis['error']))
+                @if(isset($crypto_analysis) && !isset($crypto_analysis['error']) && isset($crypto_analysis['conclusion']))
                 <div class="analysis-results info-card mt-4">
                     <h4>🔍 Kesimpulan Analisis</h4>
-                    @php
-                        // Handle both old and new analysis result structures
-                        if (isset($crypto_analysis['analysis'])) {
-                            // Old structure (backward compatibility)
-                            $signal = $crypto_analysis['analysis']['signal'] ?? 'NEUTRAL';
-                            $confidence = $crypto_analysis['analysis']['confidence'] ?? 0;
-                            $rrRatio = $crypto_analysis['analysis']['rr_ratio'] ?? 0;
-                        } else {
-                            // New structure from analysis services
-                            $signal = $crypto_analysis['signal'] ?? 'NEUTRAL';
-                            $confidence = $crypto_analysis['confidence'] ?? 0;
-                            $rrRatio = $crypto_analysis['risk_reward'] ?? 0;
-                        }
-                    @endphp
 
-                    @if($signal === 'BUY')
-                        <div class="alert alert-success">
-                            <h5>📈 REKOMENDASI PERDAGANGAN LONG</h5>
-                            <p><strong>Kekuatan Sinyal:</strong> Tingkat kepercayaan {{ $confidence }}%</p>
-                            <p><strong>Rasio Risiko-Hadiah:</strong> {{ $rrRatio }}:1</p>
-                            <p>Analisis ini menunjukkan peluang <strong>BUY</strong> dengan titik masuk di dekat harga pasar saat ini. Stop loss ditempatkan di bawah level support kunci, dan target take profit ditetapkan di zona resistance atau level Fibonacci.</p>
+                    <!-- Signal Recommendation -->
+                    <div class="alert {{ $crypto_analysis['conclusion']['signal'] === 'BUY' ? 'alert-success' : ($crypto_analysis['conclusion']['signal'] === 'SELL' ? 'alert-danger' : 'alert-warning') }}">
+                        <h5>{{ $crypto_analysis['conclusion']['recommendations']['title'] }}</h5>
+                        <p><strong>Kekuatan Sinyal:</strong> Tingkat kepercayaan {{ $crypto_analysis['conclusion']['confidence'] }}%</p>
+                        <p><strong>Rasio Risiko-Hadiah:</strong> {{ $crypto_analysis['conclusion']['rr_ratio'] }}:1</p>
+                        <p>{{ $crypto_analysis['conclusion']['recommendations']['description'] }}</p>
 
-                            @if($analyst_method === AnalysisType::DYNAMIC_RR)
-                                <p><em>Metode RR Dinamis telah mengidentifikasi level optimal berdasarkan volatilitas pasar saat ini dan struktur teknis.</em></p>
-                            @elseif($analyst_method === AnalysisType::SNIPER)
-                                <p><em>Metode Sniper telah mengkonfirmasi keselarasan kuat dari beberapa indikator teknis untuk setup perdagangan ini.</em></p>
-                            @else
-                                <p><em>Metode analisis Dasar menunjukkan kondisi pasar yang menguntungkan untuk arah perdagangan ini.</em></p>
-                            @endif
-                        </div>
-                    @elseif($signal === 'SELL')
-                        <div class="alert alert-danger">
-                            <h5>📉 REKOMENDASI PERDAGANGAN SHORT</h5>
-                            <p><strong>Kekuatan Sinyal:</strong> Tingkat kepercayaan {{ $confidence }}%</p>
-                            <p><strong>Rasio Risiko-Hadiah:</strong> {{ $rrRatio }}:1</p>
-                            <p>Analisis ini menunjukkan peluang <strong>SELL</strong> dengan titik masuk di dekat harga pasar saat ini. Stop loss ditempatkan di atas level resistance kunci, dan target take profit ditetapkan di zona support atau level Fibonacci.</p>
+                        @if(isset($crypto_analysis['conclusion']['method_descriptions']['description']))
+                            <p><em>{{ $crypto_analysis['conclusion']['method_descriptions']['description'] }}</em></p>
+                        @endif
+                    </div>
 
-                            @if($analyst_method === AnalysisType::DYNAMIC_RR)
-                                <p><em>Metode RR Dinamis telah mengidentifikasi level optimal berdasarkan volatilitas pasar saat ini dan struktur teknis.</em></p>
-                            @elseif($analyst_method === AnalysisType::SNIPER)
-                                <p><em>Metode Sniper telah mengkonfirmasi keselarasan kuat dari beberapa indikator teknis untuk setup perdagangan ini.</em></p>
-                            @else
-                                <p><em>Metode analisis Dasar menunjukkan kondisi pasar yang menguntungkan untuk arah perdagangan ini.</em></p>
-                            @endif
-                        </div>
-                    @else
-                        <div class="alert alert-warning">
-                            <h5>⏸️ KONDISI PASAR NETRAL</h5>
-                            <p><strong>Kekuatan Sinyal:</strong> Tingkat kepercayaan {{ $confidence }}%</p>
-                            <p>Kondisi pasar saat ini tidak menunjukkan peluang perdagangan yang jelas. Disarankan untuk:</p>
+                    <!-- Trading Advice -->
+                    @if(isset($crypto_analysis['conclusion']['recommendations']['trading_advice']))
+                    <div class="alert alert-info">
+                        <h6>💡 Rekomendasi Trading:</h6>
+                        <ul>
+                            @foreach($crypto_analysis['conclusion']['recommendations']['trading_advice'] as $advice)
+                                <li>{{ $advice }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
+
+                    <!-- Method Description -->
+                    @if(isset($crypto_analysis['conclusion']['method_descriptions']['details']))
+                    <div class="mt-3 p-3 bg-light border rounded">
+                        <h5>📚 Deskripsi Metode:</h5>
+                        <ul>
+                            @foreach($crypto_analysis['conclusion']['method_descriptions']['details'] as $detail)
+                                <li>{{ $detail }}</li>
+                            @endforeach
+                        </ul>
+
+                        @if(isset($crypto_analysis['conclusion']['method_descriptions']['advantages']))
+                        <div class="alert alert-info mt-2">
+                            <h6>💡 Keuntungan Utama:</h6>
                             <ul>
-                                <li>Menunggu konfirmasi teknis yang lebih kuat</li>
-                                <li>Memantau level support dan resistance kunci</li>
-                                <li>Waspadai pola breakout atau breakdown</li>
-                                <li>Pertimbangkan koin atau pasar lain untuk peluang</li>
+                                @foreach($crypto_analysis['conclusion']['method_descriptions']['advantages'] as $advantage)
+                                    <li>{{ $advantage }}</li>
+                                @endforeach
                             </ul>
-
-                            @if($analyst_method === AnalysisType::DYNAMIC_RR)
-                                <p><em>Metode RR Dinamis menyarankan kondisi pasar tidak optimal untuk perdagangan saat ini.</em></p>
-                            @elseif($analyst_method === AnalysisType::SNIPER)
-                                <p><em>Metode Sniper tidak menemukan konvergensi yang cukup untuk setup dengan probabilitas tinggi.</em></p>
-                            @else
-                                <p><em>Metode analisis Dasar menunjukkan kondisi pasar netral.</em></p>
-                            @endif
                         </div>
+                        @endif
+                    </div>
+                    @endif
+
+                    <!-- General Trading Advice -->
+                    @if(isset($crypto_analysis['conclusion']['general_advice']))
+                    <div class="mt-3 p-3 bg-warning text-dark border rounded">
+                        <h5>⚠️ Catatan Penting Trading:</h5>
+                        <ul>
+                            @foreach($crypto_analysis['conclusion']['general_advice'] as $advice)
+                                <li>{{ $advice }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
                     @endif
 
                     <!-- Market Context -->
@@ -577,71 +489,6 @@
                     </div>
                 </div>
                 @endif
-
-                <!-- Analysis Method Description -->
-                <div class="analysis-results info-card mt-4">
-                    <h4>📋 Deskripsi Metode Analisis</h4>
-                    @if($analyst_method === AnalysisType::SNIPER)
-                        <div class="mt-3 p-3 mb-5 border rounded">
-                            <h5>📚 Analisis Sniper:</h5>
-                            <p><strong>Analisis Sniper</strong> menggunakan volume dan price action untuk sinyal entry yang presisi tinggi. Metode ini mencari konvergensi indikator teknis yang optimal untuk mengidentifikasi peluang trading dengan probabilitas tinggi.</p>
-                            <ul>
-                                <li>Menggunakan volume dan price action untuk sinyal entry presisi tinggi</li>
-                                <li>Penyelarasan beberapa indikator teknis untuk konfirmasi tren</li>
-                                <li>RSI dalam rentang optimal (45-75 untuk beli, 25-55 untuk jual)</li>
-                                <li>Target rasio risiko-hadiah 3:1 untuk entri sniper</li>
-                                <li>Penilaian kepercayaan yang ditingkatkan berdasarkan kondisi yang terpenuhi</li>
-                            </ul>
-                        </div>
-                    @elseif($analyst_method === AnalysisType::DYNAMIC_RR)
-                        <div class="mt-3 p-3 bg-light border rounded">
-                            <h5>📚 Analisis RR Dinamis:</h5>
-                            <p><strong>Analisis RR Dinamis</strong> menggunakan perhitungan risiko-hadiah adaptif berdasarkan volatilitas pasar, level Fibonacci, dan zona support/resistance. Metode ini secara dinamis menyesuaikan level take profit dan stop loss berdasarkan kondisi pasar saat ini.</p>
-                            <ul>
-                                <li>ATR (Average True Range) untuk penempatan stop loss berbasis volatilitas</li>
-                                <li>Level retracement Fibonacci (23.6%, 38.2%, 50.0%, 61.8%, 78.6%) untuk target take profit</li>
-                                <li>Perhitungan rasio risiko-hadiah dinamis berdasarkan kondisi pasar</li>
-                                <li>Integrasi level support dan resistance untuk entri yang optimal</li>
-                                <li>Persyaratan rasio risiko-hadiah minimum 1,5:1</li>
-                                <li>Penilaian kepercayaan berdasarkan keselarasan indikator teknis</li>
-                            </ul>
-                            <div class="alert alert-info mt-2">
-                                <h6>💡 Keuntungan Utama:</h6>
-                                <p>Metode ini beradaptasi dengan kondisi pasar daripada menggunakan rasio tetap, yang membantu dalam:</p>
-                                <ul>
-                                    <li>Menghindari overtrading dalam kondisi volatilitas rendah</li>
-                                    <li>Memaksimalkan keuntungan di pasar yang tren kuat</li>
-                                    <li>Mengurangi kerugian dengan menempatkan stop berdasarkan volatilitas aktual</li>
-                                    <li>Menggunakan level Fibonacci untuk mengidentifikasi target harga alami</li>
-                                </ul>
-                            </div>
-                        </div>
-                    @else
-                        <div class="mt-3 p-3 bg-light border rounded">
-                            <h5>📚 Analisis Dasar:</h5>
-                            <p><strong>Analisis Dasar</strong> menggunakan indikator teknis standar (EMA 20, RSI 14) pada timeframe 1 jam untuk arah pasar umum. Metode ini menyediakan pendekatan yang sederhana namun efektif untuk analisis pasar.</p>
-                            <ul>
-                                <li>EMA 20 dan RSI 14 pada timeframe 1 jam</li>
-                                <li>Sinyal beli/jual sederhana berdasarkan harga vs EMA</li>
-                                <li>Identifikasi level support dan resistance</li>
-                                <li>Target rasio risiko-hadiah 2:1</li>
-                                <li>Penilaian kepercayaan yang mudah</li>
-                            </ul>
-                        </div>
-                    @endif
-
-                    <!-- General Trading Advice -->
-                    <div class="mt-3 p-3 bg-warning text-dark border rounded">
-                        <h5>⚠️ Catatan Penting Trading:</h5>
-                        <ul>
-                            <li>Selalu gunakan ukuran posisi yang tepat sesuai toleransi risiko Anda</li>
-                            <li>Sinyal ini hanya untuk tujuan informasi, bukan saran keuangan</li>
-                            <li>Pertimbangkan berita pasar dan peristiwa yang dapat mempengaruhi pergerakan harga</li>
-                            <li>Gunakan metode konfirmasi tambahan sebelum memasuki perdagangan</li>
-                            <li>Pantau perdagangan dan sesuaikan stop sesuai kebutuhan berdasarkan kondisi pasar</li>
-                        </ul>
-                    </div>
-                </div>
             </x-card>
         </div>
 
@@ -651,7 +498,7 @@
                 <x-form method="GET" action="{{ route(module('getUpdate'), $model) }}">
                     <x-select searchable name="coin_code" :value="$model->coin_code" :options="$coin" label="Select Coin" required/>
                     <x-select name="analyst" :options="$analyst_methods" label="Metode Analisis" :value="request('analyst', 'sniper')" required/>
-                    <x-input type="number" name="amount" :value="request('amount', 1000)" label="Trading Amount (USD)" step="0.01" min="1" required placeholder="Enter amount to trade"/>
+                    <x-input type="number" name="amount" :value="request('amount', 100)" label="Trading Amount (USD)" step="0.01" min="1" placeholder="Enter amount to trade"/>
 
                     <x-footer>
                         <a href="{{ route(module('getData')) }}" class="button secondary">Back</a>

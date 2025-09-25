@@ -46,29 +46,39 @@ abstract class AnalysisService implements AnalysisInterface
     }
 
     /**
-     * Calculate fees for a trade (Indonesian market context)
+     * Calculate fees for a trade (Indonesian market context - Pluang PRO structure)
      */
-    protected function calculateFees(float $positionSize): array
+    protected function calculateFees(float $positionSize, string $orderType = 'taker'): array
     {
-        // Indonesian market fees based on the example:
-        // Total additional tax and third-party fees: 0.0332%
-        // This matches the Pluang example: Rp1,000,000 x 0.0332% = Rp332
+        // Based on Pluang PRO fee structure:
+        // Maker fee: 0.10% + PPN 0.011% = 0.111%
+        // Taker fee: 0.15% + PPN 0.011% = 0.161%
 
-        $taxAndThirdPartyFees = $positionSize * 0.000332; // 0.0332%
+        if ($orderType === 'maker') {
+            $baseFee = $positionSize * 0.0010; // 0.10% maker fee
+            $ppn = $positionSize * 0.00011; // 0.011% PPN
+            $tradingFee = $baseFee + $ppn;
+        } else { // taker (default)
+            $baseFee = $positionSize * 0.0015; // 0.15% taker fee
+            $ppn = $positionSize * 0.00011; // 0.011% PPN
+            $tradingFee = $baseFee + $ppn;
+        }
 
-        // Keep minimal trading fees for market maker/taker
-        $tradingFee = $positionSize * 0.001; // 0.1% trading fee
+        // Slippage (estimated)
+        $slippage = $positionSize * 0.005; // 0.5% slippage
 
-        $totalFees = $taxAndThirdPartyFees + $tradingFee;
+        $totalFees = $tradingFee + $slippage;
 
         $formattedFees = $this->formatPrice($totalFees);
 
         return [
-            'tax_and_third_party' => $taxAndThirdPartyFees, // 0.0332% - Indonesian tax + third party fees
-            'trading_fee' => $tradingFee, // 0.1% - Trading fee
+            'base_fee' => $baseFee, // 0.10% or 0.15%
+            'ppn' => $ppn, // 0.011% PPN
+            'slippage' => $slippage, // 0.5% - Estimated slippage
+            'trading_fee' => $tradingFee, // Total trading fee (base + PPN)
             'total' => $totalFees,
             'formatted' => $formattedFees['formatted'],
-            'description' => 'Pajak dan biaya pihak ketiga sebesar 0,0332% + biaya trading 0,1%'
+            'description' => 'Biaya ' . ($orderType === 'maker' ? 'maker 0,10%' : 'taker 0,15%') . ' + PPN 0,011% + slippage 0,5%'
         ];
     }
 
@@ -97,7 +107,8 @@ abstract class AnalysisService implements AnalysisInterface
         $risk = abs($entryPrice - $stopLoss);
         $reward = abs($entryPrice - $takeProfit);
 
-        $fees = $this->calculateFees($positionSize);
+        // Default to taker fees for profit/loss calculations
+        $fees = $this->calculateFees($positionSize, 'taker');
 
         // Calculate profit/loss without fees first
         if ($positionType === 'long') {
@@ -192,7 +203,8 @@ abstract class AnalysisService implements AnalysisInterface
         $entryPrices = $this->formatPrice($entry);
         $stopLossPrices = $this->formatPrice($stopLoss);
         $takeProfitPrices = $this->formatPrice($takeProfit);
-        $fees = $this->calculateFees($positionSize);
+        // Default to taker fees for result formatting
+        $fees = $this->calculateFees($positionSize, 'taker');
         $pl = $this->calculatePotentialPL($entry, $stopLoss, $takeProfit, $positionSize, $signal);
 
         return (object) [

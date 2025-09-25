@@ -42,7 +42,7 @@
 - **Model:** `App\Models\Coin`
 - **Method:** `getUpdate` method in `CoinController`
 - **View:** `resources/views/coin/update.blade.php` form using GET with query string parameters for the form.
-- **Service:** `App\Services\AnalysisService` gets parameters crypto symbol and method analysis, with each service having a single file class for each analysis. E.g. `App\Services\SniperService`
+- **Service:** `App\Analysis\AnalysisService` gets parameters crypto symbol and method analysis, with each service having a single file class for each analysis. E.g. `App\Analysis\SniperService`
 - **Callable:** This service or action can be called and used by controller, console jobs, or anything in Laravel.
 
 ### Service Results Structure
@@ -53,13 +53,42 @@ The service will always and mandatory to return an object containing:
 | **title** | Title of the analysis |
 | **signal** | Long or short |
 | **confidence** | 95% (calculated percentage from analysis functions) |
-| **entry** | Entry price in USD and Rupiah |
-| **stop_loss** | Stop loss price in USD and Rupiah |
-| **take_profit** | Take profit price in USD and Rupiah |
+| **entry_usd** | Entry price in USD |
+| **entry_idr** | Entry price in Rupiah |
+| **stop_loss_usd** | Stop loss price in USD |
+| **stop_loss_idr** | Stop loss price in Rupiah |
+| **take_profit_usd** | Take profit price in USD |
+| **take_profit_idr** | Take profit price in Rupiah |
 | **risk_reward** | Risk-reward ratio e.g. 1:3 |
-| **fee** | Fees in USD and Rupiah (slippage 0.5%, taker 0.15%, maker 0.10%, tax 0.21%, CFX 0.0222%) |
-| **potential_profit** | Potential profit in USD and Rupiah after fees |
-| **potential_loss** | Potential loss in USD and Rupiah after fees |
+| **fee_usd** | Fees in USD (slippage 0.5%, transaction fee 0.10% + PPN 0.011% + CFX 0.15% + PPN on CFX 0.0165% for taker, CFX 0.05% + PPN on CFX 0.0055% for maker) |
+| **fee_idr** | Fees in Rupiah (slippage 0.5%, transaction fee 0.10% + PPN 0.011% + CFX 0.15% + PPN on CFX 0.0165% for taker, CFX 0.05% + PPN on CFX 0.0055% for maker) |
+| **potential_profit_usd** | Potential profit in USD after fees |
+| **potential_profit_idr** | Potential profit in Rupiah after fees |
+| **potential_loss_usd** | Potential loss in USD after fees |
+| **potential_loss_idr** | Potential loss in Rupiah after fees |
+| **indicators** | Technical indicators used in the analysis |
+| **indicator_config** | Configuration for displaying indicators |
+| **conclusion** | Analysis conclusion and recommendations |
+
+### Fee Structure (Pluang PRO - Kripto Futures)
+Based on the correct fee structure for Kripto Futures on Pluang PRO:
+
+**Maker Fee:**
+- Transaction fee: 0.10%
+- PPN on transaction fee: 0.011%
+- CFX fee: 0.05%
+- PPN on CFX fee: 0.0055%
+- **Total Maker Fee: 0.1665%**
+
+**Taker Fee:**
+- Transaction fee: 0.10%
+- PPN on transaction fee: 0.011%
+- CFX fee: 0.15%
+- PPN on CFX fee: 0.0165%
+- **Total Taker Fee: 0.2775%**
+
+**Additional Costs:**
+- Slippage: 0.5% (estimated)
 
 ### Implementation Flow
 1. User selects crypto symbol and analysis method from dropdowns
