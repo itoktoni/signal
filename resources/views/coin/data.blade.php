@@ -28,7 +28,7 @@
                 <form id="filter-form" class="form-table-filter" method="GET" action="{{ route(module('getData')) }}">
                     <div class="row">
                         <x-select name="perpage" label="Page" :options="['10' => '10', '20' => '20', '50' => '50', '100' => '100']" :value="request('perpage', 10)" col="1" id="perpage-select"/>
-                        <x-select name="coin_watch" :options="[null => 'Select Watch', 'watch' => 'Watch']" :value="request('coin_watch', 'watch')" col="2"/>
+                        <x-select name="coin_watch" :options="[null => 'Select Watch', 1 => 'Watch']" :value="request('coin_watch', null)" col="2"/>
                         <x-select name="coin_plan" :options="[null => 'Select Plan', 'long' => 'Long', 'short' => 'Short']" :value="request('coin_watch', null)" col="2"/>
                         <x-select name="filter" :options="[null => 'All Filter', 'coin_code' => 'Code', 'coin_base' => 'Name']" :value="request('filter', 'All Filter')" col="3"/>
                         <x-input name="search" type="text" placeholder="Enter search term" :value="request('search')" col="4"/>

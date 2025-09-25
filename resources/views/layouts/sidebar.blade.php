@@ -1,10 +1,10 @@
  <!-- Sidebar Container for both columns -->
-        <div id="sidebar-container" class="sidebar-container">
+       <div id="sidebar-container" class="sidebar-container">
             <!-- Column 1: Main Sidebar -->
             <aside class="main-sidebar safe-area-drawer">
                 <ul class="main-nav">
                     @php
-                        $currentRoute = Route::currentRouteName();
+                        $currentRoute = request()->route()->getName();
                         $activeGroup = null;
                         foreach(config('sidebar.groups') as $groupKey => $group) {
                             foreach($group['menus'] as $menuKey => $menu) {
