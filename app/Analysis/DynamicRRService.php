@@ -66,9 +66,6 @@ class DynamicRRService extends AnalysisService
             'resistance' => $srLevels['resistance']
         ];
 
-        // Get indicator configuration for this analysis method
-        $indicatorConfig = $this->getIndicatorConfig('dynamic_rr');
-
         // Format the result with dynamic amount
         return $this->formatResult(
             "Dynamic RR Analysis for {$symbol}",
@@ -80,9 +77,7 @@ class DynamicRRService extends AnalysisService
             $levels['risk_reward'] !== '1:1' ? floatval(str_replace('1:', '', $levels['risk_reward'])) : 1.0,
             $amount, // dynamic position size in USD
             'dynamic_rr', // analyst method parameter
-            $displayIndicators, // pass indicators
-            'taker', // order type (dynamic RR typically uses taker orders)
-            $indicatorConfig // pass indicator configuration
+            $displayIndicators // pass indicators
         );
     }
 
@@ -516,4 +511,5 @@ class DynamicRRService extends AnalysisService
         $rs = $avgGain / $avgLoss;
         return 100 - (100 / (1 + $rs));
     }
+
 }

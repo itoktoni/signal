@@ -13,17 +13,22 @@ interface AnalysisInterface
      *   - title: string - Analysis title
      *   - signal: string - Trading signal ('BUY', 'SELL', or 'NEUTRAL')
      *   - confidence: float - Confidence percentage (0-100)
-     *   - entry: array - Entry price with 'usd' and 'rupiah' values
-     *   - stop_loss: array - Stop loss price with 'usd' and 'rupiah' values
-     *   - take_profit: array - Take profit price with 'usd' and 'rupiah' values
+     *   - entry_usd: float - Entry price in USD
+     *   - entry_idr: float - Entry price in Rupiah
+     *   - stop_loss_usd: float - Stop loss price in USD
+     *   - stop_loss_idr: float - Stop loss price in Rupiah
+     *   - take_profit_usd: float - Take profit price in USD
+     *   - take_profit_idr: float - Take profit price in Rupiah
      *   - risk_reward: float - Risk-reward ratio
-     *   - fee: array - Fee details with 'usd' and 'rupiah' values
-     *   - potential_profit: array - Potential profit with 'usd' and 'rupiah' values
-     *   - potential_loss: array - Potential loss with 'usd' and 'rupiah' values
+     *   - fee_usd: float - Fee details in USD
+     *   - fee_idr: float - Fee details in Rupiah
+     *   - potential_profit_usd: float - Potential profit in USD
+     *   - potential_profit_idr: float - Potential profit in Rupiah
+     *   - potential_loss_usd: float - Potential loss in USD
+     *   - potential_loss_idr: float - Potential loss in Rupiah
      *   - indicators: array - Technical indicators for display
      *   - indicator_config: array - Configuration for displaying indicators
      *   - conclusion: array - Analysis conclusion and recommendations
-     *   - formatted: array - Formatted values for display
      */
     public function analyze(string $symbol, float $amount = 100): object;
 

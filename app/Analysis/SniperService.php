@@ -58,9 +58,6 @@ class SniperService extends AnalysisService
             'resistance' => $resistance
         ];
 
-        // Get indicator configuration for this analysis method
-        $indicatorConfig = $this->getIndicatorConfig('sniper');
-
         // Format the result with dynamic amount
         return $this->formatResult(
             "Sniper Analysis for {$symbol}",
@@ -72,9 +69,7 @@ class SniperService extends AnalysisService
             $levels['risk_reward'] !== '1:1' ? floatval(str_replace('1:', '', $levels['risk_reward'])) : 1.0,
             $amount, // dynamic position size in USD
             'sniper', // analyst method
-            $displayIndicators, // pass indicators
-            'taker', // order type (sniper typically uses taker orders)
-            $indicatorConfig // pass indicator configuration
+            $displayIndicators // pass indicators
         );
     }
 
@@ -369,4 +364,5 @@ class SniperService extends AnalysisService
         $slice = array_slice($trs, -$period);
         return array_sum($slice) / count($slice);
     }
+
 }

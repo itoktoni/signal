@@ -64,7 +64,7 @@ class CoinController extends Controller
         return $this->views($this->module());
     }
 
-     /**
+    /**
      * Show the form for editing the specified resource.
      */
     public function getWatch($code)
@@ -195,7 +195,7 @@ class CoinController extends Controller
     private function convertAnalysisResult($result, $symbol)
     {
         // Extract signal from the new result structure
-        $signal = strtoupper($result->signal); // Convert 'long'/'short'/'hold' to 'BUY'/'SELL'/'NEUTRAL'
+        $signal = strtoupper(safeValue($result, 'signal', 'NEUTRAL')); // Convert 'long'/'short'/'hold' to 'BUY'/'SELL'/'NEUTRAL'
         if ($signal === 'LONG') {
             $signal = 'BUY';
         } elseif ($signal === 'SHORT') {
@@ -204,59 +204,29 @@ class CoinController extends Controller
             $signal = 'NEUTRAL';
         }
 
-        // Calculate RR ratio from the new result structure
-        $rrRatio = $result->risk_reward ?? 0;
-
-        // Extract entry, stop loss, and take profit with both USD and Rupiah
-        $entry = $result->entry ?? ['usd' => 0, 'rupiah' => 0];
-        $stopLoss = $result->stop_loss ?? ['usd' => 0, 'rupiah' => 0];
-        $takeProfit = $result->take_profit ?? ['usd' => 0, 'rupiah' => 0];
-
-        // Extract and restructure fee information for the view
-        $feeData = $result->fee ?? null;
-        $fee = ['usd' => 0, 'rupiah' => 0];
-        if ($feeData && isset($feeData['total'])) {
-            $fee = [
-                'usd' => $feeData['total'],
-                'rupiah' => $feeData['total'] * 16000, // Convert USD to Rupiah
-                'breakdown' => $feeData, // Keep original breakdown for reference
-                'description' => $feeData['description'] ?? 'Biaya transaksi dan pajak'
-            ];
-        }
-
-        // Extract potential profit/loss information
-        // These are now returned as formatted arrays with USD and Rupiah values
-        $potentialProfit = $result->potential_profit ?? ['usd' => 0, 'rupiah' => 0];
-        $potentialLoss = $result->potential_loss ?? ['usd' => 0, 'rupiah' => 0];
-
-        // Only include indicators if they exist in the result
-        $indicators = [];
-        if (isset($result->indicators) && is_array($result->indicators)) {
-            $indicators = $result->indicators;
-        }
-
         return [
             'symbol' => $symbol,
-            'current_price' => $entry['usd'] ?? 0, // Use entry price as current price for compatibility
-            'analysis' => [
-                'signal' => $signal,
-                'confidence' => $result->confidence ?? 50,
-                'entry' => $entry,
-                'stop_loss' => $stopLoss,
-                'take_profit' => $takeProfit,
-                'rr_ratio' => $rrRatio,
-                'indicators' => $indicators
-            ],
-            'entry' => $entry,
-            'stop_loss' => $stopLoss,
-            'take_profit' => $takeProfit,
-            'fee' => $fee,
-            'potential_profit' => $potentialProfit,
-            'potential_loss' => $potentialLoss,
+            'title' => safeValue($result, 'title', 'Analysis'),
+            'signal' => $signal,
+            'confidence' => safeNumericValue($result, 'confidence', 50),
+            'risk_reward' => safeNumericValue($result, 'risk_reward'),
+            'entry_usd' => safeNumericValue($result, 'entry_usd'),
+            'entry_idr' => safeNumericValue($result, 'entry_idr'),
+            'stop_loss_usd' => safeNumericValue($result, 'stop_loss_usd'),
+            'stop_loss_idr' => safeNumericValue($result, 'stop_loss_idr'),
+            'take_profit_usd' => safeNumericValue($result, 'take_profit_usd'),
+            'take_profit_idr' => safeNumericValue($result, 'take_profit_idr'),
+            'fee_usd' => safeNumericValue($result, 'fee_usd'),
+            'fee_idr' => safeNumericValue($result, 'fee_idr'),
+            'potential_profit_usd' => safeNumericValue($result, 'potential_profit_usd'),
+            'potential_profit_idr' => safeNumericValue($result, 'potential_profit_idr'),
+            'potential_loss_usd' => safeNumericValue($result, 'potential_loss_usd'),
+            'potential_loss_idr' => safeNumericValue($result, 'potential_loss_idr'),
+            'indicators' => [],
+            'indicator_config' => [],
+            'conclusion' => [],
             'last_updated' => now()->format('Y-m-d H:i:s'),
-            'analysis_type' => $result->title ?? 'Analysis'
+            'analysis_type' => safeValue($result, 'title', 'Analysis')
         ];
     }
-
-    // ... existing methods ...
 }
