@@ -195,7 +195,7 @@ class CoinController extends Controller
     private function convertAnalysisResult($result, $symbol)
     {
         // Extract signal from the new result structure
-        $signal = strtoupper(safeValue($result, 'signal', 'NEUTRAL')); // Convert 'long'/'short'/'hold' to 'BUY'/'SELL'/'NEUTRAL'
+        $signal = strtoupper($result->signal); // Convert 'long'/'short'/'hold' to 'BUY'/'SELL'/'NEUTRAL'
         if ($signal === 'LONG') {
             $signal = 'BUY';
         } elseif ($signal === 'SHORT') {
@@ -206,7 +206,7 @@ class CoinController extends Controller
 
         return [
             'symbol' => $symbol,
-            'title' => safeValue($result, 'title', 'Analysis'),
+            'title' => $result->title ?? 'Analysis',
             'signal' => $signal,
             'confidence' => safeNumericValue($result, 'confidence', 50),
             'risk_reward' => safeNumericValue($result, 'risk_reward'),

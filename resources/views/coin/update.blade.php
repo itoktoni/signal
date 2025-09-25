@@ -1,444 +1,589 @@
 <x-layout>
+    <style>
+        :root {
+            --crypto-primary: #2563eb;
+            --crypto-secondary: #7c3aed;
+            --crypto-success: #10b981;
+            --crypto-danger: #ef4444;
+            --crypto-warning: #f59e0b;
+            --crypto-dark: #1e293b;
+            --crypto-light: #f8fafc;
+            --crypto-card-bg: #ffffff;
+            --crypto-border: #e2e8f0;
+            --crypto-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
 
-    <div class="row">
-        <!-- Crypto Analysis Section -->
-        <div class="col-12">
-            <x-card title="🔍 {{ $crypto_analysis['analysis_type'] ?? (isset($crypto_analysis['title']) ? $crypto_analysis['title'] : (AnalysisType::{strtoupper($analyst_method)}()->getAnalysisDescription() ?? 'Basic Analysis')) }} - {{ $model->coin_code ?? 'Tidak Diketahui' }}">
-                @if(isset($crypto_analysis) && !isset($crypto_analysis['error']))
-                    @php
-                        // Standardized analysis result structure from all analysis services
-                        $signal = safeValue($crypto_analysis, 'signal', 'NEUTRAL');
-                        $confidence = safeNumericValue($crypto_analysis, 'confidence');
-                        $rrRatio = safeNumericValue($crypto_analysis, 'risk_reward');
-                        // Updated to match the new standardized format with separate _usd and _idr fields
-                        $entryUsd = safeNumericValue($crypto_analysis, 'entry_usd');
-                        $entryIdr = safeNumericValue($crypto_analysis, 'entry_idr');
-                        $stopLossUsd = safeNumericValue($crypto_analysis, 'stop_loss_usd');
-                        $stopLossIdr = safeNumericValue($crypto_analysis, 'stop_loss_idr');
-                        $takeProfitUsd = safeNumericValue($crypto_analysis, 'take_profit_usd');
-                        $takeProfitIdr = safeNumericValue($crypto_analysis, 'take_profit_idr');
-                        $title = safeValue($crypto_analysis, 'title', 'Analysis');
-                        $feeUsd = safeNumericValue($crypto_analysis, 'fee_usd');
-                        $feeIdr = safeNumericValue($crypto_analysis, 'fee_idr');
-                        $potentialProfitUsd = safeNumericValue($crypto_analysis, 'potential_profit_usd');
-                        $potentialProfitIdr = safeNumericValue($crypto_analysis, 'potential_profit_idr');
-                        $potentialLossUsd = safeNumericValue($crypto_analysis, 'potential_loss_usd');
-                        $potentialLossIdr = safeNumericValue($crypto_analysis, 'potential_loss_idr');
+        .crypto-dashboard {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-                        $direction = $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
-                        $directionIcon = $signal === 'BUY' ? '🚀' : ($signal === 'SELL' ? '⚠️' : '⏳');
-                        $signalClass = $signal === 'BUY' ? 'success' : ($signal === 'SELL' ? 'danger' : 'warning');
-                    @endphp
+        .crypto-header {
+            background: linear-gradient(135deg, var(--crypto-primary) 0%, var(--crypto-secondary) 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--crypto-shadow);
+        }
 
-                    <!-- Signal Summary Banner -->
-                    <div class="signal-banner {{ $signalClass }}">
-                        <div class="signal-content">
-                            <h2 class="signal-title">
-                                {{ $directionIcon }} {{ $direction }} SIGNAL
-                            </h2>
-                            <div class="signal-details">
-                                <span class="signal-confidence">Confidence: {{ $confidence }}%</span>
-                                <span class="signal-rr">Risk-Reward: {{ $rrRatio }}:1</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="analysis-results">
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="info-card">
-                                    <h4>📊 Market Data</h4>
-                                    <p><strong>Symbol:</strong> {{ $crypto_analysis['symbol'] ?? $model->coin_code ?? 'Unknown' }}</p>
-                                    <p><strong>Current Price:</strong> ${{ number_format($entryUsd, 8) }}</p>
-                                    <p><strong>Trading Amount:</strong> ${{ number_format($amount, 2) }}</p>
-                                    <p><strong>Last Updated:</strong> {{ $crypto_analysis['last_updated'] ?? now()->format('Y-m-d H:i:s') }}</p>
-                                    <p><strong>Tipe Analisis:</strong>
-                                        <span class="badge {{ $analyst_method === AnalysisType::SNIPER ? 'badge-success' : ($analyst_method === AnalysisType::DYNAMIC_RR ? 'badge-primary' : 'badge-warning') }}">
-                                            {{ AnalysisType::{strtoupper($analyst_method)}()->getDisplayName() ?? 'Dasar' }}
-                                        </span>
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="info-card">
-                                    <h4>🎯 Trading Signal</h4>
-                                    @php
-                                        $signalClass = $signal === 'BUY' ? 'success' : ($signal === 'SELL' ? 'danger' : 'warning');
-                                        $direction = $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
-                                        $directionIcon = $signal === 'BUY' ? '🚀' : ($signal === 'SELL' ? '⚠️' : '⏳');
-                                    @endphp
-                                    <p><strong>Direction:</strong>
-                                        <span class="badge badge-{{ $signalClass }} signal-large">
-                                            {{ $directionIcon }} {{ $direction }}
-                                        </span>
-                                    </p>
-                                    <p><strong>Signal:</strong>
-                                        <span class="badge badge-{{ $signalClass }}">
-                                            {{ $signal }}
-                                        </span>
-                                    </p>
-                                    <p><strong>Confidence:</strong>
-                                        <span class="badge {{ $confidence >= 70 ? 'badge-success' : ($confidence >= 50 ? 'badge-warning' : 'badge-danger') }}">
-                                            {{ $confidence }}%
-                                        </span>
-                                    </p>
-                                    <p><strong>Risk-Reward Ratio:</strong>
-                                        <span class="badge {{ $rrRatio >= 2 ? 'badge-success' : 'badge-warning' }}">
-                                            {{ $rrRatio }}:1
-                                        </span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+        .crypto-card {
+            background: var(--crypto-card-bg);
+            border-radius: 16px;
+            box-shadow: var(--crypto-shadow);
+            border: 1px solid var(--crypto-border);
+            margin: 2rem;
+        }
 
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="info-card">
-                                    <h4>📈 Trading Levels</h4>
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <p><strong>Entry Point:</strong></p>
-                                            <div class="price-dual">
-                                                <span class="price-usd">${{ number_format($entryUsd, 3) }}</span>
-                                                <span class="price-rupiah">Rp {{ number_format($entryIdr, 0) }}</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-4">
-                                            <p><strong>Stop Loss:</strong></p>
-                                            <div class="price-dual">
-                                                <span class="price-usd text-danger">${{ number_format($stopLossUsd, 3) }}</span>
-                                                <span class="price-rupiah text-danger">Rp {{ number_format($stopLossIdr, 0) }}</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-4">
-                                            <p><strong>Take Profit:</strong></p>
-                                            <div class="price-dual">
-                                                <span class="price-usd text-success">${{ number_format($takeProfitUsd, 3) }}</span>
-                                                <span class="price-rupiah text-success">Rp {{ number_format($takeProfitIdr, 0) }}</span>
+        .crypto-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .crypto-card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--crypto-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .crypto-card-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--crypto-dark);
+            margin: 0;
+        }
+
+        .crypto-card-body {
+            padding: 24px;
+        }
+
+        .signal-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 1.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .signal-badge.buy {
+            background-color: #dcfce7;
+            color: var(--crypto-success);
+        }
+
+        .signal-badge.sell {
+            background-color: #fee2e2;
+            color: var(--crypto-danger);
+        }
+
+        .signal-badge.neutral {
+            background-color: #fef3c7;
+            color: var(--crypto-warning);
+        }
+
+        .crypto-metric {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .crypto-metric-label {
+            font-size: 1.7rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .crypto-metric-value {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--crypto-dark);
+        }
+
+        .crypto-price {
+            font-size: 1.7rem;
+            font-weight: 700;
+        }
+
+        .crypto-grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        .crypto-grid-cols-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .crypto-grid-cols-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .crypto-section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--crypto-dark);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--crypto-primary);
+            display: inline-block;
+        }
+
+        .crypto-data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .crypto-data-item {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .crypto-data-label {
+            font-size: 1.5rem;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .crypto-data-value {
+            font-size: 1.525rem;
+            font-weight: 600;
+            color: var(--crypto-dark);
+        }
+
+        .crypto-price-usd {
+            color: var(--crypto-dark);
+            font-weight: 700;
+        }
+
+        .crypto-price-idr {
+            color: #64748b;
+            font-size: 1.5rem;
+        }
+
+        .crypto-indicator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 16px;
+        }
+
+        .crypto-indicator-card {
+            background: #f8fafc;
+            border: 1px solid var(--crypto-border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .crypto-indicator-label {
+            font-size: 1.5rem;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .crypto-indicator-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--crypto-dark);
+        }
+
+        .crypto-profit-positive {
+            color: var(--crypto-success);
+        }
+
+        .crypto-profit-negative {
+            color: var(--crypto-danger);
+        }
+
+        .crypto-conclusion-card {
+            background: #eff6ff;
+            border-left: 4px solid var(--crypto-primary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .crypto-conclusion-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--crypto-dark);
+            margin-bottom: 12px;
+        }
+
+        .crypto-conclusion-content {
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .crypto-alert {
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .crypto-alert-success {
+            background-color: #dcfce7;
+            border-left: 4px solid var(--crypto-success);
+        }
+
+        .crypto-alert-warning {
+            background-color: #fef3c7;
+            border-left: 4px solid var(--crypto-warning);
+        }
+
+        .crypto-alert-danger {
+            background-color: #fee2e2;
+            border-left: 4px solid var(--crypto-danger);
+        }
+
+        .crypto-alert-info {
+            background-color: #dbeafe;
+            border-left: 4px solid var(--crypto-primary);
+        }
+
+
+        @media (max-width: 768px) {
+            .crypto-grid-cols-2,
+            .crypto-grid-cols-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .crypto-header {
+                padding: 16px;
+            }
+
+            .crypto-card-body {
+                padding: 16px;
+            }
+        }
+    </style>
+
+    <div class="crypto-dashboard">
+        <!-- Crypto Analysis Header -->
+        <div class="crypto-header">
+            <div class="row align-items-center">
+                <div class="col-12 col-md-8">
+                    <h1 class="mb-2">
+                        <i class="bi bi-graph-up"></i>
+                        {{ $crypto_analysis['analysis_type'] ?? (AnalysisType::{strtoupper($analyst_method)}()->getAnalysisDescription()) ?? 'Basic Analysis' }}
+                    </h1>
+                    <p class="mb-0">
+                        <i class="bi bi-currency-bitcoin"></i>
+                        {{ $model->coin_code ?? 'Tidak Diketahui' }}
+                        <span class="mx-2">•</span>
+                        Last Updated: {{ $crypto_analysis['last_updated'] ?? now()->format('Y-m-d H:i:s') }}
+                    </p>
+                </div>
+                <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
+                    @if(isset($crypto_analysis) && !isset($crypto_analysis['error']))
+                        @php
+                            $signal = $crypto_analysis['signal'] ?? 'NEUTRAL';
+                            $signalClass = $signal === 'BUY' ? 'buy' : ($signal === 'SELL' ? 'sell' : 'neutral');
+                            $signalText = $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
+                        @endphp
+                        <span class="signal-badge {{ $signalClass }}">
+                            {{ $signalText }}
+                        </span>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <!-- Crypto Analysis Content -->
+        <div class="row">
+            <div class="col-12">
+                <x-card title="📊 Crypto Analysis Results">
+                    @if(isset($crypto_analysis) && !isset($crypto_analysis['error']))
+                        @php
+                            // Standardized analysis result structure from all analysis services
+                            $signal = $crypto_analysis['signal'] ?? 'NEUTRAL';
+                            $confidence = $crypto_analysis['confidence'] ?? 0;
+                            $rrRatio = $crypto_analysis['risk_reward'] ?? 0;
+                            // Updated to match the new standardized format with separate _usd and _idr fields
+                            $entryUsd = $crypto_analysis['entry_usd'] ?? 0;
+                            $entryIdr = $crypto_analysis['entry_idr'] ?? 0;
+                            $stopLossUsd = $crypto_analysis['stop_loss_usd'] ?? 0;
+                            $stopLossIdr = $crypto_analysis['stop_loss_idr'] ?? 0;
+                            $takeProfitUsd = $crypto_analysis['take_profit_usd'] ?? 0;
+                            $takeProfitIdr = $crypto_analysis['take_profit_idr'] ?? 0;
+                            $title = $crypto_analysis['title'] ?? 'Analysis';
+                            $feeUsd = $crypto_analysis['fee_usd'] ?? 0;
+                            $feeIdr = $crypto_analysis['fee_idr'] ?? 0;
+                            $potentialProfitUsd = $crypto_analysis['potential_profit_usd'] ?? 0;
+                            $potentialProfitIdr = $crypto_analysis['potential_profit_idr'] ?? 0;
+                            $potentialLossUsd = $crypto_analysis['potential_loss_usd'] ?? 0;
+                            $potentialLossIdr = $crypto_analysis['potential_loss_idr'] ?? 0;
+
+                            $signalClass = $signal === 'BUY' ? 'buy' : ($signal === 'SELL' ? 'sell' : 'neutral');
+                            $signalText = $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
+                        @endphp
+
+                        <!-- Key Metrics Overview -->
+                        <div class="crypto-grid crypto-grid-cols-3 mb-4">
+                            <div class="crypto-card">
+                                <div class="crypto-card-body">
+                                    <div class="crypto-metric">
+                                        <div class="crypto-metric-label">Confidence Level</div>
+                                        <div class="crypto-metric-value">{{ $confidence }}%</div>
+                                        <div class="mt-2">
+                                            <div class="progress" style="height: 8px;">
+                                                <div class="progress-bar bg-{{ $confidence >= 70 ? 'success' : ($confidence >= 50 ? 'warning' : 'danger') }}"
+                                                     role="progressbar"
+                                                     style="width: {{ $confidence }}%"
+                                                     aria-valuenow="{{ $confidence }}"
+                                                     aria-valuemin="0"
+                                                     aria-valuemax="100"></div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="crypto-card">
+                                <div class="crypto-card-body">
+                                    <div class="crypto-metric">
+                                        <div class="crypto-metric-label">Risk-Reward Ratio</div>
+                                        <div class="crypto-metric-value">{{ $rrRatio }}:1</div>
+                                        <div class="mt-2">
+                                            <span class="badge bg-{{ $rrRatio >= 2 ? 'success' : 'warning' }}">
+                                                {{ $rrRatio >= 2 ? 'GOOD' : 'MODERATE' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="crypto-card">
+                                <div class="crypto-card-body">
+                                    <div class="crypto-metric">
+                                        <div class="crypto-metric-label">Current Price</div>
+                                        <div class="crypto-price">${{ number_format($entryUsd, 3) }}</div>
+                                        <div class="crypto-price-idr">Rp {{ number_format($entryIdr, 0) }}</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Fee Information Section -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="info-card">
-                                    <h4>💰 Informasi Biaya</h4>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <p><strong>Total Fee (USD):</strong></p>
-                                            <div class="fee-info">
-                                                <span class="price-value">${{ number_format($feeUsd, 4) }}</span>
-                                                @if($amount > 0)
-                                                <span class="percentage">
-                                                    ({{ number_format(($feeUsd / $amount) * 100, 2) }}%)
-                                                </span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <p><strong>Total Fee (Rupiah):</strong></p>
-                                            <div class="fee-info">
-                                                <span class="price-value">Rp {{ number_format($feeIdr, 0) }}</span>
-                                                @if($amount > 0)
-                                                <span class="percentage">
-                                                    ({{ number_format(($feeIdr / ($amount * 16000)) * 100, 2) }}%)
-                                                </span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                        @if(isset($crypto_analysis['fee']) && is_array($crypto_analysis['fee']) && isset($crypto_analysis['fee']['description']))
-                                        <div class="col-12 mt-3">
-                                            <p><strong>Deskripsi Biaya:</strong> {{ $crypto_analysis['fee']['description'] }}</p>
-                                        </div>
+                        <!-- Trading Levels -->
+                        <div class="crypto-card">
+                            <div class="crypto-card-header">
+                                <h3 class="crypto-card-title">
+                                    <i class="bi bi-bar-chart-steps"></i> Trading Levels
+                                </h3>
+                            </div>
+                            <div class="crypto-card-body">
+                                <div class="crypto-data-grid">
+                                    <div class="crypto-data-item">
+                                        <div class="crypto-data-label">Entry Point</div>
+                                        <div class="crypto-data-value crypto-price-usd">${{ number_format($entryUsd, 3) }}</div>
+                                        <div class="crypto-price-idr">Rp {{ number_format($entryIdr, 0) }}</div>
+                                    </div>
+                                    <div class="crypto-data-item">
+                                        <div class="crypto-data-label">Stop Loss</div>
+                                        <div class="crypto-data-value text-danger">${{ number_format($stopLossUsd, 3) }}</div>
+                                        <div class="crypto-price-idr text-danger">Rp {{ number_format($stopLossIdr, 0) }}</div>
+                                    </div>
+                                    <div class="crypto-data-item">
+                                        <div class="crypto-data-label">Take Profit</div>
+                                        <div class="crypto-data-value text-success">${{ number_format($takeProfitUsd, 3) }}</div>
+                                        <div class="crypto-price-idr text-success">Rp {{ number_format($takeProfitIdr, 0) }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fee Information -->
+                        <div class="crypto-card">
+                            <div class="crypto-card-header">
+                                <h3 class="crypto-card-title">
+                                    <i class="bi bi-currency-dollar"></i> Fee Information
+                                </h3>
+                            </div>
+                            <div class="crypto-card-body">
+                                <div class="crypto-data-grid">
+                                    <div class="crypto-data-item">
+                                        <div class="crypto-data-label">Total Fee (USD)</div>
+                                        <div class="crypto-data-value">${{ number_format($feeUsd, 4) }}</div>
+                                        @if($amount > 0)
+                                            <div class="crypto-price-idr">({{ number_format(($feeUsd / $amount) * 100, 2) }}% of trade)</div>
+                                        @endif
+                                    </div>
+                                    <div class="crypto-data-item">
+                                        <div class="crypto-data-label">Total Fee (IDR)</div>
+                                        <div class="crypto-data-value">Rp {{ number_format($feeIdr, 0) }}</div>
+                                        @if($amount > 0)
+                                            <div class="crypto-price-idr">({{ number_format(($feeIdr / ($amount * 16000)) * 100, 2) }}% of trade)</div>
+                                        @endif
+                                    </div>
+                                </div>
+                                @if(isset($crypto_analysis['fee']) && is_array($crypto_analysis['fee']) && isset($crypto_analysis['fee']['description']))
+                                    <div class="mt-3 p-3 bg-light rounded">
+                                        <small class="text-muted">{{ $crypto_analysis['fee']['description'] }}</small>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Profit/Loss Potential -->
+                        <div class="crypto-card">
+                            <div class="crypto-card-header">
+                                <h3 class="crypto-card-title">
+                                    <i class="bi bi-graph-up-arrow"></i> Profit & Loss Potential
+                                </h3>
+                            </div>
+                            <div class="crypto-card-body">
+                                <div class="crypto-data-grid">
+                                    <div class="crypto-data-item">
+                                        <div class="crypto-data-label">Potential Profit</div>
+                                        <div class="crypto-data-value crypto-profit-positive">${{ number_format($potentialProfitUsd, 2) }}</div>
+                                        <div class="crypto-price-idr crypto-profit-positive">Rp {{ number_format($potentialProfitIdr, 0) }}</div>
+                                        @if($amount > 0)
+                                            <div class="crypto-price-idr">({{ number_format(($potentialProfitUsd / $amount) * 100, 1) }}%)</div>
+                                        @endif
+                                    </div>
+                                    <div class="crypto-data-item">
+                                        <div class="crypto-data-label">Potential Loss</div>
+                                        @php
+                                            $displayLossUsd = abs($potentialLossUsd);
+                                            $displayLossIdr = abs($potentialLossIdr);
+                                        @endphp
+                                        <div class="crypto-data-value crypto-profit-negative">${{ number_format($displayLossUsd, 2) }}</div>
+                                        <div class="crypto-price-idr crypto-profit-negative">Rp {{ number_format($displayLossIdr, 0) }}</div>
+                                        @if($amount > 0)
+                                            <div class="crypto-price-idr">({{ number_format(($displayLossUsd / $amount) * 100, 1) }}%)</div>
                                         @endif
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Profit/Loss Information Section -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="info-card">
-                                    <h4>📊 Profit & Loss Potential</h4>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <p><strong>Potential Profit:</strong></p>
-                                            <div class="profit-loss-info">
-                                                <span class="price-value text-success">${{ number_format($potentialProfitUsd, 2) }}</span>
-                                                <span class="price-rupiah text-success">Rp {{ number_format($potentialProfitIdr, 0) }}</span>
-                                                @if($amount > 0)
-                                                <span class="percentage text-success">
-                                                    ({{ number_format(($potentialProfitUsd / $amount) * 100, 1) }}%)
-                                                </span>
+                        <!-- Technical Indicators -->
+                        @php
+                            $hasIndicators = false;
+                            if (isset($crypto_analysis['indicators']) && is_array($crypto_analysis['indicators'])) {
+                                $indicators = $crypto_analysis['indicators'];
+                                $hasIndicators = !empty($indicators);
+                            }
+
+                            $currentConfig = $crypto_analysis['indicator_config'] ?? [];
+                        @endphp
+
+                        @if($hasIndicators)
+                        <div class="crypto-card">
+                            <div class="crypto-card-header">
+                                <h3 class="crypto-card-title">
+                                    <i class="bi bi-activity"></i> Technical Indicators
+                                </h3>
+                            </div>
+                            <div class="crypto-card-body">
+                                <div class="crypto-indicator-grid">
+                                    @foreach($currentConfig as $key => $config)
+                                        @if(isset($indicators[$key]))
+                                        <div class="crypto-indicator-card">
+                                            <div class="crypto-indicator-label">{{ $config['label'] }}</div>
+                                            <div class="crypto-indicator-value">
+                                                @if($config['format'] === 'price')
+                                                    ${{ number_format($indicators[$key], 3) }}
+                                                @else
+                                                    {{ $indicators[$key] }}
                                                 @endif
                                             </div>
                                         </div>
-                                        <div class="col-6">
-                                            <p><strong>Potential Loss:</strong></p>
-                                            <div class="profit-loss-info">
-                                                @php
-                                                    // Loss should typically be negative, but we'll handle both cases
-                                                    $displayLossUsd = abs($potentialLossUsd);
-                                                    $displayLossIdr = abs($potentialLossIdr);
-                                                @endphp
-                                                <span class="price-value text-danger">${{ number_format($displayLossUsd, 2) }}</span>
-                                                <span class="price-rupiah text-danger">Rp {{ number_format($displayLossIdr, 0) }}</span>
-                                                @if($amount > 0)
-                                                <span class="percentage text-danger">
-                                                    ({{ number_format(($displayLossUsd / $amount) * 100, 1) }}%)
-                                                </span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
+                                        @endif
+                                    @endforeach
                                 </div>
                             </div>
                         </div>
+                        @endif
 
+                        <!-- Analysis Conclusion -->
+                        @if(isset($crypto_analysis['conclusion']) && !empty($crypto_analysis['conclusion']))
+                        <div class="crypto-card">
+                            <div class="crypto-card-header">
+                                <h3 class="crypto-card-title">
+                                    <i class="bi bi-clipboard-data"></i> Analysis Conclusion
+                                </h3>
+                            </div>
+                            <div class="crypto-card-body">
+                                @if(isset($crypto_analysis['conclusion']['recommendations']['title']))
+                                <div class="crypto-conclusion-card">
+                                    <h4 class="crypto-conclusion-title">{{ $crypto_analysis['conclusion']['recommendations']['title'] }}</h4>
+                                    <div class="crypto-conclusion-content">
+                                        @if(isset($crypto_analysis['conclusion']['recommendations']['description']))
+                                            <p>{{ $crypto_analysis['conclusion']['recommendations']['description'] }}</p>
+                                        @endif
 
+                                        @if(isset($crypto_analysis['conclusion']['recommendations']['trading_advice']))
+                                            <ul class="mt-3">
+                                                @foreach($crypto_analysis['conclusion']['recommendations']['trading_advice'] as $advice)
+                                                    <li>{{ $advice }}</li>
+                                                @endforeach
+                                            </ul>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endif
 
+                                @if(isset($crypto_analysis['conclusion']['method_descriptions']['description']))
+                                <div class="crypto-alert crypto-alert-info">
+                                    <h5>Method Description</h5>
+                                    <p>{{ $crypto_analysis['conclusion']['method_descriptions']['description'] }}</p>
 
+                                    @if(isset($crypto_analysis['conclusion']['method_descriptions']['details']))
+                                        <ul class="mb-0">
+                                            @foreach($crypto_analysis['conclusion']['method_descriptions']['details'] as $detail)
+                                                <li>{{ $detail }}</li>
+                                            @endforeach
+                                        </ul>
+                                    @endif
+                                </div>
+                                @endif
 
-                    </div>
-                @else
-                    <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        <strong>Analysis Error:</strong> {{ $crypto_analysis['error'] ?? 'Unable to perform analysis' }}
-                    </div>
-                @endif
-
-            </x-card>
+                                @if(isset($crypto_analysis['conclusion']['general_advice']))
+                                <div class="crypto-alert crypto-alert-warning">
+                                    <h5>General Trading Advice</h5>
+                                    <ul class="mb-0">
+                                        @foreach($crypto_analysis['conclusion']['general_advice'] as $advice)
+                                            <li>{{ $advice }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                        @endif
+                    @else
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Analysis Error:</strong> {{ $crypto_analysis['error'] ?? 'Unable to perform analysis' }}
+                        </div>
+                    @endif
+                </x-card>
+            </div>
         </div>
 
         <!-- Analysis Form Section -->
-        <div class="col-12">
-            <x-card title="🎯 Konfigurasi Analisis">
-                <x-form method="GET" action="{{ route(module('getUpdate'), $model) }}">
-                    <x-select searchable name="coin_code" :value="$model->coin_code" :options="$coin" label="Select Coin" required/>
-                    <x-select name="analyst" :options="$analyst_methods" label="Metode Analisis" :value="request('analyst', 'sniper')" required/>
-                    <x-input type="number" name="amount" :value="request('amount', 100)" label="Trading Amount (USD)" step="0.01" min="1" placeholder="Enter amount to trade"/>
+        <div class="row">
+            <div class="col-12">
+                <x-card title="🎯 Konfigurasi Analisis">
+                    <x-form method="GET" action="{{ route(module('getUpdate'), $model) }}">
+                        <x-select searchable name="coin_code" :value="$model->coin_code" :options="$coin" label="Select Coin" required/>
+                        <x-select name="analyst" :options="$analyst_methods" label="Metode Analisis" :value="request('analyst', 'sniper')" required/>
+                        <x-input type="number" name="amount" :value="request('amount', 100)" label="Trading Amount (USD)" step="0.01" min="1" placeholder="Enter amount to trade"/>
 
-                    <x-footer>
-                        <a href="{{ route(module('getData')) }}" class="button secondary">Back</a>
-                        <x-button type="submit" class="primary">🔍 Analyze</x-button>
-                    </x-footer>
-
-                </x-form>
-            </x-card>
+                        <x-footer>
+                            <a href="{{ route(module('getData')) }}" class="button secondary">Back</a>
+                            <x-button type="submit" class="primary">🔍 Analyze</x-button>
+                        </x-footer>
+                    </x-form>
+                </x-card>
+            </div>
         </div>
     </div>
-
-    <style>
-    .analysis-results {
-        margin: 0px 2rem;
-
-    }
-    .info-card {
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 15px;
-    }
-    .info-card h4 {
-        margin-top: 0;
-        color: #495057;
-        border-bottom: 2px solid #007bff;
-        padding-bottom: 8px;
-    }
-    .price-value {
-        font-size: 16px;
-        font-weight: bold;
-        display: block;
-        margin-top: 5px;
-    }
-    .price-dual {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    .price-usd {
-        font-size: 14px;
-        font-weight: bold;
-    }
-    .price-rupiah {
-        font-size: 12px;
-        opacity: 0.8;
-    }
-    .profit-loss-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    .percentage {
-        font-size: 12px;
-        font-weight: bold;
-        margin-top: 2px;
-    }
-    .fee-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    .badge {
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: bold;
-    }
-    .badge-success {
-        background-color: #28a745;
-        color: white;
-    }
-    .badge-danger {
-        background-color: #dc3545;
-        color: white;
-    }
-    .badge-warning {
-        background-color: #ffc107;
-        color: #212529;
-    }
-    .badge-info {
-        background-color: #17a2b8;
-        color: white;
-    }
-    .badge-primary {
-        background-color: #007bff;
-        color: white;
-    }
-    .alert {
-        padding: 15px;
-        border: 1px solid transparent;
-        border-radius: 4px;
-        margin-bottom: 20px;
-    }
-    .alert-warning {
-        color: #856404;
-        background-color: #fff3cd;
-        border-color: #ffeaa7;
-    }
-    .alert-success {
-        color: #155724;
-        background-color: #d4edda;
-        border-color: #c3e6cb;
-    }
-    .alert-danger {
-        color: #721c24;
-        background-color: #f8d7da;
-        border-color: #f5c6cb;
-    }
-    .alert-info {
-        color: #0c5460;
-        background-color: #d1ecf1;
-        border-color: #bee5eb;
-    }
-
-    /* Enhanced Signal Display */
-    .signal-large {
-        font-size: 16px !important;
-        padding: 8px 16px !important;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .badge-success.signal-large {
-        background-color: #28a745 !important;
-        color: white !important;
-        animation: pulse-green 2s infinite;
-    }
-
-    .badge-danger.signal-large {
-        background-color: #dc3545 !important;
-        color: white !important;
-        animation: pulse-red 2s infinite;
-    }
-
-    .badge-warning.signal-large {
-        background-color: #ffc107 !important;
-        color: #212529 !important;
-        animation: pulse-yellow 2s infinite;
-    }
-
-    @keyframes pulse-green {
-        0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
-    }
-
-    @keyframes pulse-red {
-        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
-    }
-
-    @keyframes pulse-yellow {
-        0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
-    }
-
-    /* Signal Banner Styles */
-    .signal-banner {
-        border-radius: 12px;
-        padding: 20px;
-        margin: 2rem;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .signal-banner::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
-        animation: shimmer 3s infinite;
-    }
-
-    @keyframes shimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-    }
-
-    .signal-banner.success {
-        background: linear-gradient(135deg, #28a745, #20c997);
-        color: white;
-    }
-
-    .signal-banner.danger {
-        background: linear-gradient(135deg, #dc3545, #fd7e14);
-        color: white;
-    }
-
-    .signal-banner.warning {
-        background: linear-gradient(135deg, #ffc107, #fd7e14);
-        color: #212529;
-    }
-
-    /* Analysis Description Styles */
-    .info-card ul {
-        padding-left: 20px;
-    }
-
-    .info-card li {
-        margin-bottom: 8px;
-    }
-
-    .alert h5 {
-        margin-top: 0;
-    }
-
-    .alert ul {
-        padding-left: 20px;
-        margin-bottom: 0;
-    }
-    </style>
 </x-layout>
