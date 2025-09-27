@@ -2,30 +2,94 @@
 
 namespace App\Analysis;
 
-use App\Analysis\MAAnalysis;
 use App\Enums\AnalysisType;
 
 class AnalysisServiceFactory
 {
     /**
+     * Cache for discovered analysis classes
+     */
+    private static array $analysisClasses = [];
+
+    /**
+     * Discover all analysis classes in the app/Analysis directory
+     */
+    private static function discoverAnalysisClasses(): array
+    {
+        if (!empty(self::$analysisClasses)) {
+            return self::$analysisClasses;
+        }
+
+        // Construct path manually since Laravel helpers may not be available
+        $analysisPath = __DIR__; // This is app/Analysis directory
+        $files = glob($analysisPath . '/*.php');
+
+        foreach ($files as $file) {
+            $className = basename($file, '.php');
+            $fullClassName = 'App\\Analysis\\' . $className;
+
+            // Skip interfaces and abstract classes
+            if ($className === 'AnalysisInterface' || $className === 'AnalysisService') {
+                continue;
+            }
+
+            // Check if class exists and implements AnalysisInterface
+            if (class_exists($fullClassName)) {
+                try {
+                    $reflection = new \ReflectionClass($fullClassName);
+                    if ($reflection->implementsInterface(AnalysisInterface::class) && !$reflection->isAbstract()) {
+                        $instance = $reflection->newInstanceWithoutConstructor();
+                        self::$analysisClasses[$instance->getCode()] = [
+                            'class' => $fullClassName,
+                            'name' => $instance->getName(),
+                            'code' => $instance->getCode()
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    // Skip classes that can't be instantiated without constructor
+                    continue;
+                }
+            }
+        }
+
+        return self::$analysisClasses;
+    }
+
+    /**
      * Create an analysis service instance based on the method name
      */
     public static function create(string $method): AnalysisInterface
     {
-        return match ($method) {
-            AnalysisType::MA_20_50 => new MAAnalysis(),
-            default => new MAAnalysis() // Default to MA Analysis only
-        };
+        $classes = self::discoverAnalysisClasses();
+
+        if (isset($classes[$method])) {
+            $className = $classes[$method]['class'];
+            return new $className();
+        }
+
+        // Legacy support for enum
+        if ($method === AnalysisType::MA_20_50) {
+            return new \App\Analysis\MAAnalysis();
+        }
+
+        // Default to first available analysis or MA Analysis
+        $defaultClass = $classes[array_key_first($classes)]['class'] ?? \App\Analysis\MAAnalysis::class;
+        return new $defaultClass();
     }
 
     /**
-     * Get list of available analysis methods
+     * Get list of available analysis methods for select dropdown
      */
     public static function getAvailableMethods(): array
     {
-        return [
-            AnalysisType::MA_20_50 => AnalysisType::MA_20_50()->getAnalysisDescription(),
-        ];
+        $classes = self::discoverAnalysisClasses();
+        $methods = [];
+
+        foreach ($classes as $code => $info) {
+            $methods[$code] = $info['name'];
+        }
+
+        return $methods;
     }
 
     /**

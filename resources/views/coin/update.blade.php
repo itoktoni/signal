@@ -334,6 +334,7 @@
                 <x-form method="GET" action="{{ route(module('getUpdate'), $model) }}">
                     <x-select searchable name="coin_code" :value="$model->coin_code" :options="$coin" label="Select Coin"
                         required />
+                    <x-select searchable name="analyst_method" :value="request('analyst_method', 'ma_rsi_volume_atr_macd')" :options="\App\Analysis\AnalysisServiceFactory::getAvailableMethods()" label="Select Analysis Method" required />
                     <x-input type="number" name="amount" :value="request('amount', 100)" label="Trading Amount (USD)"
                         step="0.01" min="1" placeholder="Enter amount to trade" />
 
@@ -353,7 +354,10 @@
                 <div class="col-12 col-md-8">
                     <h1 class="mb-2">
                         <i class="bi bi-graph-up"></i>
-                        {{ $crypto_analysis['analysis_type'] ?? (AnalysisType::{strtoupper($analyst_method)}()->getAnalysisDescription() ?? 'Basic Analysis') }}
+                        @php
+                            $analysisMethods = \App\Analysis\AnalysisServiceFactory::getAvailableMethods();
+                        @endphp
+                        {{ $crypto_analysis['analysis_type'] ?? ($analysisMethods[$analyst_method] ?? 'Basic Analysis') }}
                     </h1>
                     <p class="mb-0">
                         <i class="bi bi-currency-bitcoin"></i>

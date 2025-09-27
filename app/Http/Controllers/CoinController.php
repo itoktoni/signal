@@ -133,15 +133,18 @@ class CoinController extends Controller
         // Get trading amount from query parameter (default to 100)
         $amount = floatval(request('amount', 100));
 
+        // Get analysis method from query parameter (default to MA analysis)
+        $analystMethod = request('analyst_method', 'ma_rsi_volume_atr_macd');
+
         // Validate amount
         if ($amount <= 0) {
             $amount = 100;
         }
 
-        // Perform analysis using MA Analysis only
+        // Perform analysis using selected method
         try {
-            // Use MA Analysis service with dynamic amount
-            $analysisService = AnalysisServiceFactory::create(AnalysisType::MA_20_50);
+            // Use selected analysis service with dynamic amount
+            $analysisService = AnalysisServiceFactory::create($analystMethod);
             $result = $analysisService->analyze($model->coin_code ?? 'BTCUSDT', $amount);
 
             // Convert the new result structure to match the existing view expectations
@@ -171,6 +174,7 @@ class CoinController extends Controller
             'coin' => $coin->toArray(),
             'crypto_analysis' => $cryptoAnalysis,
             'amount' => $amount,
+            'analyst_method' => $analystMethod,
         ]));
     }
 

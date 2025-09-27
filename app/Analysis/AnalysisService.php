@@ -4,7 +4,6 @@ namespace App\Analysis;
 
 use App\Helpers\CurrencyHelper;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 abstract class AnalysisService implements AnalysisInterface
 {
