@@ -50,6 +50,68 @@ function confirmBulkDelete() {
 window.confirmDelete = confirmDelete;
 window.confirmBulkDelete = confirmBulkDelete;
 
+// Initialize TomSelect
+function initializeTomSelect() {
+    // Check if TomSelect is available
+    if (typeof TomSelect === 'undefined') {
+        console.log('TomSelect not available');
+        return;
+    }
+
+    // Find all select elements with the 'data-searchable' attribute or 'searchable-select' class
+    const selectElements = document.querySelectorAll('select[data-searchable="true"], select.searchable-select');
+
+    selectElements.forEach(select => {
+        // Skip if already initialized
+        if (select.tomselect) {
+            return;
+        }
+
+        // Configuration
+        const config = {
+            placeholder: select.dataset.placeholder || 'Select an option',
+            allowEmptyOption: true,
+            create: false,
+            sortField: 'text'
+        };
+
+        // Add search functionality if searchable
+        if (select.dataset.searchable === 'true') {
+            config.plugins = {
+                ...config.plugins,
+                dropdown_input: {}
+            };
+        }
+
+        // Add remove button for multiple selects
+        if (select.multiple) {
+            config.plugins = {
+                ...config.plugins,
+                remove_button: {
+                    title: 'Remove this item'
+                }
+            };
+        }
+
+        try {
+            // Initialize TomSelect
+            new TomSelect(select, config);
+        } catch (error) {
+            console.error('Error initializing TomSelect:', error);
+        }
+    });
+}
+
+// Wait for TomSelect to be available and initialize
+function waitForTomSelect() {
+    if (typeof TomSelect !== 'undefined') {
+        initializeTomSelect();
+    } else {
+        // Try again in 100ms
+        setTimeout(waitForTomSelect, 100);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Show success message if exists
     const successElement = document.getElementById('success-message');
@@ -233,166 +295,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Custom Select Functionality
-    document.querySelectorAll('.custom-select-wrapper').forEach(function(wrapper) {
-        const input = wrapper.querySelector('.custom-select-input');
-        const dropdown = wrapper.querySelector('.custom-select-dropdown');
-        const searchInput = wrapper.querySelector('.custom-select-search');
-        const options = wrapper.querySelectorAll('.custom-select-option');
-        const hiddenContainer = wrapper.querySelector('.custom-select-hidden-inputs');
-        const hiddenInput = wrapper.querySelector('input[type="hidden"]');
-        const placeholder = wrapper.querySelector('.custom-select-placeholder');
-        const isMultiple = wrapper.dataset.multiple === 'true';
-
-        let selectedValues = [];
-        let selectedTexts = [];
-
-        // Initialize selected values
-        options.forEach(option => {
-            if (option.dataset.selected === 'true') {
-                const value = option.dataset.value;
-                const text = option.textContent.trim();
-                selectedValues.push(value);
-                selectedTexts.push(text);
-                option.classList.add('selected');
-            }
-        });
-
-        updateDisplay();
-
-        // Toggle dropdown
-        input.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const isOpen = dropdown.style.display === 'block';
-            closeAllDropdowns();
-            if (!isOpen) {
-                dropdown.style.display = 'block';
-                input.classList.add('open');
-                if (searchInput) {
-                    searchInput.value = '';
-                    searchInput.focus();
-                }
-                // Show all options
-                options.forEach(option => option.style.display = 'block');
-            }
-        });
-
-        // Search functionality
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                options.forEach(option => {
-                    const text = option.textContent.toLowerCase();
-                    option.style.display = text.includes(searchTerm) ? 'block' : 'none';
-                });
-            });
-        }
-
-        // Option selection
-        options.forEach(option => {
-            option.addEventListener('click', function() {
-                const value = this.dataset.value;
-                const text = this.textContent.trim();
-                if (value === '') return; // Don't select placeholder option
-
-                if (isMultiple) {
-                    const index = selectedValues.indexOf(value);
-                    if (index > -1) {
-                        // Remove
-                        selectedValues.splice(index, 1);
-                        selectedTexts.splice(index, 1);
-                        this.classList.remove('selected');
-                    } else {
-                        // Add
-                        selectedValues.push(value);
-                        selectedTexts.push(text);
-                        this.classList.add('selected');
-                    }
-                } else {
-                    // Single select
-                    selectedValues = [value];
-                    selectedTexts = [text];
-                    options.forEach(opt => opt.classList.remove('selected'));
-                    this.classList.add('selected');
-                    closeAllDropdowns();
-                }
-
-                updateDisplay();
-            });
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!wrapper.contains(e.target)) {
-                closeAllDropdowns();
-            }
-        });
-
-        function updateDisplay() {
-            const selectedItemsContainer = wrapper.querySelector('.custom-select-selected-items');
-            if (isMultiple) {
-                if (selectedTexts.length > 0) {
-                    placeholder.textContent = `${selectedTexts.length} selected`;
-                    placeholder.classList.remove('empty');
-                    if (selectedItemsContainer) {
-                        selectedItemsContainer.innerHTML = selectedTexts.map(text => `<span class="custom-select-tag">${text} <span class="custom-select-tag-remove" data-value="${selectedValues[selectedTexts.indexOf(text)]}">×</span></span>`).join('');
-                    }
-                } else {
-                    placeholder.textContent = wrapper.querySelector('.custom-select-placeholder').dataset.placeholder || 'Select options';
-                    placeholder.classList.add('empty');
-                    if (selectedItemsContainer) {
-                        selectedItemsContainer.innerHTML = '';
-                    }
-                }
-            } else {
-                placeholder.textContent = selectedTexts.length > 0 ? selectedTexts[0] : (wrapper.querySelector('.custom-select-placeholder').dataset.placeholder || 'Select an option');
-                placeholder.classList.toggle('empty', selectedTexts.length === 0);
-            }
-
-            if (isMultiple) {
-                if (hiddenContainer) {
-                    hiddenContainer.innerHTML = '';
-                    selectedValues.forEach(value => {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = hiddenContainer.dataset.name;
-                        input.value = value;
-                        hiddenContainer.appendChild(input);
-                    });
-                }
-            } else {
-                if (hiddenInput) {
-                    hiddenInput.value = selectedValues[0] || '';
-                }
-            }
-        }
-
-        // Handle tag removal for multiple select
-        if (isMultiple) {
-            const selectedItemsContainer = wrapper.querySelector('.custom-select-selected-items');
-            if (selectedItemsContainer) {
-                selectedItemsContainer.addEventListener('click', function(e) {
-                    if (e.target.classList.contains('custom-select-tag-remove')) {
-                        e.stopPropagation();
-                        const value = e.target.dataset.value;
-                        const index = selectedValues.indexOf(value);
-                        if (index > -1) {
-                            selectedValues.splice(index, 1);
-                            selectedTexts.splice(index, 1);
-                            wrapper.querySelector(`[data-value="${value}"]`).classList.remove('selected');
-                            updateDisplay();
-                        }
-                    }
-                });
-            }
-        }
-    });
-
-    function closeAllDropdowns() {
-        document.querySelectorAll('.custom-select-dropdown').forEach(d => {
-            d.style.display = 'none';
-            d.closest('.custom-select-wrapper').querySelector('.custom-select-input').classList.remove('open');
-        });
-    }
+    // Initialize TomSelect after a short delay to ensure the library is loaded
+    setTimeout(waitForTomSelect, 500);
 });

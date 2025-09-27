@@ -472,3 +472,40 @@ button:active:not(:disabled) {
   }
 
 }
+
+/* TomSelect Dropdown Arrow and Styling */
+.ts-wrapper .ts-control::after {
+   content: '▼' !important;
+   position: absolute !important;
+   right: 12px !important;
+   top: 50% !important;
+   transform: translateY(-50%) !important;
+   font-size: 12px !important;
+   color: #666 !important;
+   pointer-events: none !important;
+   z-index: 10 !important;
+}
+
+.ts-wrapper .ts-dropdown {
+   border: 1px solid #ddd !important;
+   border-radius: 4px !important;
+   box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+   max-height: 200px !important;
+   overflow-y: auto !important;
+   z-index: 1000 !important;
+}
+
+.ts-wrapper .option {
+   padding: 8px 12px !important;
+   cursor: pointer !important;
+   transition: background-color 0.2s !important;
+}
+
+.ts-wrapper .option:hover {
+   background-color: #f8f9fa !important;
+}
+
+.ts-wrapper .option.selected {
+   background-color: #007bff !important;
+   color: white !important;
+}

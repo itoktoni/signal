@@ -9,6 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <title>{{ $title ?? 'Users' }} - Obsesiman Report - Laravel</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- TomSelect CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css">
+
     @livewireStyles
 </head>
 
@@ -57,8 +60,9 @@
     </script>
     @endif
 
-
     @livewireScripts
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
 </body>
 
 </html>

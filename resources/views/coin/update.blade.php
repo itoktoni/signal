@@ -5,11 +5,11 @@
         <div class="col-12">
             <x-card title="🎯 Konfigurasi Analisis">
                 <x-form :model="$model" method="GET" action="{{ route(module('getUpdate'), $model) }}">
-                    <x-select searchable name="coin_code" :value="request('coin_code', $model->coin_code)" :options="$coin" label="Select Coin"
+                    <x-select col="4" searchable name="coin_code" :value="request('coin_code', $model->coin_code)" :options="$coin" label="Select Coin"
                         required />
 
-                    <x-select searchable name="analyst_method" :value="request('analyst_method', 'ma_rsi_volume_atr_macd')" :options="\App\Analysis\AnalysisServiceFactory::getAvailableMethods()" label="Select Analysis Method" required />
-                    <x-input type="number" name="amount" :value="request('amount', 100)" label="Trading Amount (USD)"
+                    <x-select name="analyst_method" :value="request('analyst_method', 'ma_rsi_volume_atr_macd')" :options="\App\Analysis\AnalysisServiceFactory::getAvailableMethods()" label="Select Analysis Method" required />
+                    <x-input col="2" type="number" name="amount" :value="request('amount', 100)" label="Trading Amount (USD)"
                         step="0.01" min="1" placeholder="Enter amount to trade" />
 
                     <x-footer>
