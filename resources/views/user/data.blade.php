@@ -2,7 +2,7 @@
     <div id="success-message" data-message="{{ session('success') }}" style="display: none;"></div>
     <div class="card">
         <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>Users</h2>
+            <h2>{{ $context['title'] }}</h2>
             <button type="button" id="toggle-filters" class="button secondary">
                 <i class="bi bi-filter"></i> <span>Hide</span>
             </button>
@@ -32,11 +32,11 @@
                                 <tr>
                                     <th class="checkbox-column"><input type="checkbox" class="checkall" /></th>
                                     <th class="text-center actions">Actions</th>
-                                    <th><x-sort-link column="id" route="{{ module('getData') }}" text="ID" /></th>
-                                    <th><x-sort-link column="username" route="{{ module('getData') }}" text="Username" /></th>
-                                    <th>Name</th>
-                                    <th><x-sort-link column="email" route="{{ module('getData') }}" text="Email" /></th>
-                                    <th><x-sort-link column="role" route="{{ module('getData') }}" text="Role" /></th>
+                                    <x-th column="id" text="ID" />
+                                    <x-th column="username" text="Username" />
+                                    <x-th text="Name" :sortable="false" />
+                                    <x-th column="email" text="Email" />
+                                    <x-th column="role" text="Role" />
                                 </tr>
                             </thead>
                             <tbody>
@@ -49,21 +49,13 @@
                                     <tr>
                                         <td class="checkbox-column"><input type="checkbox" class="row-checkbox" value="{{ $list->id }}" /></td>
                                         <td data-label="Actions">
-                                            <div class="action-table">
-                                                <a href="{{ route(module('getUpdate'), $list) }}" class="button primary">
-                                                    <i class="bi bi-pencil-square"></i>
-                                                </a>
-
-                                                <button type="button" class="button danger" onclick="confirmDelete('{{ route(module('getDelete'), $list) }}', '{{ $list->name }}')">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
+                                            <x-action-table :model="$list" />
                                         </td>
-                                        <td data-label="ID">{{ $list->id }}</td>
-                                        <td data-label="Username">{{ $list->name }}</td>
-                                        <td data-label="Name">{{ $list->name }}</td>
-                                        <td data-label="Email">{{ $list->email }}</td>
-                                        <td data-label="Role Name">Admin</td>
+                                        <x-td field="id" :model="$list" />
+                                        <x-td field="username" :model="$list" />
+                                        <x-td field="name" :model="$list" />
+                                        <x-td field="email" :model="$list" />
+                                        <x-td field="role" :model="$list" label="Role Name" />
                                     </tr>
                                 @empty
                                     <tr>

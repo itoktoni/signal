@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ActorType;
+use App\Enums\RoleType;
 use App\Models\Group;
 use App\Models\User;
 use App\Traits\ControllerHelper;
@@ -35,6 +36,18 @@ class UserController extends Controller
 
         return $this->views($this->module(), [
             'data' => $data,
+        ]);
+    }
+
+    public function share($data = [])
+    {
+        $role = RoleType::getOptions();
+        $group = Group::getOptions();
+
+        return array_merge($data, [
+            'model' => false,
+            'role' => $role,
+            'group' => $group,
         ]);
     }
 

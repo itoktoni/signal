@@ -91,6 +91,7 @@ class AppServiceProvider extends ServiceProvider
             'controller' => $shortName,
             'controller_short' => $controllerShort,
             'module' => $module,
+            'title' => ucfirst($module),
             'module_plural' => $pluralModule,
             'action' => $cleanAction,
             'current_route' => $route->getName(),

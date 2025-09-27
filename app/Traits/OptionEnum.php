@@ -6,7 +6,7 @@ trait OptionEnum
     /**
      * Get options for model selection
      */
-    public static function getOptions($selected = null): \Illuminate\Support\Collection
+    public static function getOptions($selected = null): array
     {
         $collect = collect(self::getInstances());
 
@@ -21,6 +21,6 @@ trait OptionEnum
             $data[$item->value] = $item->description;
         }
 
-        return collect($data);
+        return $data;
     }
 }
