@@ -33,36 +33,38 @@
 
 /* Main Navigation Styles (moved from _layout.css) */
 .main-nav {
+  margin-top: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding: 0px;
+  padding:0px;
+  padding-top: 0rem;
   overflow-y: auto;
-  margin-bottom: -10px;
-  margin-top: -10px;
+  z-index: 999999;
 }
 
 .main-nav :first-child {
-  padding-top: 0.5rem;
+  margin-top: 0rem;
 }
 
 .main-nav .bi {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
   font-size: 3rem;
 }
 
 .main-nav span{
-  margin-top: -3px;
   font-size: 1.1rem;
 }
 
 .main-nav li {
-  padding: 0px 7px 0 5px;
+  padding: 0px 8px 0 6px;
   text-decoration: none;
   width: 100%;
   list-style: none;
   border-bottom: 1px solid var(--bg-light);
-  margin-top: 10px;
+  margin-top: 1rem;
 }
 
 .nav-item {
@@ -72,20 +74,19 @@
   align-items: center;
   font-size: var(--icon-text);
   font-weight: normal;
-  padding: 0rem 0 2rem 0;
-  margin-bottom: 1rem;
   color: var(--text-light);
   text-decoration: none;
-  transition: background-color 0.2s;
   border-radius: 10px;
+  margin-bottom: 1rem;
+  min-height: 11rem;
 }
 
 .nav-item:hover {
-  background-color: var(--primary-hover);
 }
 
 .nav-item.active {
-  background-color: var(--primary-active);
+  /* background-color: var(--primary-color); */
+  background-color: rgba(255,255,255,0.2) !important;
 }
 
 .logout {
@@ -131,7 +132,7 @@
 }
 
 .sub-menu-list .bi{
-  font-size: 1.5rem;
+  font-size: 1.1rem;
 }
 
 .sub-menu-list .active {

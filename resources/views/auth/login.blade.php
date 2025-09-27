@@ -1,7 +1,3 @@
-@php
-use Illuminate\Support\Facades\Route;
-@endphp
-
 <x-auth-template-layout>
     <x-validation-errors class="mb-4" />
 

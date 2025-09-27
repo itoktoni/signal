@@ -100,10 +100,22 @@ document.addEventListener('DOMContentLoaded', function() {
     let sidebarOpen = false;
     let selectedMenu = "system";
 
-    // Menu navigation
     document.querySelectorAll(".nav-item").forEach((item) => {
         item.addEventListener("click", function(e) {
+            // Get the href attribute from the clicked item
+            const href = this.getAttribute("href");
+
+            // If a real href exists (and it's not just "#"),
+            // stop this function and let the link navigate normally.
+            if (href && href !== "#") {
+                return;
+            }
+
+            // --- The rest of the code only runs if there is no href ---
+
+            // Prevent the default action (like jumping to the top for href="#")
             e.preventDefault();
+
             const menuId = this.getAttribute("data-menu");
             selectedMenu = menuId;
 
@@ -193,13 +205,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Initialize active menu
-    document
-        .querySelector(`[data-menu="${selectedMenu}"]`)
-        .classList.add("active");
-    document.getElementById(selectedMenu + "-submenu").style.display =
-        "block";
-
     // Filter toggle functionality
     let filtersVisible = true;
     const toggleButton = document.getElementById('toggle-filters');
@@ -228,104 +233,48 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Modern Select Functionality
-    document.querySelectorAll('.modern-select-wrapper').forEach(function(wrapper) {
-        const container = wrapper.querySelector('.modern-select-container');
-        const display = wrapper.querySelector('.modern-select-display');
-        const dropdown = wrapper.querySelector('.modern-select-dropdown');
-        const searchInput = wrapper.querySelector('.modern-select-search');
-        const options = wrapper.querySelectorAll('.modern-select-option');
-        const hiddenContainer = wrapper.querySelector('.modern-select-hidden-inputs');
+    // Custom Select Functionality
+    document.querySelectorAll('.custom-select-wrapper').forEach(function(wrapper) {
+        const input = wrapper.querySelector('.custom-select-input');
+        const dropdown = wrapper.querySelector('.custom-select-dropdown');
+        const searchInput = wrapper.querySelector('.custom-select-search');
+        const options = wrapper.querySelectorAll('.custom-select-option');
+        const hiddenContainer = wrapper.querySelector('.custom-select-hidden-inputs');
         const hiddenInput = wrapper.querySelector('input[type="hidden"]');
-        const displayText = wrapper.querySelector('.modern-select-text');
-        const arrow = wrapper.querySelector('.modern-select-arrow');
-        const tagsContainer = wrapper.querySelector('.modern-select-tags');
+        const placeholder = wrapper.querySelector('.custom-select-placeholder');
         const isMultiple = wrapper.dataset.multiple === 'true';
-        const defaultPlaceholder = displayText.dataset.placeholder || 'Select an option';
 
         let selectedValues = [];
         let selectedTexts = [];
 
         // Initialize selected values
-        console.log('🔍 Modern Select Debug - Initializing select:', {
-            wrapper: wrapper,
-            optionsCount: options.length,
-            isMultiple: isMultiple,
-            hiddenInput: hiddenInput,
-            hiddenContainer: hiddenContainer,
-            options: Array.from(options).map(opt => ({
-                value: opt.dataset.value,
-                selected: opt.classList.contains('selected'),
-                text: opt.querySelector('.modern-select-option-text')?.textContent.trim()
-            }))
+        options.forEach(option => {
+            if (option.dataset.selected === 'true') {
+                const value = option.dataset.value;
+                const text = option.textContent.trim();
+                selectedValues.push(value);
+                selectedTexts.push(text);
+                option.classList.add('selected');
+            }
         });
-
-        // Check for pre-selected values from hidden inputs or HTML
-        if (isMultiple) {
-            if (hiddenContainer) {
-                const existingInputs = hiddenContainer.querySelectorAll('input[type="hidden"]');
-                existingInputs.forEach(input => {
-                    selectedValues.push(input.value);
-                    // Find the corresponding option text
-                    const option = wrapper.querySelector(`[data-value="${input.value}"]`);
-                    if (option) {
-                        const text = option.querySelector('.modern-select-option-text').textContent.trim();
-                        selectedTexts.push(text);
-                        option.classList.add('selected');
-                        const checkIcon = option.querySelector('.modern-select-check-icon');
-                        if (checkIcon) checkIcon.style.display = 'block';
-                    }
-                });
-            }
-        } else {
-            if (hiddenInput && hiddenInput.value) {
-                selectedValues.push(hiddenInput.value);
-                const option = wrapper.querySelector(`[data-value="${hiddenInput.value}"]`);
-                if (option) {
-                    const text = option.querySelector('.modern-select-option-text').textContent.trim();
-                    selectedTexts.push(text);
-                    option.classList.add('selected');
-                    const checkIcon = option.querySelector('.modern-select-check-icon');
-                    if (checkIcon) checkIcon.style.display = 'block';
-                }
-            } else {
-                // Check HTML selected options
-                options.forEach(option => {
-                    if (option.classList.contains('selected')) {
-                        const value = option.dataset.value;
-                        const text = option.querySelector('.modern-select-option-text').textContent.trim();
-                        selectedValues.push(value);
-                        selectedTexts.push(text);
-                        console.log('✅ Found selected option:', { value, text });
-                    }
-                });
-            }
-        }
-
-        console.log('📊 Final selected values:', { selectedValues, selectedTexts });
 
         updateDisplay();
 
         // Toggle dropdown
-        display.addEventListener('click', function(e) {
+        input.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             const isOpen = dropdown.style.display === 'block';
             closeAllDropdowns();
             if (!isOpen) {
                 dropdown.style.display = 'block';
-                container.classList.add('open');
-                arrow.classList.add('rotated');
+                input.classList.add('open');
                 if (searchInput) {
                     searchInput.value = '';
                     searchInput.focus();
                 }
                 // Show all options
-                options.forEach(option => option.style.display = 'flex');
-            } else {
-                dropdown.style.display = 'none';
-                container.classList.remove('open');
-                arrow.classList.remove('rotated');
+                options.forEach(option => option.style.display = 'block');
             }
         });
 
@@ -334,23 +283,18 @@ document.addEventListener('DOMContentLoaded', function() {
             searchInput.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase();
                 options.forEach(option => {
-                    const text = option.querySelector('.modern-select-option-text').textContent.toLowerCase();
-                    option.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+                    const text = option.textContent.toLowerCase();
+                    option.style.display = text.includes(searchTerm) ? 'block' : 'none';
                 });
             });
         }
 
         // Option selection
         options.forEach(option => {
-            option.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-
+            option.addEventListener('click', function() {
                 const value = this.dataset.value;
-                const text = this.querySelector('.modern-select-option-text').textContent.trim();
-                if (value === '' || value === undefined) return; // Don't select placeholder option
-
-                console.log('🔘 Option clicked:', { value, text, isMultiple });
+                const text = this.textContent.trim();
+                if (value === '') return; // Don't select placeholder option
 
                 if (isMultiple) {
                     const index = selectedValues.indexOf(value);
@@ -359,41 +303,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         selectedValues.splice(index, 1);
                         selectedTexts.splice(index, 1);
                         this.classList.remove('selected');
-                        const checkIcon = this.querySelector('.modern-select-check-icon');
-                        if (checkIcon) checkIcon.style.display = 'none';
                     } else {
                         // Add
                         selectedValues.push(value);
                         selectedTexts.push(text);
                         this.classList.add('selected');
-                        const checkIcon = this.querySelector('.modern-select-check-icon');
-                        if (checkIcon) checkIcon.style.display = 'block';
                     }
                 } else {
                     // Single select
                     selectedValues = [value];
                     selectedTexts = [text];
-
-                    // Remove selected class from all options
-                    options.forEach(opt => {
-                        opt.classList.remove('selected');
-                        const checkIcon = opt.querySelector('.modern-select-check-icon');
-                        if (checkIcon) checkIcon.style.display = 'none';
-                    });
-
-                    // Add selected class to clicked option
+                    options.forEach(opt => opt.classList.remove('selected'));
                     this.classList.add('selected');
-                    const checkIcon = this.querySelector('.modern-select-check-icon');
-                    if (checkIcon) checkIcon.style.display = 'block';
-
-                    // Close dropdown after selection
-                    setTimeout(() => {
-                        closeAllDropdowns();
-                    }, 100);
+                    closeAllDropdowns();
                 }
 
                 updateDisplay();
-                console.log('✅ Selection updated:', { selectedValues, selectedTexts });
             });
         });
 
@@ -404,74 +329,41 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Handle tag removal for multiple select
-        if (isMultiple && tagsContainer) {
-            tagsContainer.addEventListener('click', function(e) {
-                if (e.target.classList.contains('modern-select-tag-remove')) {
-                    e.stopPropagation();
-                    const value = e.target.dataset.value;
-                    const index = selectedValues.indexOf(value);
-                    if (index > -1) {
-                        selectedValues.splice(index, 1);
-                        selectedTexts.splice(index, 1);
-                        wrapper.querySelector(`[data-value="${value}"]`).classList.remove('selected');
-                        updateDisplay();
-                    }
-                }
-            });
-        }
-
         function updateDisplay() {
-            console.log('🔄 updateDisplay called:', {
-                selectedValues,
-                selectedTexts,
-                isMultiple,
-                displayText: displayText,
-                defaultPlaceholder,
-                hiddenInput: hiddenInput,
-                hiddenContainer: hiddenContainer
-            });
-
+            const selectedItemsContainer = wrapper.querySelector('.custom-select-selected-items');
             if (isMultiple) {
                 if (selectedTexts.length > 0) {
-                    displayText.textContent = `${selectedTexts.length} selected`;
-                    displayText.classList.remove('empty');
-                    displayText.classList.add('has-value');
-                    if (tagsContainer) {
-                        tagsContainer.innerHTML = selectedTexts.map(text => `<span class="modern-select-tag">${text} <span class="modern-select-tag-remove" data-value="${selectedValues[selectedTexts.indexOf(text)]}">×</span></span>`).join('');
+                    placeholder.textContent = `${selectedTexts.length} selected`;
+                    placeholder.classList.remove('empty');
+                    if (selectedItemsContainer) {
+                        selectedItemsContainer.innerHTML = selectedTexts.map(text => `<span class="custom-select-tag">${text} <span class="custom-select-tag-remove" data-value="${selectedValues[selectedTexts.indexOf(text)]}">×</span></span>`).join('');
                     }
                 } else {
-                    displayText.textContent = defaultPlaceholder;
-                    displayText.classList.add('empty');
-                    displayText.classList.remove('has-value');
-                    if (tagsContainer) {
-                        tagsContainer.innerHTML = '';
+                    placeholder.textContent = wrapper.querySelector('.custom-select-placeholder').dataset.placeholder || 'Select options';
+                    placeholder.classList.add('empty');
+                    if (selectedItemsContainer) {
+                        selectedItemsContainer.innerHTML = '';
                     }
                 }
             } else {
-                displayText.textContent = selectedTexts.length > 0 ? selectedTexts[0] : defaultPlaceholder;
-                displayText.classList.toggle('empty', selectedTexts.length === 0);
-                displayText.classList.toggle('has-value', selectedTexts.length > 0);
-                arrow.classList.toggle('rotated', selectedTexts.length > 0);
+                placeholder.textContent = selectedTexts.length > 0 ? selectedTexts[0] : (wrapper.querySelector('.custom-select-placeholder').dataset.placeholder || 'Select an option');
+                placeholder.classList.toggle('empty', selectedTexts.length === 0);
             }
 
-            // Update hidden inputs
             if (isMultiple) {
                 if (hiddenContainer) {
                     hiddenContainer.innerHTML = '';
                     selectedValues.forEach(value => {
                         const input = document.createElement('input');
                         input.type = 'hidden';
-                        input.name = hiddenContainer.dataset.name || `${wrapper.querySelector('input[type="hidden"]')?.name || name}[]`;
+                        input.name = hiddenContainer.dataset.name;
                         input.value = value;
                         hiddenContainer.appendChild(input);
-                        console.log('➕ Added hidden input:', { name: input.name, value: input.value });
                     });
                 }
             } else {
                 if (hiddenInput) {
                     hiddenInput.value = selectedValues[0] || '';
-                    console.log('📝 Updated hidden input:', { name: hiddenInput.name, value: hiddenInput.value });
                 }
             }
         }
@@ -498,10 +390,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function closeAllDropdowns() {
-        document.querySelectorAll('.modern-select-dropdown').forEach(d => {
+        document.querySelectorAll('.custom-select-dropdown').forEach(d => {
             d.style.display = 'none';
-            d.closest('.modern-select-wrapper').querySelector('.modern-select-container').classList.remove('open');
-            d.closest('.modern-select-wrapper').querySelector('.modern-select-arrow').classList.remove('rotated');
+            d.closest('.custom-select-wrapper').querySelector('.custom-select-input').classList.remove('open');
         });
     }
 });

@@ -47,11 +47,6 @@
   border: 1px solid var(--color-success) !important;
 }
 
-.text-watch {
-  color: var(--color-primary) !important;
-  font-weight: bold;
-}
-
 .text-primary {
   color: var(--color-primary) !important;
 }

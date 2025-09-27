@@ -14,10 +14,7 @@
                 <i class="bi bi-person-badge"></i>
                 <div class="profile-dropdown" id="profile-dropdown">
                     <a href="{{ route('profile') }}" class="dropdown-item">Profile</a>
-                    <form method="POST" action="{{ route('logout') }}" style="display: inline;">
-                        @csrf
-                        <button type="submit" class="dropdown-item" style="background: none; border: none; padding: 0; margin-left: 1rem; font: inherit; color: inherit; cursor: pointer;">Logout</button>
-                    </form>
+                    <a href="{{ route('logout') }}" class="dropdown-item">Logout</a>
                 </div>
             </div>
         </div>

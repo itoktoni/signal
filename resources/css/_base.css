@@ -66,10 +66,6 @@ a {
   text-decoration: none;
 }
 
-a:hover:not(.button) {
-  opacity: 0.75;
-}
-
 button {
   font-family: inherit;
 }

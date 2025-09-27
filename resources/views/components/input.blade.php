@@ -25,8 +25,8 @@
             }
         }
 
-        if ($currentModel && $name && property_exists($currentModel, $name)) {
-            $inputValue = old($name, $currentModel->$name);
+        if ($currentModel && $name) {
+            $inputValue = old($name, $model->$name);
         } elseif ($name) {
             $inputValue = old($name, $value);
         }

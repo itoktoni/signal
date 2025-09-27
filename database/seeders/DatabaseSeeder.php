@@ -13,7 +13,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed users
         User::factory(100)->create();
 
         User::factory()->create([
@@ -22,9 +21,5 @@ class DatabaseSeeder extends Seeder
             'email' => 'itok.toni@gmail.com',
             'password' => bcrypt(env('APP_PASSWORD', 'password')),
         ]);
-
-        // Seed crypto symbols from Binance
-        $this->command->info('🌱 Seeding crypto symbols from Binance...');
-        $this->call(CryptoSymbolSeeder::class);
     }
 }

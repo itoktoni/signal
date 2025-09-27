@@ -327,6 +327,25 @@
         }
     </style>
 
+    <!-- Analysis Form Section -->
+    <div class="row">
+        <div class="col-12">
+            <x-card title="🎯 Konfigurasi Analisis">
+                <x-form method="GET" action="{{ route(module('getUpdate'), $model) }}">
+                    <x-select searchable name="coin_code" :value="$model->coin_code" :options="$coin" label="Select Coin"
+                        required />
+                    <x-input type="number" name="amount" :value="request('amount', 100)" label="Trading Amount (USD)"
+                        step="0.01" min="1" placeholder="Enter amount to trade" />
+
+                    <x-footer>
+                        <a href="{{ route(module('getData')) }}" class="button secondary">Back</a>
+                        <x-button type="submit" class="primary">🔍 Analyze</x-button>
+                    </x-footer>
+                </x-form>
+            </x-card>
+        </div>
+    </div>
+
     <div class="crypto-dashboard">
         <!-- Crypto Analysis Header -->
         <div class="crypto-header">
@@ -385,8 +404,7 @@
                             $potentialLossIdr = $crypto_analysis['potential_loss_idr'] ?? 0;
 
                             $signalClass = $signal === 'BUY' ? 'buy' : ($signal === 'SELL' ? 'sell' : 'neutral');
-                            $signalText =
-                                $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
+                            $signalText = $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
                         @endphp
 
                         <!-- Key Metrics Overview -->
@@ -405,10 +423,7 @@
 
                                     <div class="crypto-data-item">
                                         <div class="crypto-data-label">Risk:Reward Ratio</div>
-                                        <div class="crypto-data-value">{{ $rrRatio }}:1</div>
-                                        <div class="crypto-price-idr">
-                                            {{ $rrRatio >= 2 ? 'GOOD' : 'MODERATE' }}
-                                        </div>
+                                        <div class="crypto-data-value" style="font-size: 3rem">{{ $rrRatio }}</div>
                                     </div>
 
                                     <div class="crypto-data-item">
@@ -455,7 +470,7 @@
                             </div>
                         </div>
 
-                        <!-- Fee Information -->
+                        <!-- Fee Information
                         <div class="crypto-card">
                             <div class="crypto-card-header">
                                 <h3 class="crypto-card-title">
@@ -493,7 +508,9 @@
                             </div>
                         </div>
 
-                        <!-- Profit/Loss Potential -->
+                        -->
+
+                        <!-- Profit/Loss Potential
                         <div class="crypto-card">
                             <div class="crypto-card-header">
                                 <h3 class="crypto-card-title">
@@ -512,12 +529,6 @@
                                             <div class="crypto-price-idr">
                                                 ({{ number_format(($potentialProfitUsd / $amount) * 100, 1) }}%)</div>
                                         @endif
-                                        <div class="mt-2 p-2 bg-light rounded">
-                                            <small class="text-muted d-block">Breakdown:</small>
-                                            <small class="text-success d-block">Gross Profit: ${{ number_format(($takeProfitUsd - $entryUsd) * ($amount / $entryUsd), 2) }}</small>
-                                            <small class="text-danger d-block">Less Fees: -${{ number_format($feeUsd, 2) }}</small>
-                                            <small class="text-muted d-block">Net Profit: ${{ number_format($potentialProfitUsd, 2) }}</small>
-                                        </div>
                                     </div>
                                     <div class="crypto-data-item">
                                         <div class="crypto-data-label">Potential Loss</div>
@@ -529,16 +540,12 @@
                                             <div class="crypto-price-idr">
                                                 ({{ number_format((abs($potentialLossUsd) / $amount) * 100, 1) }}%)</div>
                                         @endif
-                                        <div class="mt-2 p-2 bg-light rounded">
-                                            <small class="text-muted d-block">Breakdown:</small>
-                                            <small class="text-danger d-block">Gross Loss: ${{ number_format(-($entryUsd - $stopLossUsd) * ($amount / $entryUsd), 2) }}</small>
-                                            <small class="text-danger d-block">Plus Fees: -${{ number_format($feeUsd, 2) }}</small>
-                                            <small class="text-muted d-block">Net Loss: ${{ number_format($potentialLossUsd, 2) }}</small>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        -->
 
                         <!-- Technical Indicators -->
                         @php
@@ -646,23 +653,5 @@
             </div>
         </div>
 
-        <!-- Analysis Form Section -->
-        <div class="row">
-            <div class="col-12">
-                <x-card title="🎯 Konfigurasi Analisis">
-                    <x-form method="GET" action="{{ route(module('getUpdate'), $model) }}">
-                        <x-select searchable name="coin_code" :value="$model->coin_code" :options="$coin" label="Select Coin"
-                            required />
-                        <x-input type="number" name="amount" :value="request('amount', 100)" label="Trading Amount (USD)"
-                            step="0.01" min="1" placeholder="Enter amount to trade" />
-
-                        <x-footer>
-                            <a href="{{ route(module('getData')) }}" class="button secondary">Back</a>
-                            <x-button type="submit" class="primary">🔍 Analyze</x-button>
-                        </x-footer>
-                    </x-form>
-                </x-card>
-            </div>
-        </div>
     </div>
 </x-layout>

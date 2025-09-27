@@ -2,7 +2,6 @@
 
 namespace App\Analysis;
 
-use App\Analysis\AnalysisInterface;
 use App\Helpers\CurrencyHelper;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;

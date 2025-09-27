@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Group;
+use App\Models\Menu;
 use Illuminate\Support\Facades;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\View;
@@ -24,9 +26,14 @@ class AppServiceProvider extends ServiceProvider
         // Load helpers
         require_once app_path('Helpers/Global.php');
 
+        $menu = Menu::orderBy('menu_sort')->get();
+        $group = Group::orderBy('group_sort')->get();
+
         // Share controller context with all views
-        Facades\View::composer('*', function (View $view) {
+        Facades\View::composer('*', function (View $view) use($menu, $group){
             $context = $this->getControllerContext();
+            $context['menu'] = $menu;
+            $context['group'] = $group;
             $view->with('context', $context);
         });
     }
@@ -84,6 +91,7 @@ class AppServiceProvider extends ServiceProvider
             'controller' => $shortName,
             'controller_short' => $controllerShort,
             'module' => $module,
+            'title' => ucfirst($module),
             'module_plural' => $pluralModule,
             'action' => $cleanAction,
             'current_route' => $route->getName(),

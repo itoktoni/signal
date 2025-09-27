@@ -24,18 +24,16 @@ body {
     display: flex;
     flex-shrink: 0;
     z-index: 30;
-    transition: transform 0.3s ease-in-out;
 }
 
 /* Column 1: Main Sidebar */
 .main-sidebar {
-    width: 80px;
+    width: 90px;
     background-color: var(--primary-color);
     color: var(--text-light);
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 1rem 0;
 }
 
 .logo-container{
@@ -57,7 +55,7 @@ body {
 
 .logo img{
     width: unset;
-    max-height: 7rem;
+    max-height: 6.5rem;
 }
 
 /* Column 2: Sub Menu */
@@ -66,7 +64,6 @@ body {
     background-color: var(--bg-white);
     border-right: 1px solid var(--border-color);
     padding: 0.7rem;
-    transition: width 0.3s, padding 0.3s;
     overflow-y: auto;
 }
 

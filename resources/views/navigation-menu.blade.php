@@ -15,11 +15,8 @@
                     <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
-                    <x-nav-link href="{{ route('user.getData') }}" :active="request()->routeIs('user.*')">
+                    <x-nav-link href="{{ route('user.index') }}" :active="request()->routeIs('user.index')">
                         {{ __('Users') }}
-                    </x-nav-link>
-                    <x-nav-link href="{{ route('coin.getData') }}" :active="request()->routeIs('coin.*')">
-                        {{ __('Crypto') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -148,11 +145,8 @@
             <x-responsive-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link href="{{ route('user.getData') }}" :active="request()->routeIs('user.*')">
+            <x-responsive-nav-link href="{{ route('user.index') }}" :active="request()->routeIs('user.index')">
                 {{ __('Users') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link href="{{ route('coin.getData') }}" :active="request()->routeIs('coin.*')">
-                {{ __('Crypto') }}
             </x-responsive-nav-link>
         </div>
 

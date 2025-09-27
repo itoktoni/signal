@@ -2,10 +2,8 @@
 
 namespace App\Analysis;
 
-use App\Analysis\AnalysisInterface;
 use App\Analysis\MaAnalysis;
 use App\Enums\AnalysisType;
-use InvalidArgumentException;
 
 class AnalysisServiceFactory
 {

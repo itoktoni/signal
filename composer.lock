@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0a672d8a38cbd440cc94bbfc9f8fec24",
+    "content-hash": "fbe71edbce00640616cec5479e4ad469",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -282,291 +282,6 @@
             "time": "2024-02-09T16:56:22+00:00"
         },
         {
-            "name": "ccxt/ccxt",
-            "version": "1.93.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/ccxt/ccxt.git",
-                "reference": "9ff03248d9beebe0127c23df3de6341b62449012"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/ccxt/ccxt/zipball/9ff03248d9beebe0127c23df3de6341b62449012",
-                "reference": "9ff03248d9beebe0127c23df3de6341b62449012",
-                "shasum": ""
-            },
-            "require": {
-                "ext-bcmath": "*",
-                "ext-curl": "*",
-                "ext-gmp": "*",
-                "ext-iconv": "*",
-                "ext-json": "*",
-                "ext-openssl": "*",
-                "ext-pcre": "*",
-                "pear/console_table": "1.3.1",
-                "php": ">=7.0",
-                "symfony/polyfill-mbstring": "^1.7"
-            },
-            "suggest": {
-                "clue/buzz-react": "Required for asynchronous API calls to exchanges with PHP",
-                "clue/http-proxy-react": "Required for using a proxy when doing asynchronous API calls to exchanges with PHP",
-                "react/event-loop": "Required for asynchronous API calls to exchanges with PHP",
-                "react/http": "Required for asynchronous API calls to exchanges with PHP",
-                "recoil/react": "Required for asynchronous API calls to exchanges with PHP",
-                "recoil/recoil": "Required for asynchronous API calls to exchanges with PHP"
-            },
-            "type": "library",
-            "autoload": {
-                "files": [
-                    "ccxt.php"
-                ],
-                "psr-4": {
-                    "ccxt\\": "php/",
-                    "ccxt_async\\": "php/async/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Igor Kroitor",
-                    "email": "igor.kroitor@gmail.com",
-                    "homepage": "https://github.com/kroitor",
-                    "role": "Developer"
-                },
-                {
-                    "name": "Vitaly Gordon",
-                    "email": "rocket.mind@gmail.com",
-                    "homepage": "https://github.com/xpl",
-                    "role": "Developer"
-                },
-                {
-                    "name": "Carlo Revelli",
-                    "email": "carlo.revelli@berkeley.edu",
-                    "homepage": "https://github.com/frosty00",
-                    "role": "Junior Developer"
-                }
-            ],
-            "description": "A JavaScript / Python / PHP cryptocurrency trading library with support for more than 90 bitcoin/altcoin exchanges",
-            "homepage": "https://github.com/ccxt/ccxt",
-            "keywords": [
-                "1BTCXE",
-                "1Broker",
-                "ACX",
-                "ANX",
-                "ANXPro",
-                "BL3P",
-                "BTC Markets",
-                "BTC Trade UA",
-                "BTCC",
-                "BTCChina",
-                "BTCExchange",
-                "BTCTrader",
-                "BTCTurk",
-                "BTCX",
-                "BX.in.th",
-                "Bit2C",
-                "BitBay",
-                "BitBays",
-                "BitMEX",
-                "BitMarket",
-                "Bitcoin.co.id",
-                "Bleutrade",
-                "BlinkTrade",
-                "BtcBox",
-                "Bter.com",
-                "C-CEX",
-                "CEX.IO",
-                "CHBTC",
-                "CNY",
-                "ChileBit",
-                "CoinMate",
-                "CoinSpot",
-                "Coinsecure",
-                "Crypto Capital",
-                "DOGE",
-                "EUR",
-                "EXMO",
-                "FYB-SE",
-                "FYB-SG",
-                "FoxBit",
-                "Gatecoin",
-                "Gemini",
-                "Huobi",
-                "HuobiPRO",
-                "LakeBTC",
-                "Liqui",
-                "LiveCoin",
-                "OKCoin",
-                "OKCoin.cn",
-                "OKCoin.com",
-                "OKEX",
-                "Paymium",
-                "Poloniex",
-                "QUOINE",
-                "Qryptos",
-                "QuadrigaCX",
-                "Southxchange",
-                "SurBitcoin",
-                "TheRockTrading",
-                "Tidex",
-                "USD",
-                "UrduBit",
-                "VBTC",
-                "Vaultoro",
-                "VirWoX",
-                "Wex",
-                "YoBit",
-                "Zaif",
-                "acx.io",
-                "algorithmic",
-                "algotrading",
-                "altcoin",
-                "altcoins",
-                "api",
-                "arbitrage",
-                "backtest",
-                "backtesting",
-                "binance",
-                "binance.com",
-                "bit2c.co.il",
-                "bitcoin",
-                "bitcoincoid",
-                "bitfinex",
-                "bitflyer",
-                "bitflyer.jp",
-                "bithumb",
-                "bithumb.com",
-                "bitlish",
-                "bitso",
-                "bitstamp",
-                "bittrex",
-                "bleutrade.com",
-                "bot",
-                "btc",
-                "btc-e",
-                "btc-trade.com.ua",
-                "btc-x",
-                "btcbox.co.jp",
-                "btce",
-                "btcexchange.ph",
-                "btcmarkets",
-                "btcmarkets.net",
-                "btctrader.com",
-                "btcturk.com",
-                "bter",
-                "ccex",
-                "cex",
-                "chilebit.net",
-                "coin",
-                "coincheck",
-                "coingi",
-                "coingi.com",
-                "coinmarketcap",
-                "coins",
-                "coinspot.com.au",
-                "crypto",
-                "crypto currency",
-                "crypto market",
-                "cryptocapital.co",
-                "cryptocurrency",
-                "currencies",
-                "currency",
-                "darkcoin",
-                "dash",
-                "digital currency",
-                "dogecoin",
-                "dsx",
-                "dsx.uk",
-                "e-commerce",
-                "etc",
-                "eth",
-                "ether",
-                "ethereum",
-                "exchange",
-                "exchanges",
-                "flowBTC",
-                "flowbtc.com",
-                "foxbit.exchange",
-                "framework",
-                "gdax",
-                "hitbtc",
-                "huobi.pro",
-                "independent reserve",
-                "independentreserve.com",
-                "invest",
-                "investing",
-                "investor",
-                "itBit",
-                "jubi.com",
-                "kraken",
-                "lakebtc.com",
-                "library",
-                "light",
-                "liqui.io",
-                "litecoin",
-                "ltc",
-                "luno",
-                "market",
-                "market data",
-                "markets",
-                "mercado",
-                "mercadobitcoin",
-                "mercadobitcoin.br",
-                "merchandise",
-                "merchant",
-                "minimal",
-                "mixcoins",
-                "mixcoins.com",
-                "nova",
-                "novaexchange",
-                "novaexchange.com",
-                "okex.com",
-                "order",
-                "order book",
-                "orderbook",
-                "price",
-                "price data",
-                "pricefeed",
-                "private",
-                "public",
-                "ripple",
-                "strategy",
-                "surbitcoin.com",
-                "tidex.com",
-                "toolkit",
-                "trade",
-                "trader",
-                "trading",
-                "urdubit.com",
-                "vbtc.exchange",
-                "vbtc.vn",
-                "volume",
-                "wex.nz",
-                "xBTCe",
-                "xbt",
-                "xbtce.com",
-                "xrp",
-                "yobit.net",
-                "yunbi",
-                "zec",
-                "zerocoin"
-            ],
-            "support": {
-                "issues": "https://github.com/ccxt/ccxt/issues",
-                "source": "https://github.com/ccxt/ccxt/tree/1.93.1"
-            },
-            "funding": [
-                {
-                    "url": "https://opencollective.com/ccxt",
-                    "type": "open_collective"
-                }
-            ],
-            "time": "2022-09-02T19:55:37+00:00"
-        },
-        {
             "name": "composer/class-map-generator",
             "version": "1.6.2",
             "source": {
@@ -838,6 +553,225 @@
                 "source": "https://github.com/dflydev/dflydev-dot-access-data/tree/v3.0.3"
             },
             "time": "2024-07-08T12:26:09+00:00"
+        },
+        {
+            "name": "dietercoopman/laravel-showsql",
+            "version": "v1.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/dietercoopman/laravel-showsql.git",
+                "reference": "7a679d3c40f7cb0fee50d14c3e9fe02fb6aa35a6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/dietercoopman/laravel-showsql/zipball/7a679d3c40f7cb0fee50d14c3e9fe02fb6aa35a6",
+                "reference": "7a679d3c40f7cb0fee50d14c3e9fe02fb6aa35a6",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/support": "^6|^7|^8|^9|^10.0|^11.0|^12.0",
+                "php": "^7.4|^8.0|^8.1"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^6.15|^8.0|^9.0|^10.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Dietercoopman\\Showsql\\ShowsqlServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Dietercoopman\\Showsql\\": "src",
+                    "Dietercoopman\\Showsql\\Database\\Factories\\": "database/factories"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dieter Coopman",
+                    "email": "dieter@deltasolutions.be",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A Laravel package to output an sql as given to the database",
+            "homepage": "https://github.com/dietercoopman/showsql",
+            "keywords": [
+                "dietercoopman",
+                "laravel",
+                "showsql"
+            ],
+            "support": {
+                "issues": "https://github.com/dietercoopman/laravel-showsql/issues",
+                "source": "https://github.com/dietercoopman/laravel-showsql/tree/v1.6"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/dietercoopman",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-02-22T13:37:08+00:00"
+        },
+        {
+            "name": "doctrine/dbal",
+            "version": "4.3.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/doctrine/dbal.git",
+                "reference": "231959669bb2173194c95636eae7f1b41b2a8b19"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/doctrine/dbal/zipball/231959669bb2173194c95636eae7f1b41b2a8b19",
+                "reference": "231959669bb2173194c95636eae7f1b41b2a8b19",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/deprecations": "^1.1.5",
+                "php": "^8.2",
+                "psr/cache": "^1|^2|^3",
+                "psr/log": "^1|^2|^3"
+            },
+            "require-dev": {
+                "doctrine/coding-standard": "13.0.1",
+                "fig/log-test": "^1",
+                "jetbrains/phpstorm-stubs": "2023.2",
+                "phpstan/phpstan": "2.1.22",
+                "phpstan/phpstan-phpunit": "2.0.6",
+                "phpstan/phpstan-strict-rules": "^2",
+                "phpunit/phpunit": "11.5.23",
+                "slevomat/coding-standard": "8.16.2",
+                "squizlabs/php_codesniffer": "3.13.1",
+                "symfony/cache": "^6.3.8|^7.0",
+                "symfony/console": "^5.4|^6.3|^7.0"
+            },
+            "suggest": {
+                "symfony/console": "For helpful console commands such as SQL execution and import of files."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Doctrine\\DBAL\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Guilherme Blanco",
+                    "email": "guilhermeblanco@gmail.com"
+                },
+                {
+                    "name": "Roman Borschel",
+                    "email": "roman@code-factory.org"
+                },
+                {
+                    "name": "Benjamin Eberlei",
+                    "email": "kontakt@beberlei.de"
+                },
+                {
+                    "name": "Jonathan Wage",
+                    "email": "jonwage@gmail.com"
+                }
+            ],
+            "description": "Powerful PHP database abstraction layer (DBAL) with many features for database schema introspection and management.",
+            "homepage": "https://www.doctrine-project.org/projects/dbal.html",
+            "keywords": [
+                "abstraction",
+                "database",
+                "db2",
+                "dbal",
+                "mariadb",
+                "mssql",
+                "mysql",
+                "oci8",
+                "oracle",
+                "pdo",
+                "pgsql",
+                "postgresql",
+                "queryobject",
+                "sasql",
+                "sql",
+                "sqlite",
+                "sqlserver",
+                "sqlsrv"
+            ],
+            "support": {
+                "issues": "https://github.com/doctrine/dbal/issues",
+                "source": "https://github.com/doctrine/dbal/tree/4.3.3"
+            },
+            "funding": [
+                {
+                    "url": "https://www.doctrine-project.org/sponsorship.html",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://www.patreon.com/phpdoctrine",
+                    "type": "patreon"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/doctrine%2Fdbal",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2025-09-04T23:52:42+00:00"
+        },
+        {
+            "name": "doctrine/deprecations",
+            "version": "1.1.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/doctrine/deprecations.git",
+                "reference": "459c2f5dd3d6a4633d3b5f46ee2b1c40f57d3f38"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/doctrine/deprecations/zipball/459c2f5dd3d6a4633d3b5f46ee2b1c40f57d3f38",
+                "reference": "459c2f5dd3d6a4633d3b5f46ee2b1c40f57d3f38",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1 || ^8.0"
+            },
+            "conflict": {
+                "phpunit/phpunit": "<=7.5 || >=13"
+            },
+            "require-dev": {
+                "doctrine/coding-standard": "^9 || ^12 || ^13",
+                "phpstan/phpstan": "1.4.10 || 2.1.11",
+                "phpstan/phpstan-phpunit": "^1.0 || ^2",
+                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.6 || ^10.5 || ^11.5 || ^12",
+                "psr/log": "^1 || ^2 || ^3"
+            },
+            "suggest": {
+                "psr/log": "Allows logging deprecations via PSR-3 logger implementation"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Doctrine\\Deprecations\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "A small layer on top of trigger_error(E_USER_DEPRECATED) or PSR-3 logging with options to disable all deprecations or selectively for packages.",
+            "homepage": "https://www.doctrine-project.org/",
+            "support": {
+                "issues": "https://github.com/doctrine/deprecations/issues",
+                "source": "https://github.com/doctrine/deprecations/tree/1.1.5"
+            },
+            "time": "2025-04-07T20:06:18+00:00"
         },
         {
             "name": "doctrine/inflector",
@@ -1818,6 +1752,84 @@
                 "source": "https://github.com/kirschbaum-development/eloquent-power-joins/tree/4.2.8"
             },
             "time": "2025-08-14T18:43:05+00:00"
+        },
+        {
+            "name": "kitloong/laravel-migrations-generator",
+            "version": "v7.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/kitloong/laravel-migrations-generator.git",
+                "reference": "37f29a99671a5dde3a598e40157e2e245f077878"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/kitloong/laravel-migrations-generator/zipball/37f29a99671a5dde3a598e40157e2e245f077878",
+                "reference": "37f29a99671a5dde3a598e40157e2e245f077878",
+                "shasum": ""
+            },
+            "require": {
+                "ext-pdo": "*",
+                "illuminate/support": "^11.0|^12.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "barryvdh/laravel-ide-helper": "^3.0",
+                "friendsofphp/php-cs-fixer": "^3.1",
+                "larastan/larastan": "^2.0|^3.0",
+                "mockery/mockery": "^1.0",
+                "orchestra/testbench": "^9.0|^10.0",
+                "phpmd/phpmd": "^2.10",
+                "phpstan/phpstan-mockery": "^1.0|^2.0",
+                "slevomat/coding-standard": "^8.0",
+                "squizlabs/php_codesniffer": "^3.5"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "KitLoong\\MigrationsGenerator\\MigrationsGeneratorServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "KitLoong\\MigrationsGenerator\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Kit Loong",
+                    "email": "kitloong1008@gmail.com"
+                }
+            ],
+            "description": "Generates Laravel Migrations from an existing database",
+            "keywords": [
+                "artisan",
+                "generator",
+                "laravel",
+                "lumen",
+                "migration",
+                "migrations"
+            ],
+            "support": {
+                "issues": "https://github.com/kitloong/laravel-migrations-generator/issues",
+                "source": "https://github.com/kitloong/laravel-migrations-generator/tree/v7.2.0"
+            },
+            "funding": [
+                {
+                    "url": "https://www.buymeacoffee.com/kitloong",
+                    "type": "buy_me_a_coffee"
+                },
+                {
+                    "url": "https://github.com/kitloong",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-08-10T07:31:19+00:00"
         },
         {
             "name": "laminas/laminas-code",
@@ -3751,16 +3763,16 @@
         },
         {
             "name": "paragonie/constant_time_encoding",
-            "version": "v3.1.1",
+            "version": "v3.1.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/paragonie/constant_time_encoding.git",
-                "reference": "5e9b582660b997de205a84c02a3aac7c060900c9"
+                "reference": "d5b01a39b3415c2cd581d3bd3a3575c1ebbd8e77"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/paragonie/constant_time_encoding/zipball/5e9b582660b997de205a84c02a3aac7c060900c9",
-                "reference": "5e9b582660b997de205a84c02a3aac7c060900c9",
+                "url": "https://api.github.com/repos/paragonie/constant_time_encoding/zipball/d5b01a39b3415c2cd581d3bd3a3575c1ebbd8e77",
+                "reference": "d5b01a39b3415c2cd581d3bd3a3575c1ebbd8e77",
                 "shasum": ""
             },
             "require": {
@@ -3816,66 +3828,7 @@
                 "issues": "https://github.com/paragonie/constant_time_encoding/issues",
                 "source": "https://github.com/paragonie/constant_time_encoding"
             },
-            "time": "2025-09-22T21:00:33+00:00"
-        },
-        {
-            "name": "pear/console_table",
-            "version": "v1.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/pear/Console_Table.git",
-                "reference": "1930c11897ca61fd24b95f2f785e99e0f36dcdea"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/pear/Console_Table/zipball/1930c11897ca61fd24b95f2f785e99e0f36dcdea",
-                "reference": "1930c11897ca61fd24b95f2f785e99e0f36dcdea",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.2.0"
-            },
-            "suggest": {
-                "pear/Console_Color2": ">=0.1.2"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "Table.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-2-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Jan Schneider",
-                    "homepage": "http://pear.php.net/user/yunosh"
-                },
-                {
-                    "name": "Tal Peer",
-                    "homepage": "http://pear.php.net/user/tal"
-                },
-                {
-                    "name": "Xavier Noguer",
-                    "homepage": "http://pear.php.net/user/xnoguer"
-                },
-                {
-                    "name": "Richard Heyes",
-                    "homepage": "http://pear.php.net/user/richard"
-                }
-            ],
-            "description": "Library that makes it easy to build console style tables.",
-            "homepage": "http://pear.php.net/package/Console_Table/",
-            "keywords": [
-                "console"
-            ],
-            "support": {
-                "issues": "http://pear.php.net/bugs/search.php?cmd=display&package_name[]=Console_Table",
-                "source": "https://github.com/pear/Console_Table"
-            },
-            "time": "2018-01-25T20:47:17+00:00"
+            "time": "2025-09-24T15:06:41+00:00"
         },
         {
             "name": "phiki/phiki",
@@ -7657,54 +7610,6 @@
             "time": "2025-06-23T06:07:21+00:00"
         },
         {
-            "name": "doctrine/deprecations",
-            "version": "1.1.5",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/doctrine/deprecations.git",
-                "reference": "459c2f5dd3d6a4633d3b5f46ee2b1c40f57d3f38"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/deprecations/zipball/459c2f5dd3d6a4633d3b5f46ee2b1c40f57d3f38",
-                "reference": "459c2f5dd3d6a4633d3b5f46ee2b1c40f57d3f38",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^7.1 || ^8.0"
-            },
-            "conflict": {
-                "phpunit/phpunit": "<=7.5 || >=13"
-            },
-            "require-dev": {
-                "doctrine/coding-standard": "^9 || ^12 || ^13",
-                "phpstan/phpstan": "1.4.10 || 2.1.11",
-                "phpstan/phpstan-phpunit": "^1.0 || ^2",
-                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.6 || ^10.5 || ^11.5 || ^12",
-                "psr/log": "^1 || ^2 || ^3"
-            },
-            "suggest": {
-                "psr/log": "Allows logging deprecations via PSR-3 logger implementation"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Doctrine\\Deprecations\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "description": "A small layer on top of trigger_error(E_USER_DEPRECATED) or PSR-3 logging with options to disable all deprecations or selectively for packages.",
-            "homepage": "https://www.doctrine-project.org/",
-            "support": {
-                "issues": "https://github.com/doctrine/deprecations/issues",
-                "source": "https://github.com/doctrine/deprecations/tree/1.1.5"
-            },
-            "time": "2025-04-07T20:06:18+00:00"
-        },
-        {
             "name": "fakerphp/faker",
             "version": "v1.24.1",
             "source": {
@@ -10248,16 +10153,16 @@
         },
         {
             "name": "sebastian/exporter",
-            "version": "6.3.1",
+            "version": "6.3.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/exporter.git",
-                "reference": "8f67e53d3fcaf53105f95cc14f1630493d0fa2e6"
+                "reference": "70a298763b40b213ec087c51c739efcaa90bcd74"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/exporter/zipball/8f67e53d3fcaf53105f95cc14f1630493d0fa2e6",
-                "reference": "8f67e53d3fcaf53105f95cc14f1630493d0fa2e6",
+                "url": "https://api.github.com/repos/sebastianbergmann/exporter/zipball/70a298763b40b213ec087c51c739efcaa90bcd74",
+                "reference": "70a298763b40b213ec087c51c739efcaa90bcd74",
                 "shasum": ""
             },
             "require": {
@@ -10314,7 +10219,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/exporter/issues",
                 "security": "https://github.com/sebastianbergmann/exporter/security/policy",
-                "source": "https://github.com/sebastianbergmann/exporter/tree/6.3.1"
+                "source": "https://github.com/sebastianbergmann/exporter/tree/6.3.2"
             },
             "funding": [
                 {
@@ -10334,7 +10239,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-09-22T05:34:00+00:00"
+            "time": "2025-09-24T06:12:51+00:00"
         },
         {
             "name": "sebastian/global-state",

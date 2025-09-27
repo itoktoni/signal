@@ -1,4 +1,13 @@
-@props(['title'])
+@props(['title', 'model' => null])
+
+@php
+    $title = $title ?? $context['title'];
+    if (empty($title) && $model) {
+        $title = 'Edit ' . class_basename($model);
+    } elseif (empty($title)) {
+        $title = 'Create Form';
+    }
+@endphp
 
 <div
     class="{{ $class ?? 'card' }}"

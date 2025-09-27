@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ActorType;
+use App\Enums\RoleType;
+use App\Models\Group;
 use App\Models\User;
 use App\Traits\ControllerHelper;
 use Illuminate\Http\Request;
@@ -28,11 +31,23 @@ class UserController extends Controller
     public function getData()
     {
         $perPage = request('perpage', 10);
-        $data = $this->model->filter(request())->paginate($perPage);
+        $data = User::filter(request())->paginate($perPage);
         $data->appends(request()->query());
 
         return $this->views($this->module(), [
             'data' => $data,
+        ]);
+    }
+
+    public function share($data = [])
+    {
+        $role = RoleType::getOptions();
+        $group = Group::getOptions();
+
+        return array_merge($data, [
+            'model' => false,
+            'role' => $role,
+            'group' => $group,
         ]);
     }
 
@@ -41,7 +56,7 @@ class UserController extends Controller
      */
     public function getCreate()
     {
-        return $this->views($this->module());
+        return $this->views('user.form');
     }
 
     /**
@@ -55,9 +70,8 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function getShow($code)
+    public function getShow(User $user)
     {
-        $model = $this->model->find($code);
         return $this->views($this->module());
     }
 
@@ -66,9 +80,9 @@ class UserController extends Controller
      */
     public function getUpdate($code)
     {
-        $model = $this->model->find($code);
+        $model = User::findOrFail($code);
 
-        return $this->views($this->module(), $this->share([
+        return $this->views($this->module('form'), $this->share([
             'model' => $model,
         ]));
     }
@@ -76,26 +90,24 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function postUpdate(Request $request)
+    public function postUpdate(Request $request, User $user)
     {
-        return $this->update($request->all(), $this->model);
+        return $this->update($request->all(), $user);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function getDelete($code)
+    public function getDelete(User $user)
     {
-        $model = $this->model->find($code);
-        $model->delete();
+        $user->delete();
 
         return redirect()->route($this->module('getData'))->with('success', 'deleted successfully');
     }
 
-    public function postDelete($code)
+    public function postDelete(User $user)
     {
-        $model = $this->model->find($code);
-        $model->delete();
+        $user->delete();
 
         return redirect()->route($this->module('getData'))->with('success', 'deleted successfully');
     }
@@ -113,7 +125,7 @@ class UserController extends Controller
     public function postBulkDelete(Request $request)
     {
         $ids = explode(',', $request->ids);
-        $this->model->whereIn('id', $ids)->delete();
+        User::whereIn('id', $ids)->delete();
 
         return redirect()->route($this->module('getData'))->with('success', 'deleted successfully');
     }
