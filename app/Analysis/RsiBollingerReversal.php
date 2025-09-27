@@ -303,6 +303,18 @@ class RsiBollingerReversal implements AnalysisInterface
 
         $result->potential_profit = ($reward / $entry) * $amount;
 
+        // Add indicators data
+        $result->indicators = [
+            'rsi' => $lastRsi ?? 0,
+            'bollinger_upper' => $lastUpperBand ?? 0,
+            'bollinger_middle' => end($bollingerBands['middle']) ?? 0,
+            'bollinger_lower' => $lastLowerBand ?? 0,
+            'current_price' => $currentPrice ?? 0,
+            'last_close' => $lastClose ?? 0
+        ];
+
+        $result->notes = $this->notes ?: "RSI + Bollinger Bands reversal analysis dengan timeframe 4 jam.";
+
         return $result;
     }
 }

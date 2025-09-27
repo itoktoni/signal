@@ -37,6 +37,18 @@ class BearishReversalAnalysis implements AnalysisInterface
             $analysis = $this->technicalAnalysis($priceData, $currentPrice);
             $riskAnalysis = $this->riskAnalysis($analysis, $amount, $currentPrice);
 
+            // Collect all indicators data
+            $indicators = [
+                'rsi' => $analysis['rsi'] ?? 0,
+                'macd_histogram' => $analysis['macd_histogram'] ?? 0,
+                'volume_trend' => $analysis['volume_trend'] ?? 'neutral',
+                'bollinger_upper' => $analysis['bollinger_bands']['upper'] ?? 0,
+                'bollinger_middle' => $analysis['bollinger_bands']['middle'] ?? 0,
+                'bollinger_lower' => $analysis['bollinger_bands']['lower'] ?? 0,
+                'estimated_bottom' => $analysis['estimated_bottom'] ?? 0,
+                'current_price' => $currentPrice
+            ];
+
             return (object)[
                 'title' => "Bearish Reversal Analysis for {$symbol}",
                 'description' => $this->getDescription(),
@@ -49,12 +61,11 @@ class BearishReversalAnalysis implements AnalysisInterface
                 'fee' => $riskAnalysis['fee'],
                 'potential_profit' => $riskAnalysis['potential_profit'],
                 'potential_loss' => $riskAnalysis['potential_loss'],
+                'indicators' => $indicators, // Add indicators data
                 'timestamp' => time(),
                 'success' => true,
                 'current_price' => $currentPrice,
-                'rsi' => $analysis['rsi'] ?? 0,
-                'macd_histogram' => $analysis['macd_histogram'] ?? 0,
-                'volume_trend' => $analysis['volume_trend'] ?? 'neutral'
+                'notes' => "Analisis real-time menggunakan data Binance API. Deteksi reversal bearish dengan RSI, Fibonacci, volume analysis, dan candlestick patterns."
             ];
 
         } catch (\Exception $e) {

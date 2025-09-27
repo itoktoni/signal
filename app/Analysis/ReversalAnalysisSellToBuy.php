@@ -126,7 +126,8 @@ class ReversalAnalysisSellToBuy implements AnalysisInterface
             'fee'                  => $fee_usd,
             'potential_profit'     => $potential_profit,
             'potential_loss'       => $potential_loss,
-            'notes'                => implode(" ", $notes)
+            'indicators'           => $this->last, // Add indicators data
+            'notes'                => implode(" ", $notes) ?: "Analisis reversal dengan RSI, support-resistance, dan candlestick patterns."
         ];
     }
 

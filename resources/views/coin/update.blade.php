@@ -263,27 +263,7 @@
                             </div>
                         @endif
 
-                        <!-- Analysis Notes -->
-                        @if (isset($crypto_analysis['notes']) && !empty($crypto_analysis['notes']))
-                            <div class="crypto-card">
-                                <div class="crypto-card-header">
-                                    <h3 class="crypto-card-title">
-                                        <i class="bi bi-sticky"></i> Analysis Notes
-                                    </h3>
-                                </div>
-                                <div class="crypto-card-body">
-                                    <div class="crypto-alert">
-                                        <div class="d-flex align-items-start">
-                                            <div>
-                                               {{ $crypto_analysis['notes'] }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
-
-                        @if ($hasIndicators)
+                         @if ($hasIndicators)
                             <div class="crypto-card">
                                 <div class="crypto-card-header">
                                     <h3 class="crypto-card-title">
@@ -329,6 +309,28 @@
                                 </div>
                             </div>
                         @endif
+
+                        <!-- Analysis Notes -->
+                        @if (isset($crypto_analysis['notes']) && !empty($crypto_analysis['notes']))
+                            <div class="crypto-card">
+                                <div class="crypto-card-header">
+                                    <h3 class="crypto-card-title">
+                                        <i class="bi bi-sticky"></i> Analysis Notes
+                                    </h3>
+                                </div>
+                                <div class="crypto-card-body">
+                                    <div class="crypto-alert">
+                                        <div class="d-flex align-items-start">
+                                            <div>
+                                               {{ $crypto_analysis['notes'] }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+
                     @else
                         <div class="alert alert-warning">
                             <i class="bi bi-exclamation-triangle"></i>

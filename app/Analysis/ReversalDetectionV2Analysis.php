@@ -138,7 +138,8 @@ class ReversalDetectionV2Analysis implements AnalysisInterface
             'risk_reward'          => $risk_reward,
             'potential_profit'     => $potential_profit_usd,
             'potential_loss'       => $potential_loss_usd,
-            'notes'                => implode(" ", $notes)
+            'indicators'           => $this->last, // Add indicators data
+            'notes'                => implode(" ", $notes) ?: "Analisis reversal v2 dengan RSI, EMA50, bullish engulfing, dan volume spike."
         ];
     }
 
