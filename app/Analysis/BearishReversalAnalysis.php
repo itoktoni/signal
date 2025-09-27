@@ -17,7 +17,7 @@ class BearishReversalAnalysis implements AnalysisInterface
         $this->exchangeRate = $exchangeRate;
         $this->feePercentage = $feePercentage;
         $this->client = new Client();
-        $this->apiBaseUrl = 'https://api.binance.com/api/v3';
+        $this->apiBaseUrl = env('BINANCE_API', 'https://data-api.binance.vision').'/api/v3';
     }
 
     public function analyze(string $symbol, float $amount = 100): object

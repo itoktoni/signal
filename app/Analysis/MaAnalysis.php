@@ -172,8 +172,7 @@ class MAAnalysis implements AnalysisInterface
             'risk_reward'          => $risk_reward,
             'potential_profit'     => $potential_profit_usd,
             'potential_loss'       => $potential_loss_usd,
-            'indicators'           => $this->last, // Add indicators data
-            'notes'                => implode(" ", $notes) ?: "Analisis MA + RSI + Volume + ATR + MACD. Gunakan timeframe $timeframe untuk konfirmasi sinyal."
+            'notes'                => implode(" ", $notes) ?: "Gunakan timeframe $timeframe. SL diambil dari swing high/low, TP dihitung ATR × 2."
         ];
     }
 
