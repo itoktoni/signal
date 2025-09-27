@@ -80,7 +80,7 @@ class UserController extends Controller
      */
     public function getUpdate($code)
     {
-        $model = User::find($code);
+        $model = User::findOrFail($code);
 
         return $this->views($this->module('form'), $this->share([
             'model' => $model,

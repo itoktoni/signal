@@ -1,7 +1,7 @@
-@props(['title', 'model'])
+@props(['title', 'model' => null])
 
 @php
-    $title = $title ?? '';
+    $title = $title ?? $context['title'];
     if (empty($title) && $model) {
         $title = 'Edit ' . class_basename($model);
     } elseif (empty($title)) {

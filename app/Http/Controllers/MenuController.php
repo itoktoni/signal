@@ -41,7 +41,7 @@ class MenuController extends Controller
      */
     public function getCreate()
     {
-        return $this->views($this->module());
+        return $this->views('menu.form');
     }
 
     /**
@@ -68,18 +68,19 @@ class MenuController extends Controller
      */
     public function getUpdate($code)
     {
-        $this->model = $this->getModel($code);
-        return $this->views($this->module(), $this->share([
-            'model' => $this->model,
+        $model = $this->model->findOrFail($code);
+
+        return $this->views('menu.form', $this->share([
+            'model' => $model,
         ]));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function postUpdate(Request $request)
+    public function postUpdate(Request $request, Menu $menu)
     {
-        return $this->update($request->all(),$this->model);
+        return $this->update($request->all(), $menu);
     }
 
     /**

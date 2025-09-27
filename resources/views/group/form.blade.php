@@ -1,54 +1,36 @@
 <x-layout>
-    <x-card :title="$model ? 'Edit Group' : 'Create Group'">
-        <x-form
-            :model="$model ?? null"
-            :action="$model ? route(module('postUpdate'), $model) : route(module('postCreate'))"
-            :method="$model ? 'POST' : 'POST'"
-        >
-            @if($model)
-                @method('PUT')
-            @endif
-
+    <x-card :model="$model">
+        <x-form :model="$model">
             <x-input
-                :model="$model ?? null"
+                :model="$model"
                 name="group_code"
-                :hint="$model ? 'Group code cannot be changed' : null"
-                :required="!$model"
-                :readonly="$model ? true : null"
+                :attributes="isset($model) ? ['readonly' => true] : []"
+                hint="Group code cannot be changed"
             />
 
             <x-input
-                :model="$model ?? null"
+                :model="$model"
                 name="group_name"
-                :value="$model->group_name ?? null"
                 required
             />
 
             <x-input
-                :model="$model ?? null"
+                :model="$model"
                 name="group_icon"
-                :value="$model->group_icon ?? null"
             />
 
             <x-input
-                :model="$model ?? null"
+                :model="$model"
                 name="group_link"
-                :value="$model->group_link ?? null"
             />
 
             <x-input
-                :model="$model ?? null"
+                :model="$model"
                 type="number"
                 name="group_sort"
-                :value="$model->group_sort ?? null"
             />
 
-            <x-footer>
-                <a href="{{ route(module('index')) }}" class="button secondary">Back</a>
-                <x-button type="submit" class="primary">
-                    {{ $model ? 'Update' : 'Create' }}
-                </x-button>
-            </x-footer>
+            <x-footer :model="$model" />
 
         </x-form>
     </x-card>

@@ -41,7 +41,7 @@ class GroupController extends Controller
      */
     public function getCreate()
     {
-        return $this->views($this->module());
+        return $this->views('group.form');
     }
 
     /**
@@ -68,18 +68,19 @@ class GroupController extends Controller
      */
     public function getUpdate($code)
     {
-        $this->model = $this->getModel($code);
-        return $this->views($this->module(), $this->share([
-            'model' => $this->model,
+        $model = $this->model->findOrFail($code);
+
+        return $this->views('group.form', $this->share([
+            'model' => $model,
         ]));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function postUpdate(Request $request)
+    public function postUpdate(Request $request, Group $group)
     {
-        return $this->update($request->all(),$this->model);
+        return $this->update($request->all(), $group);
     }
 
     /**
