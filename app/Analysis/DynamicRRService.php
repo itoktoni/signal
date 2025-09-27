@@ -92,6 +92,10 @@ class DynamicRRService extends AnalysisService
             'resistance' => $srLevels['resistance']
         ];
 
+        // Calculate fees and potential P/L
+        $fees = $this->calculateFees($amount, 'taker');
+        $pl = $this->calculatePotentialPL($levels['entry'], $levels['stop_loss'], $levels['take_profit'], $amount, $signal);
+
         // Format the result with dynamic amount
         return $this->formatResult(
             "Dynamic RR Analysis for {$symbol}",
@@ -102,10 +106,11 @@ class DynamicRRService extends AnalysisService
             $levels['stop_loss'],
             $levels['take_profit'],
             $levels['risk_reward'],
-            $amount, // dynamic position size in USD
+            $fees,
+            $pl['potential_profit'],
+            $pl['potential_loss'],
             'dynamic_rr', // analyst method
             $displayIndicators, // pass indicators
-            'taker', // order type (default to taker)
             $this->getNotes() // pass notes
         );
     }
@@ -510,34 +515,149 @@ class DynamicRRService extends AnalysisService
     /**
      * Calculate RSI
      */
-    private function calculateRSI(array $prices, int $period = 14): float
-    {
-        if (count($prices) < $period + 1) {
-            return 50; // Neutral RSI
-        }
+     private function calculateRSI(array $prices, int $period = 14): float
+     {
+         if (count($prices) < $period + 1) {
+             return 50; // Neutral RSI
+         }
 
-        $gains = [];
-        $losses = [];
+         $gains = [];
+         $losses = [];
 
-        for ($i = 1; $i < count($prices); $i++) {
-            $change = $prices[$i] - $prices[$i - 1];
-            $gains[] = $change > 0 ? $change : 0;
-            $losses[] = $change < 0 ? abs($change) : 0;
-        }
+         for ($i = 1; $i < count($prices); $i++) {
+             $change = $prices[$i] - $prices[$i - 1];
+             $gains[] = $change > 0 ? $change : 0;
+             $losses[] = $change < 0 ? abs($change) : 0;
+         }
 
-        $avgGain = array_sum(array_slice($gains, 0, $period)) / $period;
-        $avgLoss = array_sum(array_slice($losses, 0, $period)) / $period;
+         $avgGain = array_sum(array_slice($gains, 0, $period)) / $period;
+         $avgLoss = array_sum(array_slice($losses, 0, $period)) / $period;
 
-        for ($i = $period; $i < count($gains); $i++) {
-            $avgGain = ($avgGain * ($period - 1) + $gains[$i]) / $period;
-            $avgLoss = ($avgLoss * ($period - 1) + $losses[$i]) / $period;
-        }
+         for ($i = $period; $i < count($gains); $i++) {
+             $avgGain = ($avgGain * ($period - 1) + $gains[$i]) / $period;
+             $avgLoss = ($avgLoss * ($period - 1) + $losses[$i]) / $period;
+         }
 
-        if ($avgLoss == 0) {
-            return 100;
-        }
+         if ($avgLoss == 0) {
+             return 100;
+         }
 
-        $rs = $avgGain / $avgLoss;
-        return 100 - (100 / (1 + $rs));
-    }
+         $rs = $avgGain / $avgLoss;
+         return 100 - (100 / (1 + $rs));
+     }
+
+     /**
+      * Calculate fees for a trade (Indonesian market context)
+      */
+     private function calculateFees(float $positionSize, string $orderType = 'taker'): array
+     {
+         // Based on Pluang PRO fee structure for Kripto Futures:
+         // Maker fee: 0.10% + PPN 0.011% + CFX 0.05% + PPN on CFX 0.0055% = 0.15561%
+         // Taker fee: 0.10% + PPN 0.011% + CFX 0.15% + PPN on CFX 0.0165% = 0.26661%
+
+         $baseFee = $positionSize * 0.0010; // 0.10% base transaction fee
+         $ppnOnBase = $positionSize * 0.00011; // 0.011% PPN on transaction fee
+
+         if ($orderType === 'maker') {
+             $cfxFee = $positionSize * 0.0005; // 0.05% CFX fee (maker)
+             $ppnOnCfx = $positionSize * 0.000055; // 0.0055% PPN on CFX fee
+             $feeDescription = 'maker 0,10% + PPN 0,011% + CFX 0,05% + PPN on CFX 0,0055%';
+         } else { // taker (default)
+             $cfxFee = $positionSize * 0.0015; // 0.15% CFX fee (taker)
+             $ppnOnCfx = $positionSize * 0.000165; // 0.0165% PPN on CFX fee
+             $feeDescription = 'taker 0,10% + PPN 0,011% + CFX 0,15% + PPN on CFX 0,0165%';
+         }
+
+         $tradingFee = $baseFee + $ppnOnBase + $cfxFee + $ppnOnCfx;
+
+         // Slippage (estimated)
+         $slippage = $positionSize * 0.005; // 0.5% slippage
+
+         $totalFees = $tradingFee + $slippage;
+
+         $formattedFees = $this->formatPrice($totalFees);
+
+         return [
+             'base_fee' => $baseFee, // 0.10% base transaction fee
+             'ppn_on_base' => $ppnOnBase, // 0.011% PPN on transaction fee
+             'cfx_fee' => $cfxFee, // 0.05% or 0.15% CFX fee (maker/taker)
+             'ppn_on_cfx' => $ppnOnCfx, // 0.0055% or 0.0165% PPN on CFX fee
+             'trading_fee' => $tradingFee, // Total trading fee
+             'slippage' => $slippage, // 0.5% - Estimated slippage
+             'total' => $totalFees,
+             'formatted' => $formattedFees['formatted'],
+             'description' => 'Biaya transaksi ' . $feeDescription . ' + slippage 0,5%'
+         ];
+     }
+
+     /**
+      * Calculate potential profit/loss
+      */
+     private function calculatePotentialPL(
+         float $entryPrice,
+         float $stopLoss,
+         float $takeProfit,
+         float $positionSize,
+         string $positionType
+     ): array {
+         // Prevent division by zero
+         if ($entryPrice <= 0) {
+             return [
+                 'potential_loss' => 0,
+                 'potential_profit' => 0,
+                 'formatted' => [
+                     'potential_loss' => 'Invalid entry price',
+                     'potential_profit' => 'Invalid entry price'
+                 ]
+             ];
+         }
+
+         $risk = abs($entryPrice - $stopLoss);
+         $reward = abs($entryPrice - $takeProfit);
+
+         // Ensure risk is never exactly 0 to avoid division issues
+         if ($risk == 0) {
+             $risk = $entryPrice * 0.001; // Use 0.1% of entry price as minimum risk
+         }
+
+         $fees = $this->calculateFees($positionSize);
+
+         // Calculate profit/loss without fees first
+         if ($positionType === 'long') {
+             $potentialLoss = -$risk * ($positionSize / $entryPrice);
+             $potentialProfit = ($takeProfit - $entryPrice) * ($positionSize / $entryPrice);
+         } else { // short
+             // For short positions: loss when price goes UP from entry
+             // Example: Short at $100, price goes to $110 = $10 loss per unit
+             // You sold at $100, buy back at $110 = lose $10
+             $potentialLoss = $risk * ($positionSize / $entryPrice);
+
+             // For short positions: profit when price goes DOWN from entry
+             // Example: Short at $100, price goes to $90 = $10 profit per unit
+             // You sold at $100, buy back at $90 = gain $10
+             $potentialProfit = ($entryPrice - $takeProfit) * ($positionSize / $entryPrice);
+         }
+
+         // Apply fees to both profit and loss (more realistic)
+         // For profits: fees are subtracted (you get less profit)
+         $potentialProfit = $potentialProfit - $fees['total'];
+         // For losses: fees are added (you lose more money)
+         $potentialLoss = $potentialLoss - $fees['total'];
+
+         // Ensure loss is always negative and includes at least the fee amount
+         // Even if risk is 0, you still pay fees on trade exit
+         $potentialLoss = min($potentialLoss, -$fees['total']);
+
+         $formattedLoss = $this->formatPrice(abs($potentialLoss)); // Use absolute for display
+         $formattedProfit = $this->formatPrice($potentialProfit);
+
+         return [
+             'potential_loss' => $potentialLoss,
+             'potential_profit' => $potentialProfit,
+             'formatted' => [
+                 'potential_loss' => $formattedLoss['formatted']['both'],
+                 'potential_profit' => $formattedProfit['formatted']['both']
+             ]
+         ];
+     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Analysis;
 
-use App\Analysis\MaAnalysis;
+use App\Analysis\MAAnalysis;
 use App\Enums\AnalysisType;
 
 class AnalysisServiceFactory
@@ -13,8 +13,8 @@ class AnalysisServiceFactory
     public static function create(string $method): AnalysisInterface
     {
         return match ($method) {
-            AnalysisType::MA_20_50 => new MaAnalysis(),
-            default => new MaAnalysis() // Default to MA Analysis only
+            AnalysisType::MA_20_50 => new MAAnalysis(),
+            default => new MAAnalysis() // Default to MA Analysis only
         };
     }
 

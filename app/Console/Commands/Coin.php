@@ -2,12 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Analysis\BearishReversalAnalysis;
 use Illuminate\Console\Command;
 use App\Analysis\MAAnalysis;
 use App\Analysis\ReversalAnalysisSellToBuy;
 use App\Analysis\ReversalDetectionV2Analysis;
+use App\Analysis\RsiBollingerReversal;
 
-class AnalyzeMA extends Command
+class Coin extends Command
 {
     /**
      * The name and signature of the console command.
@@ -17,7 +19,7 @@ class AnalyzeMA extends Command
      *
      * @var string
      */
-    protected $signature = 'analysis:ma {symbol : The trading pair symbol (e.g., BTCUSDT)} {amount=1000 : Trading amount in USD}';
+    protected $signature = 'scan:coin {symbol : The trading pair symbol (e.g., BTCUSDT)} {amount=1000 : Trading amount in USD}';
 
     /**
      * The console command description.
@@ -36,10 +38,11 @@ class AnalyzeMA extends Command
 
         // $service = new MAAnalysis();
         // $service = new ReversalAnalysisSellToBuy();
-        $service = new ReversalDetectionV2Analysis();
+        // $service = new BearishReversalAnalysis();
+        $service = new RsiBollingerReversal();
 
         try {
-            $result = $service->analyze($symbol, $amount, '15m');
+            $result = $service->analyze($symbol, $amount);
 
             $this->info("✅ Analysis Completed for {$symbol}");
             $this->line("----------------------------------------------------");
