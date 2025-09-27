@@ -42,19 +42,13 @@ class BearishReversalAnalysis implements AnalysisInterface
                 'description' => $this->getDescription(),
                 'signal' => $analysis['signal'],
                 'confidence' => $analysis['confidence'],
-                'entry_usd' => $currentPrice, // Gunakan harga current, bukan dari analisis
-                'entry_idr' => $currentPrice * $this->exchangeRate,
-                'stop_loss_usd' => $analysis['stop_loss'],
-                'stop_loss_idr' => $analysis['stop_loss'] * $this->exchangeRate,
-                'take_profit_usd' => $analysis['take_profit'],
-                'take_profit_idr' => $analysis['take_profit'] * $this->exchangeRate,
+                'entry' => $currentPrice, // Gunakan harga current, bukan dari analisis
+                'stop_loss' => $analysis['stop_loss'],
+                'take_profit' => $analysis['take_profit'],
                 'risk_reward' => $analysis['risk_reward_ratio'],
-                'fee_usd' => $riskAnalysis['fee_usd'],
-                'fee_idr' => $riskAnalysis['fee_idr'],
-                'potential_profit_usd' => $riskAnalysis['potential_profit_usd'],
-                'potential_profit_idr' => $riskAnalysis['potential_profit_idr'],
-                'potential_loss_usd' => $riskAnalysis['potential_loss_usd'],
-                'potential_loss_idr' => $riskAnalysis['potential_loss_idr'],
+                'fee' => $riskAnalysis['fee'],
+                'potential_profit' => $riskAnalysis['potential_profit'],
+                'potential_loss' => $riskAnalysis['potential_loss'],
                 'timestamp' => time(),
                 'success' => true,
                 'current_price' => $currentPrice,
@@ -69,19 +63,13 @@ class BearishReversalAnalysis implements AnalysisInterface
                 'description' => $this->getDescription(),
                 'signal' => 'NEUTRAL',
                 'confidence' => 0,
-                'entry_usd' => 0,
-                'entry_idr' => 0,
-                'stop_loss_usd' => 0,
-                'stop_loss_idr' => 0,
-                'take_profit_usd' => 0,
-                'take_profit_idr' => 0,
+                'entry' => 0,
+                'stop_loss' => 0,
+                'take_profit' => 0,
                 'risk_reward' => '0:0',
-                'fee_usd' => 0,
-                'fee_idr' => 0,
-                'potential_profit_usd' => 0,
-                'potential_profit_idr' => 0,
-                'potential_loss_usd' => 0,
-                'potential_loss_idr' => 0,
+                'fee' => 0,
+                'potential_profit' => 0,
+                'potential_loss' => 0,
                 'timestamp' => time(),
                 'success' => false,
                 'error' => $e->getMessage()
@@ -599,12 +587,9 @@ class BearishReversalAnalysis implements AnalysisInterface
 
         if ($currentPrice <= 0) {
             return [
-                'fee_usd' => 0,
-                'fee_idr' => 0,
-                'potential_profit_usd' => 0,
-                'potential_profit_idr' => 0,
-                'potential_loss_usd' => 0,
-                'potential_loss_idr' => 0
+                'fee' => 0,
+                'potential_profit' => 0,
+                'potential_loss' => 0
             ];
         }
 
@@ -615,12 +600,9 @@ class BearishReversalAnalysis implements AnalysisInterface
         $fee = $amount * ($this->feePercentage / 100);
 
         return [
-            'fee_usd' => $fee,
-            'fee_idr' => $fee * $this->exchangeRate,
-            'potential_profit_usd' => max(0, ($rewardPerUnit * $units) - ($fee * 2)),
-            'potential_profit_idr' => max(0, (($rewardPerUnit * $units) - ($fee * 2)) * $this->exchangeRate),
-            'potential_loss_usd' => max(0, ($riskPerUnit * $units) + $fee),
-            'potential_loss_idr' => max(0, (($riskPerUnit * $units) + $fee) * $this->exchangeRate)
+            'fee' => $fee,
+            'potential_profit' => max(0, ($rewardPerUnit * $units) - ($fee * 2)),
+            'potential_loss' => max(0, ($riskPerUnit * $units) + $fee)
         ];
     }
 }

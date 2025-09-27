@@ -75,6 +75,11 @@
   color: var(--white) !important;
 }
 
+.text-watch {
+  color: var(--color-error) !important;
+  font-weight: bold;
+}
+
 /* Position & alignment */
 .pull-right {
   float: right !important;

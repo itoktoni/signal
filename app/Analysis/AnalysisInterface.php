@@ -21,12 +21,7 @@ interface AnalysisInterface
      *   - take_profit_usd: float - Take profit price in USD
      *   - take_profit_idr: float - Take profit price in Rupiah
      *   - risk_reward: string - Risk-reward ratio
-     *   - fee_usd: float - Fee details in USD
-     *   - fee_idr: float - Fee details in Rupiah
-     *   - potential_profit_usd: float - Potential profit in USD
-     *   - potential_profit_idr: float - Potential profit in Rupiah
-     *   - potential_loss_usd: float - Potential loss in USD
-     *   - potential_loss_idr: float - Potential loss in Rupiah
+
      */
     public function analyze(string $symbol, float $amount = 100): object;
 

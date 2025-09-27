@@ -102,11 +102,8 @@ class ReversalSellAnalysis implements AnalysisInterface
         $risk_reward = $risk > 0 ? "1:" . round($risk_reward_ratio, 2) : "0:0";
 
         // === Potential P/L (net fee) ===
-        $potential_profit_usd = max(0, $reward - $fee_usd);
-        $potential_loss_usd   = max(0, $risk + $fee_usd);
-
-        $potential_profit_idr = $potential_profit_usd * $this->usdIdr;
-        $potential_loss_idr   = $potential_loss_usd * $this->usdIdr;
+        $potential_profit = max(0, $reward - $fee_usd);
+        $potential_loss   = max(0, $risk + $fee_usd);
 
         // === Save indikator terakhir ===
         $this->last = [
@@ -122,19 +119,13 @@ class ReversalSellAnalysis implements AnalysisInterface
             'description'          => "Deteksi reversal bearish menggunakan RSI overbought, resistance, dan pola candlestick bearish engulfing.",
             'signal'               => $signal,
             'confidence'           => $confidence,
-            'entry_usd'            => $entry_usd,
-            'entry_idr'            => $entry_idr,
-            'stop_loss_usd'        => $stop_loss_usd,
-            'stop_loss_idr'        => $stop_loss_idr,
-            'take_profit_usd'      => $take_profit_usd,
-            'take_profit_idr'      => $take_profit_idr,
+            'entry'                => $entry_usd,
+            'stop_loss'            => $stop_loss_usd,
+            'take_profit'          => $take_profit_usd,
             'risk_reward'          => $risk_reward,
-            'fee_usd'              => $fee_usd,
-            'fee_idr'              => $fee_idr,
-            'potential_profit_usd' => $potential_profit_usd,
-            'potential_profit_idr' => $potential_profit_idr,
-            'potential_loss_usd'   => $potential_loss_usd,
-            'potential_loss_idr'   => $potential_loss_idr,
+            'fee'                  => $fee_usd,
+            'potential_profit'     => $potential_profit,
+            'potential_loss'       => $potential_loss,
             'notes'                => implode(" ", $notes)
         ];
     }

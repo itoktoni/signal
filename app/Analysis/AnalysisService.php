@@ -112,18 +112,6 @@ abstract class AnalysisService implements AnalysisInterface
             'fee' => $fees, // Return the full fees array
             'potential_profit' => $potentialProfit,
             'potential_loss' => $potentialLoss,
-            'entry_usd' => $entryPrices['usd'],
-            'entry_idr' => $entryPrices['rupiah'],
-            'stop_loss_usd' => $stopLossPrices['usd'],
-            'stop_loss_idr' => $stopLossPrices['rupiah'],
-            'take_profit_usd' => $takeProfitPrices['usd'],
-            'take_profit_idr' => $takeProfitPrices['rupiah'],
-            'fee_usd' => $fees['total'],
-            'fee_idr' => $fees['total'] * $this->usdToIdr,
-            'potential_profit_usd' => $potentialProfit,
-            'potential_profit_idr' => $potentialProfit * $this->usdToIdr,
-            'potential_loss_usd' => $potentialLoss,
-            'potential_loss_idr' => abs($potentialLoss) * $this->usdToIdr,
             'indicators' => $indicators,
             'notes' => $notes,
         ];

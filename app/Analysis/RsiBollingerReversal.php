@@ -273,19 +273,13 @@ class RsiBollingerReversal implements AnalysisInterface
         $obj->description = $this->getDescription();
         $obj->signal = 'NEUTRAL';
         $obj->confidence = 0.0;
-        $obj->entry_usd = 0.0;
-        $obj->entry_idr = 0.0;
-        $obj->stop_loss_usd = 0.0;
-        $obj->stop_loss_idr = 0.0;
-        $obj->take_profit_usd = 0.0;
-        $obj->take_profit_idr = 0.0;
+        $obj->entry = 0.0;
+        $obj->stop_loss = 0.0;
+        $obj->take_profit = 0.0;
         $obj->risk_reward = 'N/A';
-        $obj->fee_usd = 0.0;
-        $obj->fee_idr = 0.0;
-        $obj->potential_profit_usd = 0.0;
-        $obj->potential_profit_idr = 0.0;
-        $obj->potential_loss_usd = 0.0;
-        $obj->potential_loss_idr = 0.0;
+        $obj->fee = 0.0;
+        $obj->potential_profit = 0.0;
+        $obj->potential_loss = 0.0;
         return $obj;
     }
 
@@ -298,22 +292,16 @@ class RsiBollingerReversal implements AnalysisInterface
         $risk = abs($entry - $sl);
         $reward = abs($tp - $entry);
 
-        $result->entry_usd = $entry;
-        $result->entry_idr = $entry * self::USD_IDR_RATE;
-        $result->stop_loss_usd = $sl;
-        $result->stop_loss_idr = $sl * self::USD_IDR_RATE;
-        $result->take_profit_usd = $tp;
-        $result->take_profit_idr = $tp * self::USD_IDR_RATE;
+        $result->entry = $entry;
+        $result->stop_loss = $sl;
+        $result->take_profit = $tp;
         $result->risk_reward = $risk > 0 ? '1:' . number_format($reward / $risk, 2) : 'N/A';
 
-        $result->fee_usd = $amount * $feeRate;
-        $result->fee_idr = $result->fee_usd * self::USD_IDR_RATE;
+        $result->fee = $amount * $feeRate;
 
-        $result->potential_loss_usd = ($risk / $entry) * $amount;
-        $result->potential_loss_idr = $result->potential_loss_usd * self::USD_IDR_RATE;
+        $result->potential_loss = ($risk / $entry) * $amount;
 
-        $result->potential_profit_usd = ($reward / $entry) * $amount;
-        $result->potential_profit_idr = $result->potential_profit_usd * self::USD_IDR_RATE;
+        $result->potential_profit = ($reward / $entry) * $amount;
 
         return $result;
     }

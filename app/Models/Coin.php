@@ -15,20 +15,15 @@ class Coin extends Model
         'coin_watch',
         'coin_price_usd',
         'coin_price_idr',
-        'coin_entry_usd',
-        'coin_entry_idr',
-        'coin_exchange',
-        'coin_plan',
     ];
 
      protected $filterable = [
         'coin_code',
         'coin_watch',
-        'coin_plan',
     ];
 
     protected $sortable = [
-        'coin_plan',
+        'coin_code',
     ];
 
     public $timestamps = true;
