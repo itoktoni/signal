@@ -2,19 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ActorType;
-use App\Models\Group;
-use App\Models\User;
+use App\Models\Menu;
 use App\Traits\ControllerHelper;
 use Illuminate\Http\Request;
 
-class UserController extends Controller
+class MenuController extends Controller
 {
     use ControllerHelper;
 
     protected $model;
 
-    public function __construct(User $model)
+    public function __construct(Menu $model)
     {
         $this->model = $model;
     }
@@ -30,7 +28,7 @@ class UserController extends Controller
     public function getData()
     {
         $perPage = request('perpage', 10);
-        $data = User::filter(request())->paginate($perPage);
+        $data = $this->model->filter(request())->paginate($perPage);
         $data->appends(request()->query());
 
         return $this->views($this->module(), [
@@ -57,9 +55,12 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function getShow(User $user)
+    public function getShow($code)
     {
-        return $this->views($this->module());
+        $this->model = $this->getModel($code);
+        return $this->views($this->module(), $this->share([
+            'model' => $this->model,
+        ]));
     }
 
     /**
@@ -67,52 +68,35 @@ class UserController extends Controller
      */
     public function getUpdate($code)
     {
-        $model = User::find($code);
-
+        $this->model = $this->getModel($code);
         return $this->views($this->module(), $this->share([
-            'model' => $model,
+            'model' => $this->model,
         ]));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function postUpdate(Request $request, User $user)
+    public function postUpdate(Request $request)
     {
-        return $this->update($request->all(), $user);
+        return $this->update($request->all(),$this->model);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function getDelete(User $user)
+    public function getDelete($code)
     {
-        $user->delete();
+        $this->model = $this->getModel($code);
+        $this->model->delete();
 
         return redirect()->route($this->module('getData'))->with('success', 'deleted successfully');
-    }
-
-    public function postDelete(User $user)
-    {
-        $user->delete();
-
-        return redirect()->route($this->module('getData'))->with('success', 'deleted successfully');
-    }
-
-    public function getProfile()
-    {
-        return view($this->module());
-    }
-
-    public function getSecurity()
-    {
-        return view($this->module());
     }
 
     public function postBulkDelete(Request $request)
     {
         $ids = explode(',', $request->ids);
-        User::whereIn('id', $ids)->delete();
+        $this->model::whereIn('id', $ids)->delete();
 
         return redirect()->route($this->module('getData'))->with('success', 'deleted successfully');
     }

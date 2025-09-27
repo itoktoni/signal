@@ -100,10 +100,22 @@ document.addEventListener('DOMContentLoaded', function() {
     let sidebarOpen = false;
     let selectedMenu = "system";
 
-    // Menu navigation
     document.querySelectorAll(".nav-item").forEach((item) => {
         item.addEventListener("click", function(e) {
+            // Get the href attribute from the clicked item
+            const href = this.getAttribute("href");
+
+            // If a real href exists (and it's not just "#"),
+            // stop this function and let the link navigate normally.
+            if (href && href !== "#") {
+                return;
+            }
+
+            // --- The rest of the code only runs if there is no href ---
+
+            // Prevent the default action (like jumping to the top for href="#")
             e.preventDefault();
+
             const menuId = this.getAttribute("data-menu");
             selectedMenu = menuId;
 
@@ -192,13 +204,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 .classList.remove("open");
         }
     });
-
-    // Initialize active menu
-    document
-        .querySelector(`[data-menu="${selectedMenu}"]`)
-        .classList.add("active");
-    document.getElementById(selectedMenu + "-submenu").style.display =
-        "block";
 
     // Filter toggle functionality
     let filtersVisible = true;

@@ -116,6 +116,11 @@ trait ControllerHelper
         ], $data);
     }
 
+    protected function getModel($code, $relations = [])
+    {
+        return $this->model->findOrFail($code)->with($relations);
+    }
+
     /**
      * Get current controller context
      */
