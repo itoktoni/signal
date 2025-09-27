@@ -43,7 +43,7 @@ class UserController extends Controller
      */
     public function getCreate()
     {
-        return $this->views($this->module());
+        return $this->views('user.form');
     }
 
     /**
@@ -69,7 +69,7 @@ class UserController extends Controller
     {
         $model = User::find($code);
 
-        return $this->views($this->module(), $this->share([
+        return $this->views($this->module('form'), $this->share([
             'model' => $model,
         ]));
     }

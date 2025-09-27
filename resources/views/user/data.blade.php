@@ -77,12 +77,7 @@
                 <x-pagination :data="$data" />
             </div>
         </div>
-        <x-footer>
-            <button type="button" class="button danger" id="bulk-delete-btn" disabled onclick="confirmBulkDelete()">Delete</button>
-            <a href="{{ route(module('getCreate')) }}" class="button success">
-                <i class="bi bi-plus"></i>Create
-            </a>
-        </x-footer>
+        <x-footer type="list" />
 
         <form id="bulk-delete-form" method="POST" action="{{ route(module('postBulkDelete')) }}" style="display: none;">
             @csrf
