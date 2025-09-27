@@ -48,6 +48,8 @@ class TelegramService
                 Log::error('Failed to send Telegram message', [
                     'status' => $response->status(),
                     'response' => $response->json(),
+                    'bot_token_prefix' => substr($this->botToken, 0, 10) . '...',
+                    'chat_id' => $this->chatId,
                 ]);
                 return false;
             }
