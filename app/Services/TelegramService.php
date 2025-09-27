@@ -36,6 +36,13 @@ class TelegramService
                 'disable_web_page_preview' => true,
             ], $options);
 
+            Log::info('Sending Telegram message', [
+                'url' => "{$this->apiUrl}/sendMessage",
+                'payload' => array_merge($payload, [
+                    'text' => substr($payload['text'], 0, 50) . '...' // Truncate for logging
+                ])
+            ]);
+
             $response = Http::timeout(10)->post("{$this->apiUrl}/sendMessage", $payload);
 
             if ($response->successful()) {
@@ -67,20 +74,20 @@ class TelegramService
      */
     public function sendAnalysisResult(string $coinCode, object $analysis, float $currentPrice): bool
     {
-        $signal = strtoupper($analysis->signal);
-        $confidence = $analysis->confidence;
+        $signal = strtoupper(isset($analysis->signal) ? $analysis->signal : 'NEUTRAL');
+        $confidence = isset($analysis->confidence) ? $analysis->confidence : 0;
         $signalEmoji = $this->getSignalEmoji($signal);
-        $signalColor = $this->getSignalColor($signal);
 
         $message = "🚨 <b>HIGH CONFIDENCE SIGNAL</b> 🚨\n\n";
         $message .= "📈 <b>Coin:</b> {$coinCode}\n";
-        $message .= "🎯 <b>Signal:</b> <span style='color: {$signalColor}'>{$signalEmoji} {$signal}</span>\n";
+        $message .= "🎯 <b>Signal:</b> {$signalEmoji} {$signal}\n";
         $message .= "📊 <b>Confidence:</b> {$confidence}%\n";
         $message .= "💰 <b>Current Price:</b> $" . number_format($currentPrice, 4) . "\n";
-        $message .= "🎯 <b>Entry:</b> $" . number_format($analysis->entry, 4) . "\n";
-        $message .= "🛑 <b>Stop Loss:</b> $" . number_format($analysis->stop_loss, 4) . "\n";
-        $message .= "✅ <b>Take Profit:</b> $" . number_format($analysis->take_profit, 4) . "\n";
-        $message .= "📈 <b>Risk:Reward:</b> {$analysis->risk_reward}\n\n";
+        $message .= "🎯 <b>Entry:</b> $" . number_format(isset($analysis->entry) ? $analysis->entry : 0, 4) . "\n";
+        $message .= "🛑 <b>Stop Loss:</b> $" . number_format(isset($analysis->stop_loss) ? $analysis->stop_loss : 0, 4) . "\n";
+        $message .= "✅ <b>Take Profit:</b> $" . number_format(isset($analysis->take_profit) ? $analysis->take_profit : 0, 4) . "\n";
+        $riskReward = isset($analysis->risk_reward) ? $analysis->risk_reward : 'N/A';
+        $message .= "📈 <b>Risk:Reward:</b> {$riskReward}\n\n";
 
         if (isset($analysis->notes) && !empty($analysis->notes)) {
             $message .= "📝 <b>Notes:</b>\n{$analysis->notes}\n\n";
@@ -96,25 +103,16 @@ class TelegramService
      */
     private function getSignalEmoji(string $signal): string
     {
-        return match (strtoupper($signal)) {
-            'BUY' => '📈',
-            'SELL' => '📉',
-            'NEUTRAL' => '➖',
-            default => '❓'
-        };
-    }
-
-    /**
-     * Get color for signal type
-     */
-    private function getSignalColor(string $signal): string
-    {
-        return match (strtoupper($signal)) {
-            'BUY' => '#00ff00',
-            'SELL' => '#ff0000',
-            'NEUTRAL' => '#ffff00',
-            default => '#ffffff'
-        };
+        switch (strtoupper($signal)) {
+            case 'BUY':
+                return '📈';
+            case 'SELL':
+                return '📉';
+            case 'NEUTRAL':
+                return '➖';
+            default:
+                return '❓';
+        }
     }
 
     /**
@@ -123,5 +121,18 @@ class TelegramService
     public function isConfigured(): bool
     {
         return !empty($this->botToken) && !empty($this->chatId);
+    }
+
+    /**
+     * Get configuration status for debugging
+     */
+    public function getConfigurationStatus(): array
+    {
+        return [
+            'bot_token_configured' => !empty($this->botToken),
+            'chat_id_configured' => !empty($this->chatId),
+            'bot_token_length' => strlen($this->botToken),
+            'chat_id_length' => strlen($this->chatId),
+        ];
     }
 }
