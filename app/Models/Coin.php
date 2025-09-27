@@ -15,6 +15,8 @@ class Coin extends Model
         'coin_watch',
         'coin_price_usd',
         'coin_price_idr',
+        'last_analyzed_at',
+        'analysis_count',
     ];
 
      protected $filterable = [
@@ -41,6 +43,42 @@ class Coin extends Model
     public function getFieldNameAttribute()
     {
         return $this->{$this->field_name()};
+    }
+
+    /**
+     * Check if coin needs analysis (not analyzed in last minute)
+     */
+    public function needsAnalysis(): bool
+    {
+        if (!$this->last_analyzed_at) {
+            return true;
+        }
+
+        return now()->diffInMinutes($this->last_analyzed_at) >= 1;
+    }
+
+    /**
+     * Update analysis tracking
+     */
+    public function updateAnalysisTracking(): void
+    {
+        $this->update([
+            'last_analyzed_at' => now(),
+            'analysis_count' => ($this->analysis_count ?? 0) + 1,
+        ]);
+    }
+
+    /**
+     * Get coins that need analysis
+     */
+    public static function getCoinsNeedingAnalysis()
+    {
+        return static::where('coin_watch', true)
+                    ->where(function ($query) {
+                        $query->whereNull('last_analyzed_at')
+                              ->orWhere('last_analyzed_at', '<', now()->subMinute());
+                    })
+                    ->get();
     }
 
 }
