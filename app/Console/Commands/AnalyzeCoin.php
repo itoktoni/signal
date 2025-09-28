@@ -187,6 +187,8 @@ class AnalyzeCoin extends Command
      */
     private function displayResults(string $symbol, object $result, float $currentPrice): void
     {
+        $rupiah = getUsdToIdrRate();
+
         $this->info("\n" . str_repeat('=', 50));
         $this->info("📈 ANALYSIS RESULTS FOR {$symbol}");
         $this->info(str_repeat('=', 50));
@@ -195,9 +197,10 @@ class AnalyzeCoin extends Command
         $this->line("Signal: {$result->signal}");
         $this->line("Confidence: {$result->confidence}%");
         $this->line("Current Price: $" . number_format($currentPrice, 4));
+        $this->line("Rupiah Price: $" . number_format($currentPrice * $rupiah, 4));
 
         // Display USD values
-        $this->line("🎯 Entry USD: $" . number_format($result->entry, 4));
+        $this->line("\n🎯 Entry USD: $" . number_format($result->entry, 4));
         if (isset($result->entry_idr)) {
             $this->line("🎯 Entry IDR: Rp " . number_format($result->entry_idr, 0, ',', '.'));
         }

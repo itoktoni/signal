@@ -78,11 +78,14 @@ class TelegramService
         $confidence = isset($analysis->confidence) ? $analysis->confidence : 0;
         $signalEmoji = $this->getSignalEmoji($signal);
 
+        $rupiah = getUsdToIdrRate();
+
         $message = "🚨 <b>HIGH CONFIDENCE SIGNAL</b> 🚨\n\n";
         $message .= "📈 <b>Coin:</b> {$coinCode}\n";
         $message .= "🎯 <b>Signal:</b> {$signalEmoji} {$signal}\n";
-        $message .= "📊 <b>Confidence:</b> {$confidence}%\n";
-        $message .= "💰 <b>Current Price:</b> $" . number_format($currentPrice, 4) . "\n\n";
+        $message .= "📊 <b>Confidence:</b> {$confidence}%\n\n";
+        $message .= "💰 <b>Current Price:</b> $" . number_format($currentPrice, 4) . "\n";
+        $message .= "💰 <b>Rupiah Price:</b> Rp" . number_format($currentPrice * $rupiah, 4) . "\n\n";
 
         // USD Values
         $message .= "💵 <b>USD VALUES:</b>\n";
