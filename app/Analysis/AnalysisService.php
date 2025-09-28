@@ -121,7 +121,7 @@ abstract class AnalysisService implements AnalysisInterface
      * Abstract method that must be implemented by all analysis services
      * This ensures all implementations return a standardized result structure
      */
-    abstract public function analyze(string $symbol, float $amount = 100): object;
+    abstract public function analyze(string $symbol, float $amount = 100, string $timeframe = '1h', ?string $forcedApi = null): object;
 
     /**
      * Get the name/identifier of this analysis method

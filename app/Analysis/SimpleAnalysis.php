@@ -7,24 +7,21 @@ use App\Settings\Settings;
 
 class SimpleAnalysis implements AnalysisInterface
 {
-    private float $usdIdr     = 16000; // asumsi kurs
-    private float $amount     = 100;   // default amount USD
-    private string $timeframe = '1h';  // default timeframe
-    private array $last       = [];
-    private ApiProviderManager $apiManager;
+     private float $usdIdr     = 16000; // asumsi kurs
+     private float $amount     = 100;   // default amount USD
+     private string $timeframe = '1h';  // default timeframe
+     private array $last       = [];
+     private ApiProviderManager $apiManager;
 
-    public function __construct()
-    {
-        $settingsManager = app('settings');
-        $driver = $settingsManager->driver();
-        $settings = new Settings($driver);
-        $this->apiManager = new ApiProviderManager($settings);
-    }
+     public function __construct(ApiProviderManager $apiManager)
+     {
+         $this->apiManager = $apiManager;
+     }
 
     // === Implementasi Interface ===
     public function getCode(): string
     {
-        return 'ma_rsi_volume_atr_macd';
+        return 'default_simple_analysis';
     }
 
     public function getName(): string
@@ -173,6 +170,10 @@ class SimpleAnalysis implements AnalysisInterface
             'current_price' => $currentPrice,
         ];
 
+        // Add API provider information to notes
+        $apiProvider = $forcedApi ? strtoupper($forcedApi) : 'BinanceApi';
+        $notes[] = "⚡️ data From {$apiProvider}";
+
         return (object) [
             'title'            => "MA20/50 + RSI + Volume + ATR + MACD Analysis for $symbol ($timeframe)",
             'description'      => "Analisis teknikal dengan MA20, MA50, RSI, Volume Ratio, ATR, MACD, Divergence pada timeframe $timeframe.",
@@ -188,7 +189,7 @@ class SimpleAnalysis implements AnalysisInterface
             'risk_reward'      => $risk_reward,
             'potential_profit' => $potential_profit_usd,
             'potential_loss'   => $potential_loss_usd,
-            'notes'            => implode(' ', $notes) ?: "Gunakan timeframe $timeframe. SL diambil dari swing high/low, TP dihitung ATR × 2.",
+            'notes'            => implode(' ', $notes) ?: "Gunakan timeframe $timeframe. SL diambil dari swing high/low, TP dihitung ATR × 2. ⚡️ data From {$apiProvider}",
         ];
     }
 

@@ -58,17 +58,29 @@ class AnalysisServiceFactory
     /**
      * Create an analysis service instance based on the method name
      */
-    public static function create(string $method): AnalysisInterface
+    public static function create(string $method, ?ApiProviderManager $apiManager = null): AnalysisInterface
     {
         $classes = self::discoverAnalysisClasses();
 
         if (isset($classes[$method])) {
             $className = $classes[$method]['class'];
+
+            // If ApiProviderManager is provided, inject it
+            if ($apiManager) {
+                return new $className($apiManager);
+            }
+
             return new $className();
         }
 
         // Default to first available analysis or MA Analysis
         $defaultClass = $classes[array_key_first($classes)]['class'] ?? \App\Analysis\SimpleAnalysis::class;
+
+        // If ApiProviderManager is provided, inject it
+        if ($apiManager) {
+            return new $defaultClass($apiManager);
+        }
+
         return new $defaultClass();
     }
 

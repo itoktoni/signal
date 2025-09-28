@@ -72,7 +72,7 @@ class TelegramService
     /**
      * Send formatted analysis result to Telegram
      */
-    public function sendAnalysisResult(string $coinCode, object $analysis, float $currentPrice): bool
+    public function sendAnalysisResult(string $coinCode, object $analysis, float $currentPrice, $apiProvider): bool
     {
         $signal = strtoupper(isset($analysis->signal) ? $analysis->signal : 'NEUTRAL');
         $confidence = isset($analysis->confidence) ? $analysis->confidence : 0;

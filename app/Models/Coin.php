@@ -12,6 +12,8 @@ class Coin extends Model
 
     protected $fillable = [
         'coin_code',
+        'coin_convert',
+        'coin_api',
         'coin_watch',
         'coin_price_usd',
         'coin_price_idr',

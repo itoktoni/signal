@@ -19,9 +19,9 @@ class AnalyzeCoin extends Command
      */
     protected $signature = 'scan:coin
         {symbol : The cryptocurrency symbol to analyze (e.g., BTCUSDT)}
-        {method? : The analysis method to use (default: ma_rsi_volume_atr_macd)}
+        {method? : The analysis method to use (default: default_simple_analysis)}
         {--amount=100 : The trading amount in USD}
-        {--api= : Force specific API provider (binance, coingecko, freecryptoapi)}';
+        {--api= : Force specific API provider (binance, coincappro, coingecko, freecryptoapi, coinlore)}';
 
     /**
      * The console command description.
@@ -70,8 +70,8 @@ class AnalyzeCoin extends Command
         }
 
         try {
-            // Create analysis service
-            $analysisService = AnalysisServiceFactory::create($method);
+            // Create analysis service with API provider manager
+            $analysisService = AnalysisServiceFactory::create($method, $this->apiManager);
 
             // Perform analysis
             $this->info('📊 Performing analysis...');
@@ -87,7 +87,8 @@ class AnalyzeCoin extends Command
             // Send to Telegram if configured
             if ($telegram->isConfigured()) {
                 $this->info('📤 Sending results to Telegram...');
-                $success = $telegram->sendAnalysisResult($symbol, $result, $currentPrice);
+                $forcedApi = $this->option('api') ?: 'Auto';
+                $success = $telegram->sendAnalysisResult($symbol, $result, $currentPrice, $forcedApi);
 
                 if ($success) {
                     $this->info('✅ Results sent to Telegram successfully!');

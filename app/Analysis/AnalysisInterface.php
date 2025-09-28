@@ -9,6 +9,8 @@ interface AnalysisInterface
      *
      * @param string $symbol The cryptocurrency symbol to analyze (e.g., 'BTCUSDT')
      * @param float $amount The trading amount in USD
+     * @param string $timeframe The timeframe for analysis (e.g., '1h', '4h', '1d')
+     * @param string|null $forcedApi Force specific API provider (optional)
      * @return object Standardized result object containing:
      *   - title: string - Analysis title
      *   - description: string - technology that used in the analysis with flow to reach the conclusion
@@ -23,7 +25,7 @@ interface AnalysisInterface
      *   - risk_reward: string - Risk-reward ratio
 
      */
-    public function analyze(string $symbol, float $amount = 100): object;
+    public function analyze(string $symbol, float $amount = 100, string $timeframe = '1h', ?string $forcedApi = null): object;
 
      /**
      * Get the name/identifier of this analysis method

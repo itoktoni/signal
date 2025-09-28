@@ -25,8 +25,10 @@ class ApiProviderManager
     {
         $providerClasses = [
             \App\Analysis\Providers\BinanceApiProvider::class,
+            \App\Analysis\Providers\CoinCapProProvider::class,
             \App\Analysis\Providers\CoinGeckoApiProvider::class,
             \App\Analysis\Providers\FreeCryptoApiProvider::class,
+            \App\Analysis\Providers\CoinLoreApiProvider::class,
             // Add more providers here as they are implemented
         ];
 
