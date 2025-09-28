@@ -195,10 +195,50 @@ class AnalyzeCoin extends Command
         $this->line("Signal: {$result->signal}");
         $this->line("Confidence: {$result->confidence}%");
         $this->line("Current Price: $" . number_format($currentPrice, 4));
-        $this->line("Entry: $" . number_format($result->entry, 4));
-        $this->line("Stop Loss: $" . number_format($result->stop_loss, 4));
-        $this->line("Take Profit: $" . number_format($result->take_profit, 4));
-        $this->line("Risk:Reward: {$result->risk_reward}");
+
+        // Display USD values
+        $this->line("🎯 Entry USD: $" . number_format($result->entry, 4));
+        if (isset($result->entry_idr)) {
+            $this->line("🎯 Entry IDR: Rp " . number_format($result->entry_idr, 0, ',', '.'));
+        }
+
+        $this->line("🛑 Stop Loss USD: $" . number_format($result->stop_loss, 4));
+        if (isset($result->stop_loss_idr)) {
+            $this->line("🛑 Stop Loss IDR: Rp " . number_format($result->stop_loss_idr, 0, ',', '.'));
+        }
+
+        $this->line("✅ Take Profit USD: $" . number_format($result->take_profit, 4));
+        if (isset($result->take_profit_idr)) {
+            $this->line("✅ Take Profit IDR: Rp " . number_format($result->take_profit_idr, 0, ',', '.'));
+        }
+
+        $this->line("📈 Risk:Reward: {$result->risk_reward}");
+
+        // Display additional metrics if available
+        if (isset($result->qty)) {
+            $this->line("📊 Quantity: " . number_format($result->qty, 8));
+        }
+
+        if (isset($result->fee)) {
+            $this->line("💸 Fee USD: $" . number_format($result->fee, 4));
+            if (isset($result->fee_idr)) {
+                $this->line("💸 Fee IDR: Rp " . number_format($result->fee_idr, 0, ',', '.'));
+            }
+        }
+
+        if (isset($result->potential_profit)) {
+            $this->line("📈 Potential Profit USD: $" . number_format($result->potential_profit, 4));
+            if (isset($result->potential_profit_idr)) {
+                $this->line("📈 Potential Profit IDR: Rp " . number_format($result->potential_profit_idr, 0, ',', '.'));
+            }
+        }
+
+        if (isset($result->potential_loss)) {
+            $this->line("📉 Potential Loss USD: $" . number_format($result->potential_loss, 4));
+            if (isset($result->potential_loss_idr)) {
+                $this->line("📉 Potential Loss IDR: Rp " . number_format($result->potential_loss_idr, 0, ',', '.'));
+            }
+        }
 
         if (isset($result->notes) && !empty($result->notes)) {
             $this->line("\n📝 Notes: {$result->notes}");

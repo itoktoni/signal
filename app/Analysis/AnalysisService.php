@@ -19,10 +19,16 @@ abstract class AnalysisService implements AnalysisInterface
      */
     protected function formatPrice(float $amount): array
     {
+        $currentRate = getUsdToIdrRate();
+        $idrAmount = $amount * $currentRate;
+
         return [
             'usd' => $amount,
+            'idr' => $idrAmount,
             'formatted' => [
                 'usd' => '$' . number_format($amount, 2, '.', ','),
+                'idr' => 'Rp ' . number_format($idrAmount, 0, ',', '.'),
+                'both' => '$' . number_format($amount, 2, '.', ',') . ' / Rp ' . number_format($idrAmount, 0, ',', '.'),
             ]
         ];
     }

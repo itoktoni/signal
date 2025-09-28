@@ -52,6 +52,144 @@ if (! function_exists('safeValue')) {
     }
 }
 
+if (! function_exists('usdToIdr')) {
+    /**
+     * Convert USD to IDR using Frankfurter API with 4-hour caching
+     *
+     * @param float $usdAmount The amount in USD to convert
+     * @param bool $forceRefresh Force refresh cache (default: false)
+     * @return float The equivalent amount in IDR
+     */
+    function usdToIdr(float $usdAmount, bool $forceRefresh = false): float
+    {
+        static $cachedRate = null;
+        static $lastFetch = null;
+
+        // Check if we have a valid cached rate (4 hours = 14400 seconds)
+        if (!$forceRefresh && $cachedRate && $lastFetch && (time() - $lastFetch) < 14400) {
+            return $usdAmount * $cachedRate;
+        }
+
+        try {
+            // Fetch from Frankfurter API
+            $response = \Illuminate\Support\Facades\Http::timeout(10)
+                ->retry(3, 1000)
+                ->get('https://api.frankfurter.app/latest?from=USD&to=IDR');
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                if (isset($data['rates']['IDR'])) {
+                    $rate = floatval($data['rates']['IDR']);
+
+                    // Cache the rate
+                    $cachedRate = $rate;
+                    $lastFetch = time();
+
+                    \Illuminate\Support\Facades\Log::info('USD to IDR rate updated', [
+                        'rate' => $rate,
+                        'source' => 'frankfurter_api'
+                    ]);
+
+                    return $usdAmount * $rate;
+                }
+            }
+
+            // If API fails, log error and use fallback
+            \Illuminate\Support\Facades\Log::warning('Frankfurter API failed, using fallback rate', [
+                'usd_amount' => $usdAmount,
+                'response_status' => $response->status(),
+                'response_body' => $response->body()
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to fetch USD to IDR rate from Frankfurter API', [
+                'usd_amount' => $usdAmount,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // Fallback to static rate (16000) if API fails
+        $fallbackRate = 16000;
+        $cachedRate = $fallbackRate;
+        $lastFetch = time();
+
+        \Illuminate\Support\Facades\Log::warning('Using fallback USD to IDR rate', [
+            'rate' => $fallbackRate,
+            'usd_amount' => $usdAmount
+        ]);
+
+        return $usdAmount * $fallbackRate;
+    }
+}
+
+if (! function_exists('getUsdToIdrRate')) {
+    /**
+     * Get current USD to IDR exchange rate
+     *
+     * @param bool $forceRefresh Force refresh cache (default: false)
+     * @return float The current USD to IDR exchange rate
+     */
+    function getUsdToIdrRate(bool $forceRefresh = false): float
+    {
+        static $cachedRate = null;
+        static $lastFetch = null;
+
+        // Check if we have a valid cached rate (4 hours = 14400 seconds)
+        if (!$forceRefresh && $cachedRate && $lastFetch && (time() - $lastFetch) < 14400) {
+            return $cachedRate;
+        }
+
+        try {
+            // Fetch from Frankfurter API
+            $response = \Illuminate\Support\Facades\Http::timeout(10)
+                ->retry(3, 1000)
+                ->get('https://api.frankfurter.app/latest?from=USD&to=IDR');
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                if (isset($data['rates']['IDR'])) {
+                    $rate = floatval($data['rates']['IDR']);
+
+                    // Cache the rate
+                    $cachedRate = $rate;
+                    $lastFetch = time();
+
+                    \Illuminate\Support\Facades\Log::info('USD to IDR rate updated', [
+                        'rate' => $rate,
+                        'source' => 'frankfurter_api'
+                    ]);
+
+                    return $rate;
+                }
+            }
+
+            // If API fails, log error and use fallback
+            \Illuminate\Support\Facades\Log::warning('Frankfurter API failed, using fallback rate', [
+                'response_status' => $response->status(),
+                'response_body' => $response->body()
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to fetch USD to IDR rate from Frankfurter API', [
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // Fallback to static rate (16000) if API fails
+        $fallbackRate = 16000;
+        $cachedRate = $fallbackRate;
+        $lastFetch = time();
+
+        \Illuminate\Support\Facades\Log::warning('Using fallback USD to IDR rate', [
+            'rate' => $fallbackRate
+        ]);
+
+        return $fallbackRate;
+    }
+}
+
 if (! function_exists('safeNumericValue')) {
     /**
      * Get a safe numeric value from object property or array key, return 0 if null, not exists, or not numeric

@@ -37,10 +37,14 @@ class CryptoSymbolSeeder extends Seeder
         foreach ($data as $symbol) {
             if(str_contains($symbol['symbol'], 'USDT') && $symbol['price'] > 0)
             {
+                $usdPrice = floatval($symbol['price']);
+                $idrPrice = usdToIdr($usdPrice);
+
                 Coin::updateOrCreate(
                     ['coin_code' => $symbol['symbol']],
                     [
-                        'coin_price_usd' => $symbol['price'],
+                        'coin_price_usd' => $usdPrice,
+                        'coin_price_idr' => $idrPrice,
                     ]
                 );
             }

@@ -11,6 +11,7 @@ class SimpleAnalysis implements AnalysisInterface
      private ApiProviderManager $apiManager;
      private float $amount = 100;   // default amount USD
      private string $timeframe = '1h';  // default timeframe
+     private float $usdIdr = 16000; // fallback exchange rate
 
      public function __construct(ApiProviderManager $apiManager)
      {
@@ -147,6 +148,17 @@ class SimpleAnalysis implements AnalysisInterface
         $potential_profit = max(0, $reward - $fee_usd);
         $potential_loss   = max(0, $risk + $fee_usd);
 
+        // === Get current USD to IDR rate ===
+        $this->usdIdr = getUsdToIdrRate();
+
+        // === Konversi IDR ===
+        $entry_idr       = $entry_usd * $this->usdIdr;
+        $stop_loss_idr   = $stop_loss_usd * $this->usdIdr;
+        $take_profit_idr = $take_profit_usd * $this->usdIdr;
+        $fee_idr         = $fee_usd * $this->usdIdr;
+        $potential_profit_idr = $potential_profit * $this->usdIdr;
+        $potential_loss_idr   = $potential_loss * $this->usdIdr;
+
         // === Save indikator terakhir ===
         $this->last = [
             'ma20'          => $ma20,
@@ -170,15 +182,21 @@ class SimpleAnalysis implements AnalysisInterface
             'signal'           => $signal,
             'confidence'       => $confidence,
             'entry'            => $entry_usd,
+            'entry_idr'        => $entry_idr,
             'stop_loss'        => $stop_loss_usd,
+            'stop_loss_idr'    => $stop_loss_idr,
             'take_profit'      => $take_profit_usd,
+            'take_profit_idr'  => $take_profit_idr,
             'qty'              => $qty,
             'fee'              => $fee_usd,
+            'fee_idr'          => $fee_idr,
             'risk_usd'         => $risk,
             'reward_usd'       => $reward,
             'risk_reward'      => $risk_reward,
             'potential_profit' => $potential_profit,
+            'potential_profit_idr' => $potential_profit_idr,
             'potential_loss'   => $potential_loss,
+            'potential_loss_idr'   => $potential_loss_idr,
             'notes'            => implode(' ', $notes) ?: "Gunakan timeframe $timeframe. SL diambil dari swing high/low, TP dihitung ATR × 2. ⚡️ data From {$apiProvider}",
         ];
     }
