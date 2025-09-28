@@ -85,7 +85,7 @@ class TelegramService
         $message .= "🎯 <b>Signal:</b> {$signalEmoji} {$signal}\n";
         $message .= "📊 <b>Confidence:</b> {$confidence}%\n\n";
         $message .= "💰 <b>Current Price:</b> $" . number_format($currentPrice, 4) . "\n";
-        $message .= "💰 <b>Rupiah Price:</b> Rp" . number_format($currentPrice * $rupiah, 4) . "\n\n";
+        $message .= "💰 <b>Rupiah Price:</b> Rp" . number_format($currentPrice * $rupiah, 0, ',', '.') . "\n\n";
 
         // USD Values
         $message .= "💵 <b>USD VALUES:</b>\n";
@@ -93,13 +93,10 @@ class TelegramService
         $message .= "🛑 <b>Stop Loss:</b> $" . number_format(isset($analysis->stop_loss) ? $analysis->stop_loss : 0, 4) . "\n";
         $message .= "✅ <b>Take Profit:</b> $" . number_format(isset($analysis->take_profit) ? $analysis->take_profit : 0, 4) . "\n";
 
-        // IDR Values (if available)
-        if (isset($analysis->entry_idr) && isset($analysis->stop_loss_idr) && isset($analysis->take_profit_idr)) {
-            $message .= "\n💶 <b>IDR VALUES:</b>\n";
-            $message .= "🎯 <b>Entry:</b> Rp " . number_format($analysis->entry_idr, 0, ',', '.') . "\n";
-            $message .= "🛑 <b>Stop Loss:</b> Rp " . number_format($analysis->stop_loss_idr, 0, ',', '.') . "\n";
-            $message .= "✅ <b>Take Profit:</b> Rp " . number_format($analysis->take_profit_idr, 0, ',', '.') . "\n";
-        }
+        $message .= "\n💶 <b>IDR VALUES:</b>\n";
+        $message .= "🎯 <b>Entry:</b> Rp " . number_format($analysis->entry * $rupiah, 0, ',', '.') . "\n";
+        $message .= "🛑 <b>Stop Loss:</b> Rp " . number_format($analysis->stop_loss * $rupiah, 0, ',', '.') . "\n";
+        $message .= "✅ <b>Take Profit:</b> Rp " . number_format($analysis->take_profit * $rupiah, 0, ',', '.') . "\n";
 
         $riskReward = isset($analysis->risk_reward) ? $analysis->risk_reward : 'N/A';
         $message .= "\n📈 <b>Risk:Reward:</b> {$riskReward}\n";

@@ -16,12 +16,9 @@ interface AnalysisInterface
      *   - description: string - technology that used in the analysis with flow to reach the conclusion
      *   - signal: string - Trading signal ('BUY', 'SELL', or 'NEUTRAL')
      *   - confidence: float - Confidence percentage (0-100)
-     *   - entry_usd: float - Entry price in USD
-     *   - entry_idr: float - Entry price in Rupiah
-     *   - stop_loss_usd: float - Stop loss price in USD
-     *   - stop_loss_idr: float - Stop loss price in Rupiah
-     *   - take_profit_usd: float - Take profit price in USD
-     *   - take_profit_idr: float - Take profit price in Rupiah
+     *   - entry: float - Entry price in USD
+     *   - stop_loss: float - Stop loss price in USD
+     *   - take_profit: float - Take profit price in USD
      *   - risk_reward: string - Risk-reward ratio
 
      */

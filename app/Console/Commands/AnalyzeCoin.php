@@ -19,9 +19,9 @@ class AnalyzeCoin extends Command
      */
     protected $signature = 'scan:coin
         {symbol : The cryptocurrency symbol to analyze (e.g., BTCUSDT)}
-        {method? : The analysis method to use (default: default_simple_analysis)}
+        {method? : The analysis method to use (default: ma_rsi_volume_atr_macd)}
         {--amount=100 : The trading amount in USD}
-        {--api= : Force specific API provider (binance, coincappro, coingecko, freecryptoapi, coinlore)}';
+        {--api= : Force specific API provider (binance, coingecko, etc)}';
 
     /**
      * The console command description.
@@ -30,72 +30,44 @@ class AnalyzeCoin extends Command
      */
     protected $description = 'Analyze a cryptocurrency using a specific method and send results to Telegram';
 
-    /**
-     * Create a new command instance.
-     */
     public function __construct()
     {
         parent::__construct();
 
-        // Initialize API provider manager
         $settingsManager = app('settings');
         $driver = $settingsManager->driver();
         $settings = new Settings($driver);
         $this->apiManager = new ApiProviderManager($settings);
     }
 
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
-        $symbol = $this->argument('symbol');
+        $symbol = strtoupper($this->argument('symbol'));
         $method = $this->argument('method') ?? 'ma_rsi_volume_atr_macd';
         $amount = (float) $this->option('amount');
 
         $this->info("🔍 Analyzing {$symbol} using {$method} method...");
 
-        // Show API provider information
         $this->showApiProviderInfo($symbol);
 
-        // Initialize Telegram service
         $telegram = new TelegramService();
 
-        // Check if Telegram is configured
-        if (!$telegram->isConfigured()) {
-            $this->warn('⚠️  Telegram not configured. Results will be displayed in console only.');
-            $this->line('To enable Telegram notifications, add these to your .env file:');
-            $this->line('TELEGRAM_BOT_TOKEN=your_bot_token_here');
-            $this->line('TELEGRAM_CHAT_ID=your_chat_id_here');
-        }
-
         try {
-            // Create analysis service with API provider manager
             $analysisService = AnalysisServiceFactory::create($method, $this->apiManager);
 
-            // Perform analysis
             $this->info('📊 Performing analysis...');
             $forcedApi = $this->option('api') ? strtolower($this->option('api')) : null;
-            $result = $analysisService->analyze(strtoupper($symbol), $amount, '1h', $forcedApi);
 
-            // Get current price
-            $currentPrice = $this->getCurrentPrice(strtoupper($symbol));
+            // Hasil SimpleAnalysis (object sesuai AnalysisInterface)
+            $result = $analysisService->analyze($symbol, $amount, '1h', $forcedApi);
 
-            // Display results in console
+            $currentPrice = $this->getCurrentPrice($symbol);
+
             $this->displayResults($symbol, $result, $currentPrice);
 
-            // Send to Telegram if configured
             if ($telegram->isConfigured()) {
                 $this->info('📤 Sending results to Telegram...');
-                $forcedApi = $this->option('api') ?: 'Auto';
-                $success = $telegram->sendAnalysisResult($symbol, $result, $currentPrice, $forcedApi);
-
-                if ($success) {
-                    $this->info('✅ Results sent to Telegram successfully!');
-                } else {
-                    $this->error('❌ Failed to send results to Telegram!');
-                    $this->line('Check your Telegram configuration and network connectivity.');
-                }
+                $telegram->sendAnalysisResult($symbol, $result, $currentPrice, $forcedApi ?? 'Auto');
             }
 
             return 0;
@@ -103,7 +75,6 @@ class AnalyzeCoin extends Command
             $this->error("❌ Analysis failed: " . $e->getMessage());
             $this->error("Stack trace: " . $e->getTraceAsString());
 
-            // Send error to Telegram if configured
             if ($telegram->isConfigured()) {
                 $errorMessage = "❌ <b>Analysis Error</b>\n\n";
                 $errorMessage .= "Symbol: {$symbol}\n";
@@ -117,22 +88,16 @@ class AnalyzeCoin extends Command
         }
     }
 
-    /**
-     * Get current price of a symbol using API provider manager
-     */
     private function getCurrentPrice(string $symbol): float
     {
         try {
-            return $this->apiManager->getCurrentPrice(strtoupper($symbol));
+            return $this->apiManager->getCurrentPrice($symbol);
         } catch (\Exception $e) {
             $this->warn("⚠️  Could not fetch current price: " . $e->getMessage());
             return 0;
         }
     }
 
-    /**
-     * Show API provider information for the coin
-     */
     private function showApiProviderInfo(string $symbol): void
     {
         $forcedApi = $this->option('api');
@@ -140,51 +105,26 @@ class AnalyzeCoin extends Command
         $apiConfigs = config('crypto.api_providers.providers', []);
 
         if ($forcedApi) {
-            // User forced specific API
             $apiCode = strtolower($forcedApi);
             if (isset($apiConfigs[$apiCode])) {
                 $apiConfig = $apiConfigs[$apiCode];
-                $baseUrl = $apiConfig['base_url'] ?? 'Unknown';
-                $this->line("🌐 Using Forced API:");
-                $this->line("   API: " . strtoupper($apiCode));
-                $this->line("   URL: {$baseUrl}");
+                $this->line("🌐 Using Forced API: " . strtoupper($apiCode));
+                $this->line("   URL: " . ($apiConfig['base_url'] ?? 'Unknown'));
             } else {
                 $this->warn("⚠️  Unknown API provider: {$apiCode}");
-                return;
             }
         } else {
-            // Show intelligent routing info
             $primaryApi = $coinMapping['primary_api'][$symbol] ?? 'binance';
             $fallbackApis = $coinMapping['fallback_apis'][$symbol] ?? [$primaryApi, 'coingecko'];
 
             $this->line("🌐 Intelligent API Routing:");
             $this->line("   Primary API: " . strtoupper($primaryApi));
             $this->line("   Fallback APIs: " . implode(', ', array_map('strtoupper', $fallbackApis)));
-
-            // Show URLs for available providers
-            $availableProviders = [];
-            foreach ($fallbackApis as $apiCode) {
-                if (isset($apiConfigs[$apiCode])) {
-                    $availableProviders[] = $apiCode;
-                }
-            }
-
-            if (!empty($availableProviders)) {
-                $this->line("   Available API URLs:");
-                foreach ($availableProviders as $apiCode) {
-                    $apiConfig = $apiConfigs[$apiCode];
-                    $baseUrl = $apiConfig['base_url'] ?? 'Unknown';
-                    $this->line("     ✅ {$apiCode}: {$baseUrl}");
-                }
-            }
         }
 
         $this->newLine();
     }
 
-    /**
-     * Display analysis results in console
-     */
     private function displayResults(string $symbol, object $result, float $currentPrice): void
     {
         $rupiah = getUsdToIdrRate();
@@ -193,58 +133,32 @@ class AnalyzeCoin extends Command
         $this->info("📈 ANALYSIS RESULTS FOR {$symbol}");
         $this->info(str_repeat('=', 50));
 
-        $this->line("Title: {$result->title}");
-        $this->line("Signal: {$result->signal}");
-        $this->line("Confidence: {$result->confidence}%");
-        $this->line("Current Price: $" . number_format($currentPrice, 4));
-        $this->line("Rupiah Price: $" . number_format($currentPrice * $rupiah, 4));
+        $this->line("📌 Title: {$result->title}");
+        $this->line("📝 Method: {$result->description}");
+        $this->line("📊 Signal: {$result->signal}");
+        $this->line("💯 Confidence: {$result->confidence}%");
+        $this->line("💵 Current Price: $" . number_format($currentPrice, 2));
+        $this->line("💵 Rupiah Price: Rp " . number_format($currentPrice * $rupiah, 0, ',', '.'));
 
-        // Display USD values
-        $this->line("\n🎯 Entry USD: $" . number_format($result->entry, 4));
-        if (isset($result->entry_idr)) {
-            $this->line("🎯 Entry IDR: Rp " . number_format($result->entry_idr, 0, ',', '.'));
+        $this->line("\n🎯 Entry: $" . number_format($result->entry, 2));
+        $this->line("🛑 Stop Loss: $" . number_format($result->stop_loss, 2));
+        $this->line("✅ Take Profit: $" . number_format($result->take_profit, 2));
+        $this->line("⚖️ Risk:Reward: {$result->risk_reward}");
+
+        if (!empty($result->notes)) {
+            $notesText = is_array($result->notes) ? implode(" | ", $result->notes) : $result->notes;
+            $this->line("\n📝 Notes: {$notesText}");
         }
 
-        $this->line("🛑 Stop Loss USD: $" . number_format($result->stop_loss, 4));
-        if (isset($result->stop_loss_idr)) {
-            $this->line("🛑 Stop Loss IDR: Rp " . number_format($result->stop_loss_idr, 0, ',', '.'));
-        }
-
-        $this->line("✅ Take Profit USD: $" . number_format($result->take_profit, 4));
-        if (isset($result->take_profit_idr)) {
-            $this->line("✅ Take Profit IDR: Rp " . number_format($result->take_profit_idr, 0, ',', '.'));
-        }
-
-        $this->line("📈 Risk:Reward: {$result->risk_reward}");
-
-        // Display additional metrics if available
-        if (isset($result->qty)) {
-            $this->line("📊 Quantity: " . number_format($result->qty, 8));
-        }
-
-        if (isset($result->fee)) {
-            $this->line("💸 Fee USD: $" . number_format($result->fee, 4));
-            if (isset($result->fee_idr)) {
-                $this->line("💸 Fee IDR: Rp " . number_format($result->fee_idr, 0, ',', '.'));
+        if (!empty($result->indicators)) {
+            $this->line("\n📊 Indicators:");
+            foreach ($result->indicators as $name => $value) {
+                if (is_array($value)) {
+                    $this->line("   - {$name}: " . json_encode($value));
+                } else {
+                    $this->line("   - {$name}: " . (is_numeric($value) ? number_format($value, 2) : $value));
+                }
             }
-        }
-
-        if (isset($result->potential_profit)) {
-            $this->line("📈 Potential Profit USD: $" . number_format($result->potential_profit, 4));
-            if (isset($result->potential_profit_idr)) {
-                $this->line("📈 Potential Profit IDR: Rp " . number_format($result->potential_profit_idr, 0, ',', '.'));
-            }
-        }
-
-        if (isset($result->potential_loss)) {
-            $this->line("📉 Potential Loss USD: $" . number_format($result->potential_loss, 4));
-            if (isset($result->potential_loss_idr)) {
-                $this->line("📉 Potential Loss IDR: Rp " . number_format($result->potential_loss_idr, 0, ',', '.'));
-            }
-        }
-
-        if (isset($result->notes) && !empty($result->notes)) {
-            $this->line("\n📝 Notes: {$result->notes}");
         }
 
         $this->info(str_repeat('=', 50) . "\n");
