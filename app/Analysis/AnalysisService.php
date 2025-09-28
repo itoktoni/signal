@@ -2,47 +2,30 @@
 
 namespace App\Analysis;
 
-use App\Helpers\CurrencyHelper;
 use Illuminate\Support\Facades\Http;
 
 abstract class AnalysisService implements AnalysisInterface
 {
-    protected float $usdToIdr;
     protected array $config;
 
     public function __construct()
     {
-        $this->usdToIdr = env('USD_TO_IDR', 16000);
-        CurrencyHelper::setExchangeRate($this->usdToIdr);
-
         // Load configuration from config/crypto.php
         $this->config = config('crypto');
     }
 
     /**
-     * Get the exchange rate service
-     */
-    protected function getExchangeRate(): float
-    {
-        return $this->usdToIdr;
-    }
-
-    /**
-     * Format price in both USD and Rupiah
+     * Format price in USD only
      */
     protected function formatPrice(float $amount): array
     {
         return [
             'usd' => $amount,
-            'rupiah' => $amount * $this->usdToIdr,
             'formatted' => [
-                'usd' => CurrencyHelper::formatUSD($amount),
-                'rupiah' => CurrencyHelper::formatIDR($amount * $this->usdToIdr),
-                'both' => CurrencyHelper::formatUSDIDR($amount)
+                'usd' => '$' . number_format($amount, 2, '.', ','),
             ]
         ];
     }
-
 
 
     /**

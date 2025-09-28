@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Helpers\CurrencyHelper;
 use App\Models\Coin;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Http;
@@ -35,9 +34,6 @@ class CryptoSymbolSeeder extends Seeder
             return;
         }
 
-        $rateService = new \App\Services\CurrencyRateService();
-        $newRate = $rateService->getUSDToIDRRate();
-
         foreach ($data as $symbol) {
             if(str_contains($symbol['symbol'], 'USDT') && $symbol['price'] > 0)
             {
@@ -45,7 +41,6 @@ class CryptoSymbolSeeder extends Seeder
                     ['coin_code' => $symbol['symbol']],
                     [
                         'coin_price_usd' => $symbol['price'],
-                        'coin_price_idr' => $symbol['price'] * $newRate,
                     ]
                 );
             }

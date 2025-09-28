@@ -7,15 +7,14 @@ use App\Settings\Settings;
 
 class SimpleAnalysis implements AnalysisInterface
 {
-     private float $usdIdr     = 16000; // asumsi kurs
-     private float $amount     = 100;   // default amount USD
-     private string $timeframe = '1h';  // default timeframe
-     private array $last       = [];
+     private array $last = [];
      private ApiProviderManager $apiManager;
+     private float $amount = 100;   // default amount USD
+     private string $timeframe = '1h';  // default timeframe
 
      public function __construct(ApiProviderManager $apiManager)
      {
-         $this->apiManager = $apiManager;
+          $this->apiManager = $apiManager;
      }
 
     // === Implementasi Interface ===
@@ -107,21 +106,15 @@ class SimpleAnalysis implements AnalysisInterface
             $take_profit_usd = $entry_usd;
         }
 
-        // === Konversi IDR ===
-        $entry_idr       = $entry_usd * $this->usdIdr;
-        $stop_loss_idr   = $stop_loss_usd * $this->usdIdr;
-        $take_profit_idr = $take_profit_usd * $this->usdIdr;
-
         // === Hitung Qty ===
         $qty = $amount / $entry_usd;
 
-                                            // === Fee Pluang (Maker default) ===
+        // === Fee Pluang (Maker default) ===
         $maker_fee      = $amount * 0.001;  // 0.10%
         $cfx_fee        = $amount * 0.0002; // 0.02%
         $fee_before_ppn = $maker_fee + $cfx_fee;
         $ppn            = $fee_before_ppn * 0.11;
         $fee_usd        = $fee_before_ppn + $ppn;
-        $fee_idr        = $fee_usd * $this->usdIdr;
 
         // === Risk & Reward ===
         if ($signal === 'BUY') {
@@ -151,11 +144,8 @@ class SimpleAnalysis implements AnalysisInterface
         }
 
         // === Potential P/L (net fee) ===
-        $potential_profit_usd = max(0, $reward - $fee_usd);
-        $potential_loss_usd   = max(0, $risk + $fee_usd);
-
-        $potential_profit_idr = $potential_profit_usd * $this->usdIdr;
-        $potential_loss_idr   = $potential_loss_usd * $this->usdIdr;
+        $potential_profit = max(0, $reward - $fee_usd);
+        $potential_loss   = max(0, $risk + $fee_usd);
 
         // === Save indikator terakhir ===
         $this->last = [
@@ -187,8 +177,8 @@ class SimpleAnalysis implements AnalysisInterface
             'risk_usd'         => $risk,
             'reward_usd'       => $reward,
             'risk_reward'      => $risk_reward,
-            'potential_profit' => $potential_profit_usd,
-            'potential_loss'   => $potential_loss_usd,
+            'potential_profit' => $potential_profit,
+            'potential_loss'   => $potential_loss,
             'notes'            => implode(' ', $notes) ?: "Gunakan timeframe $timeframe. SL diambil dari swing high/low, TP dihitung ATR × 2. ⚡️ data From {$apiProvider}",
         ];
     }

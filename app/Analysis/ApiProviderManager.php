@@ -8,9 +8,8 @@ use Illuminate\Support\Facades\Cache;
 
 class ApiProviderManager
 {
-    private array $providers = [];
-    private Settings $settings;
-    private array $rateLimitCache = [];
+     private array $providers = [];
+     private Settings $settings;
 
     public function __construct(Settings $settings)
     {
