@@ -1,33 +1,49 @@
 <?php
-
 namespace App\Analysis;
 
 use App\Analysis\AnalysisInterface;
-use GuzzleHttp\Client;
+use App\Analysis\ApiProviderManager;
+use App\Settings\Settings;
 
-class MAAnalysis implements AnalysisInterface
+class SimpleAnalysis implements AnalysisInterface
 {
-    private string $apiUrl = 'https://api.binance.com/api/v3/klines';
-    private float $usdIdr = 16000; // asumsi kurs
-    private float $amount = 100;   // default amount USD
-    private string $timeframe = '1h'; // default timeframe
-    private array $last = [];
+    private float $usdIdr     = 16000; // asumsi kurs
+    private float $amount     = 100;   // default amount USD
+    private string $timeframe = '1h';  // default timeframe
+    private array $last       = [];
+    private ApiProviderManager $apiManager;
 
-    public function analyze(string $symbol, float $amount = 100, string $timeframe = '1h'): object
+    public function __construct()
     {
-        $this->amount = $amount;
+        $settingsManager = app('settings');
+        $driver = $settingsManager->driver();
+        $settings = new Settings($driver);
+        $this->apiManager = new ApiProviderManager($settings);
+    }
+
+    // === Implementasi Interface ===
+    public function getCode(): string
+    {
+        return 'ma_rsi_volume_atr_macd';
+    }
+
+    public function getName(): string
+    {
+        return 'MA + RSI + Volume + ATR + MACD Analysis';
+    }
+
+    public function getDescription(): string
+    {
+        return 'Analisis teknikal dengan MA20, MA50, RSI, Volume Ratio, ATR, MACD, Divergence untuk entry/SL/TP.';
+    }
+
+    public function analyze(string $symbol, float $amount = 100, string $timeframe = '1h', ?string $forcedApi = null): object
+    {
+        $this->amount    = $amount;
         $this->timeframe = $timeframe;
 
         // === Ambil data harga ===
-        $client = new Client();
-        $response = $client->get($this->apiUrl, [
-            'query' => [
-                'symbol'   => strtoupper($symbol),
-                'interval' => $timeframe,
-                'limit'    => 200
-            ]
-        ]);
-        $data = json_decode($response->getBody()->getContents(), true);
+        $data = $this->apiManager->getHistoricalData(strtoupper($symbol), $timeframe, 200, $forcedApi);
 
         $closes  = array_map(fn($c) => (float) $c[4], $data);
         $highs   = array_map(fn($c) => (float) $c[2], $data);
@@ -37,39 +53,39 @@ class MAAnalysis implements AnalysisInterface
         $currentPrice = end($closes);
 
         // === Hitung indikator ===
-        $ma20 = array_sum(array_slice($closes, -20)) / 20;
-        $ma50 = array_sum(array_slice($closes, -50)) / 50;
-        $rsi  = $this->calculateRSI($closes, 14);
-        $atr  = $this->calculateATR($highs, $lows, $closes, 14);
+        $ma20        = array_sum(array_slice($closes, -20)) / 20;
+        $ma50        = array_sum(array_slice($closes, -50)) / 50;
+        $rsi         = $this->calculateRSI($closes, 14);
+        $atr         = $this->calculateATR($highs, $lows, $closes, 14);
         $volumeRatio = $volumes[count($volumes) - 1] / (array_sum(array_slice($volumes, -20)) / 20);
 
         [$macd, $signalLine, $histogram] = $this->calculateMACD($closes);
-        $volumeDivergence = $this->detectVolumeDivergence($closes, $volumes);
+        $volumeDivergence                = $this->detectVolumeDivergence($closes, $volumes);
 
         // === Sinyal awal ===
-        $signal = 'NEUTRAL';
+        $signal     = 'NEUTRAL';
         $confidence = 50;
-        $notes = [];
+        $notes      = [];
 
         if ($ma20 < $ma50 && $rsi < 40 && $currentPrice < $ma20 && $macd < $signalLine) {
-            $signal = 'SELL';
+            $signal     = 'SELL';
             $confidence = 80;
-            $notes[] = 'Harga di bawah MA20 & MA50, RSI rendah, MACD bearish.';
+            $notes[]    = 'Harga di bawah MA20 & MA50, RSI rendah, MACD bearish.';
         } elseif ($ma20 > $ma50 && $rsi > 60 && $currentPrice > $ma20 && $macd > $signalLine) {
-            $signal = 'BUY';
+            $signal     = 'BUY';
             $confidence = 80;
-            $notes[] = 'Harga di atas MA20 & MA50, RSI kuat, MACD bullish.';
+            $notes[]    = 'Harga di atas MA20 & MA50, RSI kuat, MACD bullish.';
         }
 
         // === Volume divergence konfirmasi ===
         if ($volumeDivergence === 'bullish') {
-            $notes[] = "Volume divergence bullish → potensi pembalikan naik.";
+            $notes[] = 'Volume divergence bullish → potensi pembalikan naik.';
             if ($signal === 'SELL') {
                 $signal = 'NEUTRAL';
                 $confidence -= 20;
             }
         } elseif ($volumeDivergence === 'bearish') {
-            $notes[] = "Volume divergence bearish → potensi pembalikan turun.";
+            $notes[] = 'Volume divergence bearish → potensi pembalikan turun.';
             if ($signal === 'BUY') {
                 $signal = 'NEUTRAL';
                 $confidence -= 20;
@@ -81,16 +97,16 @@ class MAAnalysis implements AnalysisInterface
         $recentLow  = min(array_slice($lows, -10));
 
         if ($signal === 'BUY') {
-            $entry_usd = $currentPrice;
-            $stop_loss_usd = $recentLow;
-            $take_profit_usd = $entry_usd + ($atr * 2);
+            $entry_usd       = $currentPrice;
+            $stop_loss_usd   = $recentLow;
+            $take_profit_usd = $entry_usd + $atr * 2;
         } elseif ($signal === 'SELL') {
-            $entry_usd = $currentPrice;
-            $stop_loss_usd = $recentHigh;
-            $take_profit_usd = $entry_usd - ($atr * 2);
+            $entry_usd       = $currentPrice;
+            $stop_loss_usd   = $recentHigh;
+            $take_profit_usd = $entry_usd - $atr * 2;
         } else {
-            $entry_usd = $currentPrice;
-            $stop_loss_usd = $entry_usd;
+            $entry_usd       = $currentPrice;
+            $stop_loss_usd   = $entry_usd;
             $take_profit_usd = $entry_usd;
         }
 
@@ -102,13 +118,13 @@ class MAAnalysis implements AnalysisInterface
         // === Hitung Qty ===
         $qty = $amount / $entry_usd;
 
-        // === Fee Pluang (Maker default) ===
-        $maker_fee = $amount * 0.0010; // 0.10%
-        $cfx_fee   = $amount * 0.0002; // 0.02%
+                                            // === Fee Pluang (Maker default) ===
+        $maker_fee      = $amount * 0.001;  // 0.10%
+        $cfx_fee        = $amount * 0.0002; // 0.02%
         $fee_before_ppn = $maker_fee + $cfx_fee;
-        $ppn = $fee_before_ppn * 0.11;
-        $fee_usd = $fee_before_ppn + $ppn;
-        $fee_idr = $fee_usd * $this->usdIdr;
+        $ppn            = $fee_before_ppn * 0.11;
+        $fee_usd        = $fee_before_ppn + $ppn;
+        $fee_idr        = $fee_usd * $this->usdIdr;
 
         // === Risk & Reward ===
         if ($signal === 'BUY') {
@@ -118,21 +134,21 @@ class MAAnalysis implements AnalysisInterface
             $risk   = ($stop_loss_usd - $entry_usd) * $qty;
             $reward = ($entry_usd - $take_profit_usd) * $qty;
         } else {
-            $risk = 0;
+            $risk   = 0;
             $reward = 0;
         }
 
         $risk_reward_ratio = $risk > 0 ? $reward / $risk : 0;
-        $risk_reward = $risk > 0 ? "1:" . round($risk_reward_ratio, 2) : "0:0";
+        $risk_reward       = $risk > 0 ? '1:' . round($risk_reward_ratio, 2) : '0:0';
 
         // === Jika RR < 1, balikkan signal ===
         if ($risk_reward_ratio < 1 && $signal !== 'NEUTRAL') {
             if ($signal === 'SELL') {
-                $signal = 'BUY';
-                $notes[] = "Reversal: RR < 1, SELL tidak menguntungkan → dibalik jadi BUY.";
+                $signal  = 'BUY';
+                $notes[] = 'Reversal: RR < 1, SELL tidak menguntungkan → dibalik jadi BUY.';
             } elseif ($signal === 'BUY') {
-                $signal = 'SELL';
-                $notes[] = "Reversal: RR < 1, BUY tidak menguntungkan → dibalik jadi SELL.";
+                $signal  = 'SELL';
+                $notes[] = 'Reversal: RR < 1, BUY tidak menguntungkan → dibalik jadi SELL.';
             }
             $confidence = max(60, $confidence - 10);
         }
@@ -154,42 +170,26 @@ class MAAnalysis implements AnalysisInterface
             'macd'          => $macd,
             'signal_line'   => $signalLine,
             'histogram'     => $histogram,
-            'current_price' => $currentPrice
+            'current_price' => $currentPrice,
         ];
 
         return (object) [
-            'title'                => "MA20/50 + RSI + Volume + ATR + MACD Analysis for $symbol ($timeframe)",
-            'description'          => "Analisis teknikal dengan MA20, MA50, RSI, Volume Ratio, ATR, MACD, Divergence pada timeframe $timeframe.",
-            'signal'               => $signal,
-            'confidence'           => $confidence,
-            'entry'                => $entry_usd,
-            'stop_loss'            => $stop_loss_usd,
-            'take_profit'          => $take_profit_usd,
-            'qty'                  => $qty,
-            'fee'                  => $fee_usd,
-            'risk_usd'             => $risk,
-            'reward_usd'           => $reward,
-            'risk_reward'          => $risk_reward,
-            'potential_profit'     => $potential_profit_usd,
-            'potential_loss'       => $potential_loss_usd,
-            'notes'                => implode(" ", $notes) ?: "Gunakan timeframe $timeframe. SL diambil dari swing high/low, TP dihitung ATR × 2."
+            'title'            => "MA20/50 + RSI + Volume + ATR + MACD Analysis for $symbol ($timeframe)",
+            'description'      => "Analisis teknikal dengan MA20, MA50, RSI, Volume Ratio, ATR, MACD, Divergence pada timeframe $timeframe.",
+            'signal'           => $signal,
+            'confidence'       => $confidence,
+            'entry'            => $entry_usd,
+            'stop_loss'        => $stop_loss_usd,
+            'take_profit'      => $take_profit_usd,
+            'qty'              => $qty,
+            'fee'              => $fee_usd,
+            'risk_usd'         => $risk,
+            'reward_usd'       => $reward,
+            'risk_reward'      => $risk_reward,
+            'potential_profit' => $potential_profit_usd,
+            'potential_loss'   => $potential_loss_usd,
+            'notes'            => implode(' ', $notes) ?: "Gunakan timeframe $timeframe. SL diambil dari swing high/low, TP dihitung ATR × 2.",
         ];
-    }
-
-    // === Implementasi Interface ===
-    public function getCode(): string
-    {
-        return 'ma_rsi_volume_atr_macd';
-    }
-
-    public function getName(): string
-    {
-        return 'MA + RSI + Volume + ATR + MACD Analysis';
-    }
-
-    public function getDescription(): string
-    {
-        return 'Analisis teknikal dengan MA20, MA50, RSI, Volume Ratio, ATR, MACD, Divergence untuk entry/SL/TP.';
     }
 
     public function getAmount(): float
@@ -220,26 +220,28 @@ class MAAnalysis implements AnalysisInterface
     // === Helper ===
     private function calculateRSI(array $closes, int $period = 14): float
     {
-        $gains = 0; $losses = 0;
+        $gains  = 0;
+        $losses = 0;
         for ($i = count($closes) - $period; $i < count($closes) - 1; $i++) {
             $diff = $closes[$i + 1] - $closes[$i];
-            if ($diff > 0) $gains += $diff;
-            else $losses -= $diff;
+            if ($diff > 0) {
+                $gains += $diff;
+            } else {
+                $losses -= $diff;
+            }
         }
-        if ($losses == 0) return 100;
+        if ($losses == 0) {
+            return 100;
+        }
         $rs = $gains / $losses;
-        return 100 - (100 / (1 + $rs));
+        return 100 - 100 / (1 + $rs);
     }
 
     private function calculateATR(array $highs, array $lows, array $closes, int $period = 14): float
     {
         $trs = [];
         for ($i = 1; $i < count($closes); $i++) {
-            $tr = max(
-                $highs[$i] - $lows[$i],
-                abs($highs[$i] - $closes[$i - 1]),
-                abs($lows[$i] - $closes[$i - 1])
-            );
+            $tr    = max($highs[$i] - $lows[$i], abs($highs[$i] - $closes[$i - 1]), abs($lows[$i] - $closes[$i - 1]));
             $trs[] = $tr;
         }
         return array_sum(array_slice($trs, -$period)) / $period;
@@ -247,8 +249,8 @@ class MAAnalysis implements AnalysisInterface
 
     private function calculateEMA(array $data, int $period): array
     {
-        $k = 2 / ($period + 1);
-        $ema = [];
+        $k      = 2 / ($period + 1);
+        $ema    = [];
         $ema[0] = array_sum(array_slice($data, 0, $period)) / $period;
         for ($i = $period; $i < count($data); $i++) {
             $ema[] = ($data[$i] - end($ema)) * $k + end($ema);
@@ -258,23 +260,23 @@ class MAAnalysis implements AnalysisInterface
 
     private function calculateMACD(array $closes): array
     {
-        $ema12 = $this->calculateEMA($closes, 12);
-        $ema26 = $this->calculateEMA($closes, 26);
+        $ema12    = $this->calculateEMA($closes, 12);
+        $ema26    = $this->calculateEMA($closes, 26);
         $macdLine = [];
-        $len = min(count($ema12), count($ema26));
+        $len      = min(count($ema12), count($ema26));
         for ($i = 0; $i < $len; $i++) {
             $macdLine[] = $ema12[$i] - $ema26[$i];
         }
         $signalLine = $this->calculateEMA($macdLine, 9);
-        $lastMacd = end($macdLine);
+        $lastMacd   = end($macdLine);
         $lastSignal = end($signalLine);
-        $histogram = $lastMacd - $lastSignal;
+        $histogram  = $lastMacd - $lastSignal;
         return [$lastMacd, $lastSignal, $histogram];
     }
 
     private function detectVolumeDivergence(array $closes, array $volumes): string
     {
-        $recentCloseChange = end($closes) - $closes[count($closes) - 5];
+        $recentCloseChange  = end($closes) - $closes[count($closes) - 5];
         $recentVolumeChange = end($volumes) - $volumes[count($volumes) - 5];
 
         if ($recentCloseChange > 0 && $recentVolumeChange < 0) {

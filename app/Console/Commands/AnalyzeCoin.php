@@ -3,21 +3,25 @@
 namespace App\Console\Commands;
 
 use App\Analysis\AnalysisServiceFactory;
+use App\Analysis\ApiProviderManager;
 use App\Services\TelegramService;
+use App\Settings\Settings;
 use Illuminate\Console\Command;
-use GuzzleHttp\Client;
 
-class AnalyzeAndNotify extends Command
+class AnalyzeCoin extends Command
 {
+    private ApiProviderManager $apiManager;
+
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'analyze:notify
+    protected $signature = 'scan:coin
         {symbol : The cryptocurrency symbol to analyze (e.g., BTCUSDT)}
         {method? : The analysis method to use (default: ma_rsi_volume_atr_macd)}
-        {--amount=100 : The trading amount in USD}';
+        {--amount=100 : The trading amount in USD}
+        {--api= : Force specific API provider (binance, coingecko, freecryptoapi)}';
 
     /**
      * The console command description.
@@ -25,6 +29,20 @@ class AnalyzeAndNotify extends Command
      * @var string
      */
     protected $description = 'Analyze a cryptocurrency using a specific method and send results to Telegram';
+
+    /**
+     * Create a new command instance.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Initialize API provider manager
+        $settingsManager = app('settings');
+        $driver = $settingsManager->driver();
+        $settings = new Settings($driver);
+        $this->apiManager = new ApiProviderManager($settings);
+    }
 
     /**
      * Execute the console command.
@@ -36,6 +54,9 @@ class AnalyzeAndNotify extends Command
         $amount = (float) $this->option('amount');
 
         $this->info("🔍 Analyzing {$symbol} using {$method} method...");
+
+        // Show API provider information
+        $this->showApiProviderInfo($symbol);
 
         // Initialize Telegram service
         $telegram = new TelegramService();
@@ -54,10 +75,11 @@ class AnalyzeAndNotify extends Command
 
             // Perform analysis
             $this->info('📊 Performing analysis...');
-            $result = $analysisService->analyze($symbol, $amount);
+            $forcedApi = $this->option('api') ? strtolower($this->option('api')) : null;
+            $result = $analysisService->analyze(strtoupper($symbol), $amount, '1h', $forcedApi);
 
             // Get current price
-            $currentPrice = $this->getCurrentPrice($symbol);
+            $currentPrice = $this->getCurrentPrice(strtoupper($symbol));
 
             // Display results in console
             $this->displayResults($symbol, $result, $currentPrice);
@@ -95,22 +117,68 @@ class AnalyzeAndNotify extends Command
     }
 
     /**
-     * Get current price of a symbol from Binance
+     * Get current price of a symbol using API provider manager
      */
     private function getCurrentPrice(string $symbol): float
     {
         try {
-            $client = new Client();
-            $response = $client->get("https://api.binance.com/api/v3/ticker/price", [
-                'query' => ['symbol' => strtoupper($symbol)]
-            ]);
-
-            $data = json_decode($response->getBody()->getContents(), true);
-            return (float) $data['price'];
+            return $this->apiManager->getCurrentPrice(strtoupper($symbol));
         } catch (\Exception $e) {
             $this->warn("⚠️  Could not fetch current price: " . $e->getMessage());
             return 0;
         }
+    }
+
+    /**
+     * Show API provider information for the coin
+     */
+    private function showApiProviderInfo(string $symbol): void
+    {
+        $forcedApi = $this->option('api');
+        $coinMapping = config('crypto.coin_api_mapping', []);
+        $apiConfigs = config('crypto.api_providers.providers', []);
+
+        if ($forcedApi) {
+            // User forced specific API
+            $apiCode = strtolower($forcedApi);
+            if (isset($apiConfigs[$apiCode])) {
+                $apiConfig = $apiConfigs[$apiCode];
+                $baseUrl = $apiConfig['base_url'] ?? 'Unknown';
+                $this->line("🌐 Using Forced API:");
+                $this->line("   API: " . strtoupper($apiCode));
+                $this->line("   URL: {$baseUrl}");
+            } else {
+                $this->warn("⚠️  Unknown API provider: {$apiCode}");
+                return;
+            }
+        } else {
+            // Show intelligent routing info
+            $primaryApi = $coinMapping['primary_api'][$symbol] ?? 'binance';
+            $fallbackApis = $coinMapping['fallback_apis'][$symbol] ?? [$primaryApi, 'coingecko'];
+
+            $this->line("🌐 Intelligent API Routing:");
+            $this->line("   Primary API: " . strtoupper($primaryApi));
+            $this->line("   Fallback APIs: " . implode(', ', array_map('strtoupper', $fallbackApis)));
+
+            // Show URLs for available providers
+            $availableProviders = [];
+            foreach ($fallbackApis as $apiCode) {
+                if (isset($apiConfigs[$apiCode])) {
+                    $availableProviders[] = $apiCode;
+                }
+            }
+
+            if (!empty($availableProviders)) {
+                $this->line("   Available API URLs:");
+                foreach ($availableProviders as $apiCode) {
+                    $apiConfig = $apiConfigs[$apiCode];
+                    $baseUrl = $apiConfig['base_url'] ?? 'Unknown';
+                    $this->line("     ✅ {$apiCode}: {$baseUrl}");
+                }
+            }
+        }
+
+        $this->newLine();
     }
 
     /**

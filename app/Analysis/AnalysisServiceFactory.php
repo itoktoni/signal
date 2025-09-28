@@ -67,13 +67,8 @@ class AnalysisServiceFactory
             return new $className();
         }
 
-        // Legacy support for enum
-        if ($method === AnalysisType::MA_20_50) {
-            return new \App\Analysis\MAAnalysis();
-        }
-
         // Default to first available analysis or MA Analysis
-        $defaultClass = $classes[array_key_first($classes)]['class'] ?? \App\Analysis\MAAnalysis::class;
+        $defaultClass = $classes[array_key_first($classes)]['class'] ?? \App\Analysis\SimpleAnalysis::class;
         return new $defaultClass();
     }
 
