@@ -21,7 +21,8 @@ class AnalyzeCoin extends Command
         {symbol : The cryptocurrency symbol to analyze (e.g., BTCUSDT)}
         {method? : The analysis method to use (default: ma_rsi_volume_atr_macd)}
         {--amount=100 : The trading amount in USD}
-        {--api= : Force specific API provider (binance, coingecko, etc)}';
+        {--api= : Force specific API provider (binance, coingecko, etc)}
+        {--check-providers : Check available coins for all API providers}';
 
     /**
      * The console command description.
@@ -29,6 +30,42 @@ class AnalyzeCoin extends Command
      * @var string
      */
     protected $description = 'Analyze a cryptocurrency using a specific method and send results to Telegram';
+
+    /**
+     * Check available coins for all API providers
+     */
+    private function checkApiProviderCoins(): array
+    {
+        $this->info('🔍 Checking available coins for all API providers...');
+        $this->newLine();
+
+        $results = [];
+        $providers = $this->apiManager->getAvailableProviders();
+
+        foreach ($providers as $providerCode => $provider) {
+            $this->info("📊 Checking {$providerCode}...");
+
+            try {
+                $symbolInfo = $provider->getSymbolInfo();
+
+                if (is_array($symbolInfo)) {
+                    $coinCount = count($symbolInfo);
+                    $results[$providerCode] = $coinCount;
+
+                    $this->line("   ✅ {$providerCode}: {$coinCount} coins");
+                } else {
+                    $this->line("   ⚠️  {$providerCode}: Invalid response format");
+                    $results[$providerCode] = 0;
+                }
+            } catch (\Exception $e) {
+                $this->line("   ❌ {$providerCode}: " . $e->getMessage());
+                $results[$providerCode] = 0;
+            }
+        }
+
+        $this->newLine();
+        return $results;
+    }
 
     public function __construct()
     {
@@ -42,13 +79,40 @@ class AnalyzeCoin extends Command
 
     public function handle()
     {
+        // Check if we should check API providers
+        if ($this->option('check-providers')) {
+            $results = $this->checkApiProviderCoins();
+
+            // Find provider with most coins
+            $bestProvider = null;
+            $maxCoins = 0;
+
+            foreach ($results as $provider => $count) {
+                if ($count > $maxCoins) {
+                    $maxCoins = $count;
+                    $bestProvider = $provider;
+                }
+            }
+
+            if ($bestProvider) {
+                $this->info("🏆 Provider with most coins: {$bestProvider} ({$maxCoins} coins)");
+                $this->info("💡 Consider updating your main API provider in config/crypto.php");
+            }
+
+            return 0;
+        }
+
         $symbol = strtoupper($this->argument('symbol'));
         $method = $this->argument('method') ?? 'ma_rsi_volume_atr_macd';
         $amount = (float) $this->option('amount');
 
+        // Convert symbol format if needed (BTC -> BTCUSDT)
+        $symbolConverter = config('crypto.symbol_converter', []);
+        $fullSymbol = $symbolConverter[$symbol] ?? $symbol;
+
         $this->info("🔍 Analyzing {$symbol} using {$method} method...");
 
-        $this->showApiProviderInfo($symbol);
+        $this->showApiProviderInfo($fullSymbol);
 
         $telegram = new TelegramService();
 
@@ -59,15 +123,15 @@ class AnalyzeCoin extends Command
             $forcedApi = $this->option('api') ? strtolower($this->option('api')) : null;
 
             // Hasil SimpleAnalysis (object sesuai AnalysisInterface)
-            $result = $analysisService->analyze($symbol, $amount, '1h', $forcedApi);
+            $result = $analysisService->analyze($fullSymbol, $amount, '1h', $forcedApi);
 
-            $currentPrice = $this->getCurrentPrice($symbol);
+            $currentPrice = $this->getCurrentPrice($fullSymbol);
 
             $this->displayResults($symbol, $result, $currentPrice);
 
             if ($telegram->isConfigured()) {
                 $this->info('📤 Sending results to Telegram...');
-                $telegram->sendAnalysisResult($symbol, $result, $currentPrice, $forcedApi ?? 'Auto');
+                $telegram->sendAnalysisResult($fullSymbol, $result, $currentPrice, $forcedApi ?? 'Auto');
             }
 
             return 0;
@@ -77,7 +141,7 @@ class AnalyzeCoin extends Command
 
             if ($telegram->isConfigured()) {
                 $errorMessage = "❌ <b>Analysis Error</b>\n\n";
-                $errorMessage .= "Symbol: {$symbol}\n";
+                $errorMessage .= "Symbol: {$fullSymbol}\n";
                 $errorMessage .= "Method: {$method}\n";
                 $errorMessage .= "Error: " . $e->getMessage();
 

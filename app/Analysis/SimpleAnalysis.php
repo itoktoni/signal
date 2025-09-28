@@ -25,6 +25,12 @@ class SimpleAnalysis implements AnalysisInterface
 
         // === Ambil data timeframe utama ===
         $data = $this->apiManager->getHistoricalData(strtoupper($symbol), $timeframe, 200, $forcedApi);
+
+        // Check if we have sufficient data
+        if (empty($data) || count($data) < 14) {
+            throw new \Exception("Insufficient historical data for {$symbol}. Need at least 14 data points.");
+        }
+
         $closes  = array_map(fn($c) => (float) $c[4], $data);
         $highs   = array_map(fn($c) => (float) $c[2], $data);
         $lows    = array_map(fn($c) => (float) $c[3], $data);
@@ -36,8 +42,8 @@ class SimpleAnalysis implements AnalysisInterface
         $d1 = $this->apiManager->getHistoricalData(strtoupper($symbol), "1d", 200, $forcedApi);
 
         $ema200_1h = $this->ema($closes, 200);
-        $ema200_4h = $this->ema(array_map(fn($c) => (float) $c[4], $h4), 200);
-        $ema200_1d = $this->ema(array_map(fn($c) => (float) $c[4], $d1), 200);
+        $ema200_4h = $this->ema(array_map(fn($c) => (float) $c[4], $h4 ?? []), 200);
+        $ema200_1d = $this->ema(array_map(fn($c) => (float) $c[4], $d1 ?? []), 200);
 
         // === Indikator utama ===
         $ema20  = $this->ema($closes, 20);
@@ -161,6 +167,11 @@ class SimpleAnalysis implements AnalysisInterface
     }
 
     private function rsi(array $closes, int $period = 14): float {
+        // Need at least period + 1 data points for RSI calculation
+        if (count($closes) < $period + 1) {
+            return 50; // Return neutral RSI value when insufficient data
+        }
+
         $gains = $losses = 0;
         for ($i = 1; $i <= $period; $i++) {
             $diff = $closes[$i] - $closes[$i - 1];
@@ -182,6 +193,11 @@ class SimpleAnalysis implements AnalysisInterface
     }
 
     private function atr(array $highs, array $lows, array $closes, int $period = 14): float {
+        // Need at least 2 data points for ATR calculation
+        if (count($closes) < 2 || count($highs) < 2 || count($lows) < 2) {
+            return 0;
+        }
+
         $trs = [];
         for ($i = 1; $i < count($closes); $i++) {
             $tr = max([
@@ -191,13 +207,31 @@ class SimpleAnalysis implements AnalysisInterface
             ]);
             $trs[] = $tr;
         }
+
+        // Need at least period TR values
+        if (count($trs) < $period) {
+            $period = count($trs);
+        }
+
         return array_sum(array_slice($trs, -$period)) / max(1, $period);
     }
 
     private function stochasticRsi(array $closes, int $period = 14): float {
+        // Need at least period + 1 data points for Stochastic RSI
+        if (count($closes) < $period + 1) {
+            return 50; // Return neutral value when insufficient data
+        }
+
         $rsi = $this->rsi($closes, $period);
-        $min = min(array_slice($closes, -$period));
-        $max = max(array_slice($closes, -$period));
+        $slice = array_slice($closes, -$period);
+
+        // Additional safety check for the slice
+        if (empty($slice)) {
+            return 50;
+        }
+
+        $min = min($slice);
+        $max = max($slice);
         return ($max - $min == 0) ? 50 : (($rsi - $min) / ($max - $min)) * 100;
     }
 

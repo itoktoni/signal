@@ -102,38 +102,42 @@ class ApiProviderManager
     }
 
     /**
-     * Get the appropriate API providers for a specific coin
-     */
-    private function getProvidersForCoin(string $symbol): array
-    {
-        $coinMapping = config('crypto.coin_api_mapping', []);
+      * Get the appropriate API providers for a specific coin
+      */
+     private function getProvidersForCoin(string $symbol): array
+     {
+         $coinMapping = config('crypto.coin_api_mapping', []);
+         $symbolConverter = config('crypto.symbol_converter', []);
 
-        // Check if coin has specific API mapping
-        if (isset($coinMapping['primary_api'][$symbol])) {
-            $primaryApi = $coinMapping['primary_api'][$symbol];
+         // Convert symbol if needed (BTC -> BTCUSDT)
+         $fullSymbol = $symbolConverter[$symbol] ?? $symbol;
 
-            // If coin has fallback APIs configured
-            if (isset($coinMapping['fallback_apis'][$symbol])) {
-                return $coinMapping['fallback_apis'][$symbol];
-            }
+         // Check if coin has specific API mapping
+         if (isset($coinMapping['primary_api'][$fullSymbol])) {
+             $primaryApi = $coinMapping['primary_api'][$fullSymbol];
 
-            // Otherwise, try primary API first, then fall back to all providers sorted by priority
-            $allProviders = array_keys($this->providers);
-            $providersToTry = [$primaryApi];
+             // If coin has fallback APIs configured
+             if (isset($coinMapping['fallback_apis'][$fullSymbol])) {
+                 return $coinMapping['fallback_apis'][$fullSymbol];
+             }
 
-            // Add other providers except the primary one
-            foreach ($allProviders as $providerCode) {
-                if ($providerCode !== $primaryApi) {
-                    $providersToTry[] = $providerCode;
-                }
-            }
+             // Otherwise, try primary API first, then fall back to all providers sorted by priority
+             $allProviders = array_keys($this->providers);
+             $providersToTry = [$primaryApi];
 
-            return $providersToTry;
-        }
+             // Add other providers except the primary one
+             foreach ($allProviders as $providerCode) {
+                 if ($providerCode !== $primaryApi) {
+                     $providersToTry[] = $providerCode;
+                 }
+             }
 
-        // Default: use all providers sorted by priority
-        return array_keys($this->providers);
-    }
+             return $providersToTry;
+         }
+
+         // Default: use all providers sorted by priority
+         return array_keys($this->providers);
+     }
 
     /**
      * Check if interval is supported by provider
