@@ -133,6 +133,48 @@ return [
                     'requests_per_second' => env('FREECRYPTOAPI_RATE_LIMIT_SECOND', 2),
                 ],
             ],
+            'coincappro' => [
+                'name' => 'CoinCap Pro API',
+                'priority' => 0, // High priority (requires API key)
+                'enabled' => env('COINCAPPRO_API_ENABLED', true),
+                'base_url' => env('COINCAPPRO_API_URL', 'https://pro-api.coincap.io/v2'),
+                'api_key' => env('COINCAPPRO_API_KEY', ''), // Requires API key
+                'timeout' => env('COINCAPPRO_API_TIMEOUT', 30),
+                'retry_attempts' => env('COINCAPPRO_API_RETRY', 3),
+                'retry_delay' => env('COINCAPPRO_API_RETRY_DELAY', 2000),
+                'rate_limits' => [
+                    'requests_per_minute' => env('COINCAPPRO_RATE_LIMIT', 1000),
+                    'requests_per_second' => env('COINCAPPRO_RATE_LIMIT_SECOND', 5),
+                ],
+            ],
+        ],
+        'coincappro' => [
+            'max_klines_limit' => 5000,
+            'supported_intervals' => ['1m', '5m', '15m', '30m', '1h', '4h', '1d'],
+            'requires_uppercase' => false,
+            'supported_quote_assets' => ['usd'],
+            'coin_id_mapping' => [
+                'BTCUSDT' => 'bitcoin',
+                'ETHUSDT' => 'ethereum',
+                'BNBUSDT' => 'binance-coin',
+                'ADAUSDT' => 'cardano',
+                'XRPUSDT' => 'xrp',
+                'SOLUSDT' => 'solana',
+                'DOTUSDT' => 'polkadot',
+                'DOGEUSDT' => 'dogecoin',
+                'AVAXUSDT' => 'avalanche',
+                'LTCUSDT' => 'litecoin',
+                'LINKUSDT' => 'chainlink',
+                'MATICUSDT' => 'polygon',
+                'ALGOUSDT' => 'algorand',
+                'UNIUSDT' => 'uniswap',
+                'ATOMUSDT' => 'cosmos',
+                'VETUSDT' => 'vechain',
+                'ICPUSDT' => 'internet-computer',
+                'FILUSDT' => 'filecoin',
+                'TRXUSDT' => 'tron',
+                'ETCUSDT' => 'ethereum-classic',
+            ],
         ],
     ],
 
@@ -309,8 +351,8 @@ return [
 
         // Fallback APIs for coins (if primary fails)
         'fallback_apis' => [
-            'BTCUSDT' => ['binance', 'coingecko', 'freecryptoapi'],
-            'ETHUSDT' => ['binance', 'coingecko', 'freecryptoapi'],
+            'BTCUSDT' => ['binance', 'coincappro', 'coingecko', 'freecryptoapi'],
+            'ETHUSDT' => ['binance', 'coincappro', 'coingecko', 'freecryptoapi'],
             'BNBUSDT' => ['binance', 'coingecko', 'freecryptoapi'],
             'ADAUSDT' => ['binance', 'coingecko', 'freecryptoapi'],
             'XRPUSDT' => ['binance', 'coingecko', 'freecryptoapi'],
