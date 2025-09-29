@@ -164,8 +164,13 @@ class CoinController extends Controller
             ]);
 
             $result = (Object)[
-                'title' => 'title',
-                'description' => 'Analysis failed: ' . $e->getMessage(),
+                'title' => 'Analysis Error',
+                'description' => [
+                    'title' => 'Analysis Error',
+                    'error' => 'Analysis failed',
+                    'message' => $e->getMessage(),
+                    'details' => 'Please check your internet connection and API availability'
+                ],
                 'signal' => 'NEUTRAL',
                 'confidence' => 0,
                 'entry' => 0,
@@ -174,7 +179,13 @@ class CoinController extends Controller
                 'take_profit' => 0,
                 'risk_reward' => '1:1',
                 'indicators' => [],
-                'notes' => $e->getMessage(),
+                'notes' => [
+                    'analysis_notes' => 'Analysis failed: ' . $e->getMessage(),
+                    'signal_strength' => 'Unknown - analysis failed',
+                    'market_condition' => 'Error state',
+                    'risk_assessment' => 'Cannot assess - analysis failed',
+                    'execution_tips' => 'Please try again later or check API connectivity'
+                ],
             ];
         }
 

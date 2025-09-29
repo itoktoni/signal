@@ -126,25 +126,49 @@
 
                     <!-- Technical Indicators -->
 
-                    <!-- Analysis Description -->
-                    @if (!empty($result->description))
-                        <div class="crypto-card">
-                            <div class="crypto-card-header">
-                                <h3 class="crypto-card-title">
-                                    <i class="bi bi-card-text"></i> Analysis Description
-                                </h3>
-                            </div>
-                            <div class="crypto-card-body">
-                                <div class="crypto-alert">
-                                    <div class="d-flex align-items-start">
-                                        <p class="mb-0" style="font-size: 1.5rem; line-height: 1.6;">
-                                            {{ $result->description ?? '' }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
+                     @if (!empty($result->description))
+                         <div class="crypto-card">
+                             <div class="crypto-card-header">
+                                 <h3 class="crypto-card-title">
+                                     <i class="bi bi-info-circle"></i> Analysis Description
+                                 </h3>
+                             </div>
+                             <div class="crypto-card-body">
+                                 @if(is_array($result->description))
+                                     <!-- Handle key-value array format -->
+                                     <div class="analysis-description">
+                                         <div class="table-responsive">
+                                             <table class="table table-hover">
+                                                 <thead class="table-light">
+                                                     <tr>
+                                                         <th>Aspect</th>
+                                                         <th>Description</th>
+                                                     </tr>
+                                                 </thead>
+                                                 <tbody>
+                                                     @foreach ($result->description as $key => $value)
+                                                         <tr>
+                                                             <td>
+                                                                 <strong>{{ ucwords(str_replace('_', ' ', $key)) }}</strong>
+                                                             </td>
+                                                             <td>
+                                                                 <span class="crypto-indicator-value">
+                                                                     {{ $value }}
+                                                                 </span>
+                                                             </td>
+                                                         </tr>
+                                                     @endforeach
+                                                 </tbody>
+                                             </table>
+                                         </div>
+                                     </div>
+                                 @else
+                                     <!-- Fallback for string format -->
+                                     <p>{{ $result->description }}</p>
+                                 @endif
+                             </div>
+                         </div>
+                     @endif
 
                     @if (!empty($result->indicators))
                         <div class="crypto-card">
@@ -187,6 +211,52 @@
                         </div>
                     @endif
 
+                    @if (!empty($result->notes))
+                        <div class="crypto-card">
+                            <div class="crypto-card-header">
+                                <h3 class="crypto-card-title">
+                                    <i class="bi bi-sticky"></i> Analysis Notes
+                                </h3>
+                            </div>
+                            <div class="crypto-card-body">
+                                @if(is_array($result->notes))
+                                    <!-- Handle key-value array format -->
+                                    <div class="analysis-notes">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Aspect</th>
+                                                        <th>Details</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($result->notes as $key => $value)
+                                                        <tr>
+                                                            <td>
+                                                                <strong>{{ ucwords(str_replace('_', ' ', $key)) }}</strong>
+                                                            </td>
+                                                            <td>
+                                                                <span class="crypto-indicator-value">
+                                                                    {{ $value }}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                @else
+                                    <!-- Fallback for string format -->
+                                    <div class="alert alert-info">
+                                        <p>{{ $result->notes }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Chart for Analysis -->
                     <div class="crypto-card">
                         <div class="crypto-card-header">
@@ -206,25 +276,7 @@
                         </div>
                     </div>
 
-                    <!-- Analysis Notes -->
-                    @if (!empty($result->notes))
-                        <div class="crypto-card">
-                            <div class="crypto-card-header">
-                                <h3 class="crypto-card-title">
-                                    <i class="bi bi-sticky"></i> Analysis Notes
-                                </h3>
-                            </div>
-                            <div class="crypto-card-body">
-                                <div class="crypto-alert">
-                                    <div class="d-flex align-items-start">
-                                        <div>
-                                            {{ $result->notes }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
+                    <!-- Analysis Notes (Duplicate section removed - already handled above) -->
 
                 </x-card>
             </div>

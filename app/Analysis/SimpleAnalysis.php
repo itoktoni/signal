@@ -16,7 +16,15 @@ class SimpleAnalysis implements AnalysisInterface
     protected ?string $lastAnalyzedSymbol = null;
     protected ?float $lastCurrentPrice = null;
 
-    public function __construct($apiManager)
+    public function __construct($apiManager = null)
+    {
+        $this->apiManager = $apiManager;
+    }
+
+    /**
+     * Set the API manager for this analysis service
+     */
+    public function setApiManager($apiManager): void
     {
         $this->apiManager = $apiManager;
     }
@@ -24,6 +32,11 @@ class SimpleAnalysis implements AnalysisInterface
     public function analyze(string $symbol, float $amount = 100, string $timeframe = '1h', ?string $forcedApi = null): object
     {
         try {
+            // Check if API manager is available
+            if (!$this->apiManager) {
+                throw new \Exception("API Manager not set. Please set an API manager before calling analyze().");
+            }
+
             Log::info("SimpleAnalysis: Starting analysis for {$symbol}", [
                 'amount' => $amount,
                 'timeframe' => $timeframe,
@@ -121,13 +134,17 @@ class SimpleAnalysis implements AnalysisInterface
             // Set analysis notes based on the results
             $this->notes = $this->generateAnalysisNotes($recommendation, $indicators, $currentPrice);
 
+            // Calculate proper entry price based on signal
+            $suggestedEntry = $this->calculateSimpleEntry($recommendation['action'] ?? 'HOLD', $currentPrice, $indicators);
+
             // Convert to object as required by interface
             $result = (object) [
                 'title' => 'Multi-Timeframe Analysis',
                 'description' => $this->getDescription(),
                 'signal' => $recommendation['action'] ?? 'NEUTRAL',
                 'confidence' => $recommendation['confidence'] ?? 50,
-                'entry' => $currentPrice,
+                'entry' => $suggestedEntry,
+                'price' => $currentPrice,
                 'stop_loss' => $recommendation['stop_loss'] ?? $currentPrice,
                 'take_profit' => $recommendation['target_price'] ?? $currentPrice,
                 'risk_reward' => $recommendation['risk_reward_ratio'] ?? '1:1',
@@ -150,12 +167,177 @@ class SimpleAnalysis implements AnalysisInterface
 
     public function getCode(): string { return 'multi_tf_analysis'; }
     public function getName(): string { return 'Multi-Timeframe Advanced Analysis'; }
-    public function getDescription(): string
+    public function getDescription(): array
     {
-        return 'Analisis multi-timeframe (1h,4h,1d) dengan filter EMA200, indikator RSI, MACD, Stochastic RSI, Bollinger Bands, ATR, Volume. Menggunakan risk/reward nyata dan confidence threshold. Includes trend analysis, trendline breaks, support/resistance breaks.';
+        return [
+            'analysis_type' => 'Multi-Timeframe Advanced Analysis',
+            'indicators' => 'RSI, MACD, EMA20/50/200, Bollinger Bands, ATR, Stochastic RSI',
+            'features' => 'Trend analysis, Support/resistance breaks, Risk/reward calculation',
+            'timeframes' => 'Multi-timeframe (1h, 4h, 1d) with confidence scoring',
+            'risk_management' => 'ATR-based position sizing and dynamic stop loss'
+        ];
     }
     public function getIndicators(): array { return $this->indicators; }
-    public function getNotes(): string { return $this->notes; }
+    public function getNotes(): array
+    {
+        return [
+            'main_notes' => $this->notes,
+            'signal_strength' => $this->calculateSimpleSignalStrength(),
+            'market_condition' => $this->analyzeSimpleMarketCondition(),
+            'risk_level' => $this->assessSimpleRiskLevel(),
+            'execution_tips' => $this->getSimpleExecutionTips()
+        ];
+    }
+
+    /**
+     * Calculate signal strength for SimpleAnalysis
+     */
+    private function calculateSimpleSignalStrength(): string
+    {
+        if (empty($this->indicators)) {
+            return 'Insufficient data';
+        }
+
+        $rsi = $this->indicators['rsi'] ?? 50;
+        $macd = $this->indicators['macd'] ?? 0;
+        $ema20 = $this->indicators['ema20'] ?? 0;
+        $ema50 = $this->indicators['ema50'] ?? 0;
+
+        $strength = 'Weak';
+
+        if ($rsi < 30 || $rsi > 70) $strength = 'Strong';
+        if ($macd > 0 && $ema20 > $ema50) $strength = 'Very Strong';
+        if ($macd < 0 && $ema20 < $ema50) $strength = 'Very Strong';
+
+        return $strength . ' signal based on multiple indicators';
+    }
+
+    /**
+     * Analyze market condition for SimpleAnalysis
+     */
+    private function analyzeSimpleMarketCondition(): string
+    {
+        if (empty($this->indicators)) {
+            return 'Unknown';
+        }
+
+        $ema20 = $this->indicators['ema20'] ?? 0;
+        $ema50 = $this->indicators['ema50'] ?? 0;
+        $ema200 = $this->indicators['ema200'] ?? 0;
+        $rsi = $this->indicators['rsi'] ?? 50;
+
+        $condition = 'Neutral';
+
+        if ($ema20 > $ema50 && $ema50 > $ema200) {
+            $condition = 'Strong uptrend';
+        } elseif ($ema20 < $ema50 && $ema50 < $ema200) {
+            $condition = 'Strong downtrend';
+        } elseif ($rsi < 30) {
+            $condition = 'Oversold condition';
+        } elseif ($rsi > 70) {
+            $condition = 'Overbought condition';
+        }
+
+        return $condition;
+    }
+
+    /**
+     * Assess risk level for SimpleAnalysis
+     */
+    private function assessSimpleRiskLevel(): string
+    {
+        if (empty($this->indicators)) {
+            return 'Unknown';
+        }
+
+        $atr = $this->indicators['atr'] ?? 0;
+        $bbands_upper = $this->indicators['bbands_upper'] ?? 0;
+        $bbands_lower = $this->indicators['bbands_lower'] ?? 0;
+        $currentPrice = $this->lastCurrentPrice ?? 0;
+
+        if ($currentPrice == 0) return 'Unknown';
+
+        $atrPercent = ($atr / $currentPrice) * 100;
+        $bandWidth = (($bbands_upper - $bbands_lower) / $currentPrice) * 100;
+
+        if ($bandWidth > 5 || $atrPercent > 3) return 'High risk - volatile market';
+        if ($bandWidth > 3 || $atrPercent > 2) return 'Medium risk - moderate volatility';
+        if ($bandWidth > 1 || $atrPercent > 1) return 'Low risk - stable market';
+        return 'Very low risk - calm market';
+    }
+
+    /**
+     * Get execution tips for SimpleAnalysis
+     */
+    private function getSimpleExecutionTips(): string
+    {
+        if (empty($this->indicators)) {
+            return 'Wait for signal confirmation';
+        }
+
+        $ema20 = $this->indicators['ema20'] ?? 0;
+        $ema50 = $this->indicators['ema50'] ?? 0;
+        $rsi = $this->indicators['rsi'] ?? 50;
+
+        $tips = [];
+
+        if ($ema20 > $ema50) {
+            $tips[] = 'Trend is bullish - favor long positions';
+        } else {
+            $tips[] = 'Trend is bearish - favor short positions';
+        }
+
+        if ($rsi < 30) {
+            $tips[] = 'RSI oversold - look for reversal signals';
+        } elseif ($rsi > 70) {
+            $tips[] = 'RSI overbought - look for reversal signals';
+        }
+
+        return implode('. ', $tips) ?: 'Follow trend direction with proper risk management';
+    }
+
+    /**
+     * Calculate entry price for SimpleAnalysis
+     */
+    private function calculateSimpleEntry(string $signal, float $currentPrice, array $indicators): float
+    {
+        if ($signal === 'BUY') {
+            // For BUY: Use EMA20 as entry level (more realistic than current price)
+            $ema20 = $indicators['ema20'] ?? $currentPrice;
+            $ema50 = $indicators['ema50'] ?? $currentPrice;
+
+            // Use average of EMA20 and EMA50 for entry
+            $entryPrice = ($ema20 + $ema50) / 2;
+
+            // Ensure entry is below current price but not too far
+            $maxDiscount = $currentPrice * 0.03; // Max 3% discount
+            if ($currentPrice - $entryPrice > $maxDiscount) {
+                $entryPrice = $currentPrice * 0.97; // 3% discount fallback
+            }
+
+            return min($entryPrice, $currentPrice * 0.98); // Max 2% discount
+
+        } elseif ($signal === 'SELL') {
+            // For SELL: Use EMA20 as entry level
+            $ema20 = $indicators['ema20'] ?? $currentPrice;
+            $ema50 = $indicators['ema50'] ?? $currentPrice;
+
+            // Use average of EMA20 and EMA50 for entry
+            $entryPrice = ($ema20 + $ema50) / 2;
+
+            // Ensure entry is above current price but not too far
+            $maxPremium = $currentPrice * 0.03; // Max 3% premium
+            if ($entryPrice - $currentPrice > $maxPremium) {
+                $entryPrice = $currentPrice * 1.03; // 3% premium fallback
+            }
+
+            return max($entryPrice, $currentPrice * 1.02); // Max 2% premium
+
+        } else {
+            // For HOLD/NEUTRAL: Use current price
+            return $currentPrice;
+        }
+    }
 
     /**
      * Get the current price of the analyzed symbol
@@ -166,6 +348,12 @@ class SimpleAnalysis implements AnalysisInterface
     public function getCurrentPrice(?string $symbol = null): float
     {
         try {
+            // Check if API manager is available
+            if (!$this->apiManager) {
+                Log::warning("SimpleAnalysis: API Manager not set for getCurrentPrice");
+                return 0.0;
+            }
+
             $symbolToUse = $symbol ?: $this->lastAnalyzedSymbol;
 
             if (!$symbolToUse) {

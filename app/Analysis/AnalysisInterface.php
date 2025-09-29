@@ -42,9 +42,9 @@ interface AnalysisInterface
     /**
      * Get the description of this analysis method
      *
-     * @return string The technology that used in the analysis with flow to reach the conclusion
+     * @return array The technology that used in the analysis with flow to reach the conclusion
      */
-    public function getDescription(): string;
+    public function getDescription(): array;
 
     /**
      * Get the indicators used in the analysis
@@ -56,7 +56,7 @@ interface AnalysisInterface
     /**
      * Get any notes or results or suggestions from any calculation and analysis
      *
-     * @return string Any notes or results or suggestions from any calculation and analysis
+     * @return array Any notes or results or suggestions from any calculation and analysis
      */
-    public function getNotes(): string;
+    public function getNotes(): array;
 }
