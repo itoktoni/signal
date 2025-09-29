@@ -33,7 +33,7 @@ class CoinGeckoApiProvider implements ApiProviderInterface
         }
 
         $this->client = new Client([
-            'base_uri' => $this->config['base_url'] ?? 'https://api.coingecko.com/api/v3',
+            'base_uri' => rtrim($this->config['base_url'] ?? 'https://api.coingecko.com/api/v3', '/') . '/',
             'timeout' => $this->config['timeout'] ?? 30,
             'headers' => $headers,
         ]);
@@ -69,7 +69,7 @@ class CoinGeckoApiProvider implements ApiProviderInterface
             $response = $this->client->get("/coins/{$coinId}/ohlc", [
                 'query' => [
                     'vs_currency' => 'usd',
-                    'days' => $days,
+                    'days' => min($days, 90), // CoinGecko free plan limit
                 ],
             ]);
 

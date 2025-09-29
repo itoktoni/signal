@@ -1,0 +1,13 @@
+{
+    "provider_code": "coingecko",
+    "provider_name": "CoinGecko API",
+    "symbol": "BTC",
+    "mapped_symbol": "bitcoin",
+    "timestamp": "2025-09-28 18:05:46",
+    "price_data": null,
+    "historical_data": null,
+    "errors": [
+        "Error getting current price: CoinGecko API request failed: Client error: `GET https://api.coingecko.com/simple/price?ids=bitcoin&vs_currencies=usd` resulted in a `404 Not Found` response:\n{\"status\":404,\"error\":\"Not Found\"}\n",
+        "Error getting historical data: CoinGecko API request failed: Client error: `GET https://api.coingecko.com/coins/bitcoin/ohlc?vs_currency=usd&days=3` resulted in a `404 Not Found` response:\n{\"status\":404,\"error\":\"Not Found\"}\n"
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "provider_code": "freecryptoapi",
+    "provider_name": "FreeCryptoAPI (...)",
+    "symbol": "BTC",
+    "mapped_symbol": "BTC-USDT",
+    "timestamp": "2025-09-28 18:05:45",
+    "price_data": null,
+    "historical_data": null,
+    "errors": [
+        "Error getting current price: FreeCryptoAPI request failed: Client error: `GET https://freecryptoapi.com/ticker?symbol=BTC-USDT` resulted in a `404 Not Found` response:\n<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>404 Not Found</title>\n</head><body>\n<h1>Not Found (truncated...)\n",
+        "Error getting historical data: FreeCryptoAPI request failed: Client error: `GET https://freecryptoapi.com/candles?symbol=BTC-USDT&interval=1h&limit=2` resulted in a `404 Not Found` response:\n<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>404 Not Found</title>\n</head><body>\n<h1>Not Found (truncated...)\n"
+    ]
+}

@@ -19,7 +19,7 @@ class AnalyzeCoin extends Command
      */
     protected $signature = 'scan:coin
         {symbol : The cryptocurrency symbol to analyze (e.g., BTCUSDT)}
-        {method? : The analysis method to use (default: ma_rsi_volume_atr_macd)}
+        {method? : The analysis method to use (default: multi_tf_analysis)}
         {--amount=100 : The trading amount in USD}
         {--api= : Force specific API provider (binance, coingecko, etc)}
         {--check-providers : Check available coins for all API providers}';
@@ -110,9 +110,12 @@ class AnalyzeCoin extends Command
         $symbolConverter = config('crypto.symbol_converter', []);
         $fullSymbol = $symbolConverter[$symbol] ?? $symbol;
 
+        // Check if the converted symbol exists, if not try the original symbol
+        $symbolToUse = $this->findWorkingSymbol($fullSymbol, $symbol);
+
         $this->info("🔍 Analyzing {$symbol} using {$method} method...");
 
-        $this->showApiProviderInfo($fullSymbol);
+        $this->showApiProviderInfo($symbolToUse);
 
         $telegram = new TelegramService();
 
@@ -123,15 +126,15 @@ class AnalyzeCoin extends Command
             $forcedApi = $this->option('api') ? strtolower($this->option('api')) : null;
 
             // Hasil SimpleAnalysis (object sesuai AnalysisInterface)
-            $result = $analysisService->analyze($fullSymbol, $amount, '1h', $forcedApi);
+            $result = $analysisService->analyze($symbolToUse, $amount, '1h', $forcedApi);
 
-            $currentPrice = $this->getCurrentPrice($fullSymbol);
+            $currentPrice = $this->getCurrentPrice($symbolToUse);
 
             $this->displayResults($symbol, $result, $currentPrice);
 
             if ($telegram->isConfigured()) {
                 $this->info('📤 Sending results to Telegram...');
-                $telegram->sendAnalysisResult($fullSymbol, $result, $currentPrice, $forcedApi ?? 'Auto');
+                $telegram->sendAnalysisResult($symbolToUse, $result, $currentPrice, $forcedApi ?? 'Auto');
             }
 
             return 0;
@@ -141,7 +144,7 @@ class AnalyzeCoin extends Command
 
             if ($telegram->isConfigured()) {
                 $errorMessage = "❌ <b>Analysis Error</b>\n\n";
-                $errorMessage .= "Symbol: {$fullSymbol}\n";
+                $errorMessage .= "Symbol: {$symbolToUse}\n";
                 $errorMessage .= "Method: {$method}\n";
                 $errorMessage .= "Error: " . $e->getMessage();
 
@@ -149,6 +152,60 @@ class AnalyzeCoin extends Command
             }
 
             return 1;
+        }
+    }
+
+    /**
+     * Find a working symbol by trying different variations
+     */
+    private function findWorkingSymbol(string $convertedSymbol, string $originalSymbol): string
+    {
+        // First try the converted symbol
+        if ($this->symbolExists($convertedSymbol)) {
+            $this->info("✅ Using symbol: {$convertedSymbol}");
+            return $convertedSymbol;
+        }
+
+        // If that doesn't work, try the original symbol
+        if ($this->symbolExists($originalSymbol)) {
+            $this->info("✅ Using symbol: {$originalSymbol} (fallback from {$convertedSymbol})");
+            return $originalSymbol;
+        }
+
+        // If neither works, log a warning and return the converted symbol
+        $this->warn("⚠️  Neither {$convertedSymbol} nor {$originalSymbol} found in data source");
+        $this->warn("⚠️  Proceeding with {$convertedSymbol} but analysis may fail");
+        return $convertedSymbol;
+    }
+
+    /**
+     * Check if a symbol exists in any of the available API providers
+     */
+    private function symbolExists(string $symbol): bool
+    {
+        try {
+            // Try to get data for this symbol from any provider
+            $this->apiManager->getHistoricalData($symbol, '1h', 10); // Reduced from 14 to 10 to work with CoinPaprika
+            return true;
+        } catch (\Exception $e) {
+            // If we get an exception about insufficient data, that's actually good - it means the symbol exists
+            if (strpos($e->getMessage(), 'Insufficient historical data') !== false) {
+                // Even if there's insufficient data, the symbol exists
+                $this->info("ℹ️  Symbol {$symbol} exists but has insufficient data");
+                return true;
+            }
+
+            // If we get an exception about the symbol not being found, it doesn't exist
+            if (strpos($e->getMessage(), 'not found') !== false ||
+                strpos($e->getMessage(), 'Invalid symbol') !== false ||
+                strpos($e->getMessage(), '404') !== false) {
+                $this->info("ℹ️  Symbol {$symbol} not found in data source");
+                return false;
+            }
+
+            // Any other exception means there might be a connectivity issue, but we can't determine if the symbol exists
+            $this->info("ℹ️  Unable to determine if symbol {$symbol} exists due to: " . $e->getMessage());
+            return false;
         }
     }
 

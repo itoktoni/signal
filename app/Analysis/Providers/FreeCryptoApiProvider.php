@@ -16,27 +16,22 @@ class FreeCryptoApiProvider implements ApiProviderInterface
 
     public function __construct()
     {
-        $this->config = config('crypto.api_providers.providers.freecryptoapi', []);
-        $this->rateLimitInfo = [
-            'requests_remaining' => $this->config['rate_limits']['requests_per_minute'] ?? 100,
-            'requests_per_minute' => $this->config['rate_limits']['requests_per_minute'] ?? 100,
-        ];
-
-        $headers = [
-            'User-Agent' => 'Laravel-Crypto-Analysis/1.0',
-            'Accept' => 'application/json',
-        ];
-
-        // Add API key if provided
-        if (!empty($this->config['api_key'])) {
-            $headers['X-API-Key'] = $this->config['api_key'];
-        }
+        $this->config = config('crypto.api_providers.freecryptoapi', []);
 
         $this->client = new Client([
-            'base_uri' => $this->config['base_url'] ?? 'https://freecryptoapi.com/api/v1',
+            'base_uri' => rtrim($this->config['base_url'] ?? 'https://freecryptoapi.com', '/') . '/',
             'timeout' => $this->config['timeout'] ?? 30,
-            'headers' => $headers,
+            'headers' => [
+                'Accept' => 'application/json',
+                'User-Agent' => 'CryptoSignalBot/1.0',
+            ],
         ]);
+
+        // Initialize rate limit info
+        $this->rateLimitInfo = [
+            'requests_remaining' => 1000, // Default high value
+            'reset_time' => null,
+        ];
     }
 
     public function getCode(): string
@@ -47,7 +42,7 @@ class FreeCryptoApiProvider implements ApiProviderInterface
     public function getName(): string
     {
         $apiKey = $this->config['api_key'] ?? '';
-        $keyPreview = !empty($apiKey) ? substr($apiKey, 0, 8) . '...' : 'No Key';
+        $keyPreview = substr($apiKey, 0, 8) . '...' . substr($apiKey, -4);
         return "FreeCryptoAPI ({$keyPreview})";
     }
 
@@ -68,7 +63,7 @@ class FreeCryptoApiProvider implements ApiProviderInterface
             // Convert interval to FreeCryptoAPI format
             $intervalParam = $this->convertIntervalForFreeCryptoAPI($interval);
 
-            $response = $this->client->get('/candles', [
+            $response = $this->client->get('api/v1/candles', [
                 'query' => [
                     'symbol' => $formattedSymbol,
                     'interval' => $intervalParam,
@@ -112,7 +107,7 @@ class FreeCryptoApiProvider implements ApiProviderInterface
         try {
             $formattedSymbol = $this->formatSymbolForFreeCryptoAPI($symbol);
 
-            $response = $this->client->get('/ticker', [
+            $response = $this->client->get('api/v1/ticker', [
                 'query' => [
                     'symbol' => $formattedSymbol,
                 ],
@@ -156,7 +151,7 @@ class FreeCryptoApiProvider implements ApiProviderInterface
         try {
             $formattedSymbols = array_map([$this, 'formatSymbolForFreeCryptoAPI'], $symbols);
 
-            $response = $this->client->get('/tickers', [
+            $response = $this->client->get('api/v1/tickers', [
                 'query' => [
                     'symbols' => implode(',', $formattedSymbols),
                 ],
@@ -208,7 +203,7 @@ class FreeCryptoApiProvider implements ApiProviderInterface
                 $params['symbol'] = $formattedSymbol;
             }
 
-            $response = $this->client->get('/symbols', [
+            $response = $this->client->get('api/v1/symbols', [
                 'query' => $params,
             ]);
 
@@ -251,7 +246,7 @@ class FreeCryptoApiProvider implements ApiProviderInterface
 
     public function getPriority(): int
     {
-        return $this->config['priority'] ?? 2; // Lower priority than Binance and CoinGecko
+        return $this->config['priority'] ?? 0; // Highest priority
     }
 
     public function getRateLimitInfo(): array
@@ -352,8 +347,18 @@ class FreeCryptoApiProvider implements ApiProviderInterface
 
     private function formatSymbolForFreeCryptoAPI(string $symbol): string
     {
-        // Convert BTCUSDT to BTC-USDT format
-        return preg_replace('/(BTC|ETH|BNB|ADA|XRP|SOL|DOT|DOGE|AVAX|LTC|LINK|MATIC|ALGO|UNI|ATOM|VET|ICP|FIL|TRX|ETC)(USDT)$/i', '$1-$2', $symbol);
+        // If symbol is already in the correct format (e.g., BTC-USDT), return as is
+        if (strpos($symbol, '-') !== false && substr($symbol, -5) === '-USDT') {
+            return $symbol;
+        }
+
+        // Convert any symbol ending with USDT to SYMBOL-USDT format
+        if (substr($symbol, -4) === 'USDT') {
+            return substr($symbol, 0, -4) . '-USDT';
+        }
+
+        // For symbols without USDT suffix, just return as is
+        return $symbol;
     }
 
     private function convertIntervalForCoinCap(string $interval): string

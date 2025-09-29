@@ -33,7 +33,7 @@ class CoinCapProProvider implements ApiProviderInterface
         }
 
         $this->client = new Client([
-            'base_uri' => $this->config['base_url'] ?? 'https://pro-api.coincap.io/v2',
+            'base_uri' => rtrim($this->config['base_url'] ?? 'https://pro-api.coincap.io/v2', '/') . '/',
             'timeout' => $this->config['timeout'] ?? 30,
             'headers' => $headers,
         ]);
@@ -337,6 +337,26 @@ class CoinCapProProvider implements ApiProviderInterface
             'FILUSDT' => 'filecoin',
             'TRXUSDT' => 'tron',
             'ETCUSDT' => 'ethereum-classic',
+            'BTC' => 'bitcoin',  // Add base symbol mapping
+            'ETH' => 'ethereum',
+            'BNB' => 'binance-coin',
+            'ADA' => 'cardano',
+            'XRP' => 'xrp',
+            'SOL' => 'solana',
+            'DOT' => 'polkadot',
+            'DOGE' => 'dogecoin',
+            'AVAX' => 'avalanche',
+            'LTC' => 'litecoin',
+            'LINK' => 'chainlink',
+            'MATIC' => 'polygon',
+            'ALGO' => 'algorand',
+            'UNI' => 'uniswap',
+            'ATOM' => 'cosmos',
+            'VET' => 'vechain',
+            'ICP' => 'internet-computer',
+            'FIL' => 'filecoin',
+            'TRX' => 'tron',
+            'ETC' => 'ethereum-classic',
         ];
 
         return $mapping[$symbol] ?? 'bitcoin';

@@ -16,7 +16,7 @@ class CoinLoreApiProvider implements ApiProviderInterface
 
     public function __construct()
     {
-        $this->config = config('crypto.api_providers.providers.coinlore', []);
+        $this->config = config('crypto.api_providers.coinlore', []);
         $this->rateLimitInfo = [
             'requests_remaining' => $this->config['rate_limits']['requests_per_minute'] ?? 100,
             'requests_per_minute' => $this->config['rate_limits']['requests_per_minute'] ?? 100,
@@ -53,25 +53,42 @@ class CoinLoreApiProvider implements ApiProviderInterface
         }
 
         try {
-            // For demonstration purposes, create synthetic data
-            // In a real implementation, this would call the actual CoinLore API
-            $data = $this->createSyntheticHistoricalData($symbol, $interval, $limit);
+            // Check if symbol is already a numeric ID
+            $coinSymbol = is_numeric($symbol) ? $symbol : $this->convertSymbolToCoinLore($symbol);
 
-            // Debug: Log the data structure
-            Log::info('CoinLore synthetic data generated', [
-                'symbol' => $symbol,
-                'count' => count($data),
-                'sample' => !empty($data) ? json_encode($data[0]) : 'empty'
+            // Convert interval to CoinLore format
+            $intervalParam = $this->convertIntervalForCoinLore($interval);
+
+            $response = $this->client->get("coin/{$coinSymbol}/", [
+                'query' => [
+                    'period' => $intervalParam,
+                    'limit' => min($limit, 1000), // CoinLore limit
+                ],
             ]);
 
+            $data = json_decode($response->getBody()->getContents(), true);
+
+            if (empty($data) || !is_array($data)) {
+                throw new \Exception('Invalid response from CoinLore API');
+            }
+
+            // Convert to Binance format for compatibility
+            $convertedData = $this->convertCoinLoreToBinanceFormat($data);
+
+            // Update rate limit info
+            $this->updateRateLimitInfo($response);
+
             // Cache the result
-            Cache::put($cacheKey, $data, now()->addMinutes(10));
+            Cache::put($cacheKey, $convertedData, now()->addMinutes(10));
 
-            return $data;
+            return $convertedData;
 
+        } catch (RequestException $e) {
+            $this->handleRateLimit($e);
+            throw new \Exception('CoinLore API request failed: ' . $e->getMessage());
         } catch (\Exception $e) {
-            Log::error('CoinLore synthetic data generation failed', ['error' => $e->getMessage()]);
-            throw new \Exception('CoinLore API synthetic data generation failed: ' . $e->getMessage());
+            Log::error('CoinLore data processing failed', ['error' => $e->getMessage()]);
+            throw new \Exception('CoinLore API data processing failed: ' . $e->getMessage());
         }
     }
 
@@ -86,13 +103,10 @@ class CoinLoreApiProvider implements ApiProviderInterface
         }
 
         try {
-            $coinSymbol = $this->convertSymbolToCoinLore($symbol);
+            // Check if symbol is already a numeric ID
+            $coinSymbol = is_numeric($symbol) ? $symbol : $this->convertSymbolToCoinLore($symbol);
 
-            $response = $this->client->get('/ticker/', [
-                'query' => [
-                    'symbol' => $coinSymbol,
-                ],
-            ]);
+            $response = $this->client->get("ticker/?id={$coinSymbol}");
 
             $data = json_decode($response->getBody()->getContents(), true);
 
@@ -131,7 +145,11 @@ class CoinLoreApiProvider implements ApiProviderInterface
         }
 
         try {
-            $coinSymbols = array_map([$this, 'convertSymbolToCoinLore'], $symbols);
+            $coinSymbols = [];
+            foreach ($symbols as $symbol) {
+                // Check if symbol is already a numeric ID
+                $coinSymbols[] = is_numeric($symbol) ? $symbol : $this->convertSymbolToCoinLore($symbol);
+            }
             $symbolsStr = implode(',', $coinSymbols);
 
             $response = $this->client->get('/tickers/', [
@@ -182,7 +200,8 @@ class CoinLoreApiProvider implements ApiProviderInterface
             $params = [];
 
             if ($symbol) {
-                $coinSymbol = $this->convertSymbolToCoinLore($symbol);
+                // Check if symbol is already a numeric ID
+                $coinSymbol = is_numeric($symbol) ? $symbol : $this->convertSymbolToCoinLore($symbol);
                 $params['symbol'] = $coinSymbol;
             }
 
@@ -301,31 +320,72 @@ class CoinLoreApiProvider implements ApiProviderInterface
 
     private function convertSymbolToCoinLore(string $symbol): string
     {
+        // If symbol is already numeric, return as is
+        if (is_numeric($symbol)) {
+            return $symbol;
+        }
+
         // Convert trading pair symbols to CoinLore format
         $mapping = [
-            'BTCUSDT' => 'BTC',
-            'ETHUSDT' => 'ETH',
-            'BNBUSDT' => 'BNB',
-            'ADAUSDT' => 'ADA',
-            'XRPUSDT' => 'XRP',
-            'SOLUSDT' => 'SOL',
-            'DOTUSDT' => 'DOT',
-            'DOGEUSDT' => 'DOGE',
-            'AVAXUSDT' => 'AVAX',
-            'LTCUSDT' => 'LTC',
-            'LINKUSDT' => 'LINK',
-            'MATICUSDT' => 'MATIC',
-            'ALGOUSDT' => 'ALGO',
-            'UNIUSDT' => 'UNI',
-            'ATOMUSDT' => 'ATOM',
-            'VETUSDT' => 'VET',
-            'ICPUSDT' => 'ICP',
-            'FILUSDT' => 'FIL',
-            'TRXUSDT' => 'TRX',
-            'ETCUSDT' => 'ETC',
+            'BTCUSDT' => '90',
+            'ETHUSDT' => '80',
+            'BNBUSDT' => '2710',
+            'ADAUSDT' => '257',
+            'XRPUSDT' => '58',
+            'SOLUSDT' => '48543',
+            'DOTUSDT' => '11815',
+            'DOGEUSDT' => '2',
+            'AVAXUSDT' => '23210',
+            'LTCUSDT' => '1',
+            'LINKUSDT' => '1975',
+            'MATICUSDT' => '3890',
+            'ALGOUSDT' => '4030',
+            'UNIUSDT' => '7083',
+            'ATOMUSDT' => '3794',
+            'VETUSDT' => '3077',
+            'ICPUSDT' => '8916',
+            'FILUSDT' => '10804',
+            'TRXUSDT' => '1958',
+            'ETCUSDT' => '532',
+            'BTC' => '90',  // Add base symbol mapping
+            'ETH' => '80',
+            'BNB' => '2710',
+            'ADA' => '257',
+            'XRP' => '58',
+            'SOL' => '48543',
+            'DOT' => '11815',
+            'DOGE' => '2',
+            'AVAX' => '23210',
+            'LTC' => '1',
+            'LINK' => '1975',
+            'MATIC' => '3890',
+            'ALGO' => '4030',
+            'UNI' => '7083',
+            'ATOM' => '3794',
+            'VET' => '3077',
+            'ICP' => '8916',
+            'FIL' => '10804',
+            'TRX' => '1958',
+            'ETC' => '532',
         ];
 
-        return $mapping[$symbol] ?? 'BTC';
+        return $mapping[$symbol] ?? '90'; // Default to BTC
+    }
+
+    private function convertIntervalForCoinLore(string $interval): string
+    {
+        // Convert interval to CoinLore format
+        $intervalMapping = [
+            '1m' => '1MIN',
+            '5m' => '5MIN',
+            '15m' => '15MIN',
+            '30m' => '30MIN',
+            '1h' => '1H',
+            '4h' => '4H',
+            '1d' => '1D',
+        ];
+
+        return $intervalMapping[$interval] ?? '1H';
     }
 
     private function createSyntheticHistoricalData(string $symbol, string $interval, int $limit): array
@@ -425,12 +485,12 @@ class CoinLoreApiProvider implements ApiProviderInterface
         $binanceFormat = [];
 
         foreach ($coinloreData as $item) {
-            if (!isset($item['timestamp'], $item['open'], $item['high'], $item['low'], $item['close'])) {
+            if (!isset($item['time'], $item['open'], $item['high'], $item['low'], $item['close'])) {
                 continue;
             }
 
-            // CoinLore format: [timestamp, open, high, low, close, volume]
-            $timestamp = $item['timestamp'];
+            // CoinLore format: {"time": timestamp, "open": "price", "high": "price", "low": "price", "close": "price", "volume": "volume"}
+            $timestamp = $item['time'] * 1000; // Convert to milliseconds
             $open = $item['open'];
             $high = $item['high'];
             $low = $item['low'];

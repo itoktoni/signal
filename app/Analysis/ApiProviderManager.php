@@ -28,7 +28,8 @@ class ApiProviderManager
             \App\Analysis\Providers\CoinGeckoApiProvider::class,
             \App\Analysis\Providers\FreeCryptoApiProvider::class,
             \App\Analysis\Providers\CoinLoreApiProvider::class,
-            // Add more providers here as they are implemented
+            \App\Analysis\Providers\CoinpaprikaApiProvider::class,
+            \App\Analysis\Providers\CoinDeskApiProvider::class,
         ];
 
         foreach ($providerClasses as $providerClass) {
@@ -69,6 +70,10 @@ class ApiProviderManager
             try {
                 Log::info("Attempting to get historical data from {$providerCode} for {$symbol}");
 
+                // Map symbol to provider-specific format
+                $mappedSymbol = $this->getMappedSymbol($symbol, $providerCode);
+                Log::info("Mapped symbol {$symbol} to {$mappedSymbol} for provider {$providerCode}");
+
                 // Check if interval is supported by this provider
                 if (!$this->isIntervalSupported($providerCode, $interval)) {
                     Log::info("Interval {$interval} not supported by {$providerCode}, skipping");
@@ -78,7 +83,7 @@ class ApiProviderManager
                 // Adjust limit based on provider limitations
                 $adjustedLimit = $this->adjustLimitForProvider($providerCode, $limit);
 
-                $rawData = $provider->getHistoricalData($symbol, $interval, $adjustedLimit);
+                $rawData = $provider->getHistoricalData($mappedSymbol, $interval, $adjustedLimit);
 
                 if (!empty($rawData)) {
                     $normalizedData = $provider->normalizeHistoricalData($rawData, $interval);
@@ -108,17 +113,16 @@ class ApiProviderManager
      {
          $coinMapping = config('crypto.coin_api_mapping', []);
          $symbolConverter = config('crypto.symbol_converter', []);
+         $symbolMappings = $coinMapping['symbol_mappings'] ?? [];
 
-         // Convert symbol if needed (BTC -> BTCUSDT)
-         $fullSymbol = $symbolConverter[$symbol] ?? $symbol;
-
+         // Use the base symbol for primary API mapping (BTC instead of BTCUSDT)
          // Check if coin has specific API mapping
-         if (isset($coinMapping['primary_api'][$fullSymbol])) {
-             $primaryApi = $coinMapping['primary_api'][$fullSymbol];
+         if (isset($coinMapping['primary_api'][$symbol])) {
+             $primaryApi = $coinMapping['primary_api'][$symbol];
 
              // If coin has fallback APIs configured
-             if (isset($coinMapping['fallback_apis'][$fullSymbol])) {
-                 return $coinMapping['fallback_apis'][$fullSymbol];
+             if (isset($coinMapping['fallback_apis'][$symbol])) {
+                 return $coinMapping['fallback_apis'][$symbol];
              }
 
              // Otherwise, try primary API first, then fall back to all providers sorted by priority
@@ -173,7 +177,12 @@ class ApiProviderManager
 
             try {
                 Log::info("Attempting to get current price from {$providerCode}");
-                $tickerData = $provider->getTickerData($symbol);
+
+                // Map symbol to provider-specific format
+                $mappedSymbol = $this->getMappedSymbol($symbol, $providerCode);
+                Log::info("Mapped symbol {$symbol} to {$mappedSymbol} for provider {$providerCode}");
+
+                $tickerData = $provider->getTickerData($mappedSymbol);
 
                 if (!empty($tickerData) && isset($tickerData['price'])) {
                     $price = (float) $tickerData['price'];
@@ -210,7 +219,12 @@ class ApiProviderManager
 
             try {
                 Log::info("Attempting to get ticker data from {$providerCode}");
-                $tickerData = $provider->getTickerData($symbol);
+
+                // Map symbol to provider-specific format
+                $mappedSymbol = $this->getMappedSymbol($symbol, $providerCode);
+                Log::info("Mapped symbol {$symbol} to {$mappedSymbol} for provider {$providerCode}");
+
+                $tickerData = $provider->getTickerData($mappedSymbol);
 
                 if (!empty($tickerData)) {
                     $normalizedData = $provider->normalizeTickerData([$tickerData]);
@@ -245,7 +259,14 @@ class ApiProviderManager
 
             try {
                 Log::info("Attempting to get multiple ticker data from {$providerCode}");
-                $tickerData = $provider->getMultipleTickers($symbols);
+
+                // Map symbols to provider-specific format
+                $mappedSymbols = array_map(function($symbol) use ($providerCode) {
+                    return $this->getMappedSymbol($symbol, $providerCode);
+                }, $symbols);
+                Log::info("Mapped symbols for provider {$providerCode}");
+
+                $tickerData = $provider->getMultipleTickers($mappedSymbols);
 
                 if (!empty($tickerData)) {
                     $normalizedData = $provider->normalizeTickerData($tickerData);
@@ -280,7 +301,14 @@ class ApiProviderManager
 
             try {
                 Log::info("Attempting to get symbol info from {$providerCode}");
-                $symbolInfo = $provider->getSymbolInfo($symbol);
+
+                // Map symbol to provider-specific format if provided
+                $mappedSymbol = $symbol ? $this->getMappedSymbol($symbol, $providerCode) : null;
+                if ($symbol) {
+                    Log::info("Mapped symbol {$symbol} to {$mappedSymbol} for provider {$providerCode}");
+                }
+
+                $symbolInfo = $provider->getSymbolInfo($mappedSymbol);
 
                 if (!empty($symbolInfo)) {
                     Log::info("Successfully retrieved symbol info from {$providerCode}");
@@ -371,6 +399,89 @@ class ApiProviderManager
         }
 
         return $provider->isAvailable();
+    }
+
+    /**
+     * Map a symbol from one provider to another
+     */
+    public function mapSymbol(string $symbol, string $fromProvider, string $toProvider): string
+    {
+        $coinMapping = config('crypto.coin_api_mapping', []);
+        $symbolMappings = $coinMapping['symbol_mappings'] ?? [];
+
+        // If no mappings exist, return the symbol as is
+        if (empty($symbolMappings)) {
+            return $symbol;
+        }
+
+        // Get the base symbol from the source provider
+        $baseSymbol = $symbol;
+        if (isset($symbolMappings[$fromProvider][$symbol])) {
+            // Find the key that maps to this value
+            $baseSymbol = array_search($symbolMappings[$fromProvider][$symbol], $symbolMappings[$fromProvider]);
+            if ($baseSymbol === false) {
+                $baseSymbol = $symbol;
+            }
+        }
+
+        // Map to the target provider
+        if (isset($symbolMappings[$toProvider][$baseSymbol])) {
+            return $symbolMappings[$toProvider][$baseSymbol];
+        }
+
+        // If no mapping found, return the original symbol
+        return $symbol;
+    }
+
+    /**
+     * Get the mapped symbol for a specific provider
+     * This method handles the two-step mapping process:
+     * 1. Convert base symbol to standard format using symbol_converter
+     * 2. Map standard format to provider-specific format using symbol_mappings
+     */
+    public function getMappedSymbol(string $symbol, string $provider): string
+    {
+        // Step 1: Convert base symbol to standard format using symbol_converter
+        $symbolConverter = config('crypto.symbol_converter', []);
+        $standardSymbol = $symbolConverter[$symbol] ?? $symbol;
+
+        // If the symbol is already in standard format, use it as is
+        if ($standardSymbol === $symbol) {
+            // Check if this is already a standard format symbol
+            $isStandardFormat = false;
+            foreach ($symbolConverter as $base => $standard) {
+                if ($standard === $symbol) {
+                    $isStandardFormat = true;
+                    break;
+                }
+            }
+
+            if (!$isStandardFormat) {
+                // Try to find if this symbol exists in any provider mapping
+                $coinMapping = config('crypto.coin_api_mapping', []);
+                $symbolMappings = $coinMapping['symbol_mappings'] ?? [];
+
+                // Check if this symbol exists in any provider's mapping
+                foreach ($symbolMappings as $providerCode => $mappings) {
+                    if (isset($mappings[$symbol])) {
+                        $standardSymbol = $symbol;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Step 2: Map standard format to provider-specific format using symbol_mappings
+        $coinMapping = config('crypto.coin_api_mapping', []);
+        $symbolMappings = $coinMapping['symbol_mappings'] ?? [];
+
+        // If no mappings exist or provider doesn't have mappings, return the standard symbol
+        if (empty($symbolMappings) || !isset($symbolMappings[$provider])) {
+            return $standardSymbol;
+        }
+
+        // Return the mapped symbol if it exists
+        return $symbolMappings[$provider][$standardSymbol] ?? $standardSymbol;
     }
 
     /**

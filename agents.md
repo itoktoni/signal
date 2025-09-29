@@ -34,7 +34,7 @@
 
 ## Feature Analysis
 ### Form Fields
-- **Crypto Symbol:** (dropdown) Static array of options for the dropdown e.g. BTCUSDT, ETHUSDT, etc.
+- **Crypto Symbol:** (dropdown) Static array of options for the dropdown e.g. BTC, ETH, etc.
 - **Metode Analisis:** (dropdown) Static array of options for the dropdown e.g. Sniper, Support Resistant, etc.
 
 ### Code Structure

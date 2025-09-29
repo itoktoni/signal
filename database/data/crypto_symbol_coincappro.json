@@ -1,0 +1,13 @@
+{
+    "provider_code": "coincappro",
+    "provider_name": "CoinCap Pro (No Key)",
+    "symbol": "BTC",
+    "mapped_symbol": "bitcoin",
+    "timestamp": "2025-09-28 18:05:44",
+    "price_data": null,
+    "historical_data": null,
+    "errors": [
+        "Error getting current price: Invalid ticker response from CoinCap Pro API",
+        "Error getting historical data: Invalid response from CoinCap Pro API"
+    ]
+}

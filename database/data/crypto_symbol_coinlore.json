@@ -1,0 +1,41 @@
+{
+    "provider_code": "coinlore",
+    "provider_name": "CoinLore API",
+    "symbol": "BTC",
+    "mapped_symbol": "90",
+    "timestamp": "2025-09-28 18:05:47",
+    "price_data": null,
+    "historical_data": [
+        [
+            1759078855000,
+            "100199.66683329",
+            "100199.66683329",
+            "100199.66683329",
+            "100199.66683329",
+            "1000000",
+            1759078915000,
+            "0",
+            10,
+            "0",
+            "0",
+            "0"
+        ],
+        [
+            1759082455000,
+            "100000",
+            "100000",
+            "100000",
+            "100000",
+            "1000000",
+            1759082515000,
+            "0",
+            10,
+            "0",
+            "0",
+            "0"
+        ]
+    ],
+    "errors": [
+        "Error getting current price: CoinLore API request failed: Client error: `GET https://api.coinlore.net/ticker/?symbol=BTC` resulted in a `404 Not Found` response:\n<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx</c (truncated...)\n"
+    ]
+}
