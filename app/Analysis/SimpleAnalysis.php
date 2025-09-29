@@ -112,6 +112,9 @@ class SimpleAnalysis implements AnalysisInterface
                 'recommendation' => $recommendation
             ]);
 
+            // Set analysis notes based on the results
+            $this->notes = $this->generateAnalysisNotes($recommendation, $indicators, $currentPrice);
+
             // Convert to object as required by interface
             $result = (object) [
                 'title' => 'Multi-Timeframe Analysis',
@@ -147,6 +150,56 @@ class SimpleAnalysis implements AnalysisInterface
     }
     public function getIndicators(): array { return $this->indicators; }
     public function getNotes(): string { return $this->notes; }
+
+    /**
+     * Generate analysis notes based on the recommendation and indicators
+     */
+    private function generateAnalysisNotes(array $recommendation, array $indicators, float $currentPrice): string
+    {
+        $notes = [];
+
+        // Signal-based notes
+        switch ($recommendation['action'] ?? 'HOLD') {
+            case 'BUY':
+                $notes[] = "Strong buy signal detected with {$recommendation['confidence']}% confidence.";
+                $notes[] = "Entry point at $" . number_format($currentPrice, 2) . " with target at $" . number_format($recommendation['target_price'] ?? $currentPrice, 2) . ".";
+                break;
+            case 'SELL':
+                $notes[] = "Strong sell signal detected with {$recommendation['confidence']}% confidence.";
+                $notes[] = "Entry point at $" . number_format($currentPrice, 2) . " with target at $" . number_format($recommendation['target_price'] ?? $currentPrice, 2) . ".";
+                break;
+            default:
+                $notes[] = "No strong trading signals detected. Market may be ranging or uncertain.";
+                break;
+        }
+
+        // Indicator-based notes
+        if (isset($indicators['rsi'])) {
+            $rsi = $indicators['rsi'];
+            if ($rsi < 30) {
+                $notes[] = "RSI indicates oversold conditions ({$rsi}).";
+            } elseif ($rsi > 70) {
+                $notes[] = "RSI indicates overbought conditions ({$rsi}).";
+            }
+        }
+
+        if (isset($indicators['macd']) && isset($indicators['macd_signal'])) {
+            $macd = $indicators['macd'];
+            $signal = $indicators['macd_signal'];
+            if ($macd > $signal) {
+                $notes[] = "MACD shows bullish momentum.";
+            } elseif ($macd < $signal) {
+                $notes[] = "MACD shows bearish momentum.";
+            }
+        }
+
+        // Risk/Reward note
+        if (isset($recommendation['risk_reward_ratio'])) {
+            $notes[] = "Risk-reward ratio: {$recommendation['risk_reward_ratio']}.";
+        }
+
+        return implode(" ", $notes);
+    }
 
     // ===== Helper indikator =====
     private function sma(array $values, int $period): float {
