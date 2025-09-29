@@ -146,6 +146,8 @@ class CoinController extends Controller
         $cryptoAnalysis = [];
         $historicalData = [];
 
+        $result = false;
+
         try {
             // Create API manager and analysis service
             $apiManager = new ApiProviderManager(app(Settings::class));
@@ -153,14 +155,7 @@ class CoinController extends Controller
 
             // Perform analysis with selected timeframe
             $result = $analysisService->analyze($model->coin_code, $amount, $timeframe);
-            $cryptoAnalysis = $this->convertAnalysisResult($result, $model->coin_code);
-
-            // Get historical data for chart with selected timeframe
-            if ($analystMethod === 'support_resistance' || $analystMethod === 'simple_ma') {
-                $historicalData = $apiManager->getHistoricalData($model->coin_code, $timeframe, 100);
-            }
-
-            // Current price is already included in the analysis result
+            $historicalData = $apiManager->getHistoricalData($model->coin_code, $timeframe, 100);
 
         } catch (\Exception $e) {
             Log::error('Analysis failed', [
@@ -169,9 +164,9 @@ class CoinController extends Controller
                 'error' => $e->getMessage()
             ]);
 
-            $cryptoAnalysis = [
-                'error' => 'Analysis failed: ' . $e->getMessage(),
-                'symbol' => $model->coin_code,
+            $cryptoAnalysis = (Object)[
+                'title' => 'title',
+                'description' => 'Analysis failed: ' . $e->getMessage(),
                 'signal' => 'NEUTRAL',
                 'confidence' => 0,
                 'entry' => 0,
@@ -200,43 +195,7 @@ class CoinController extends Controller
             $currentProvider = null;
         }
 
-        // Process analysis data for display
-        $signal = $cryptoAnalysis['signal'] ?? 'NEUTRAL';
-        $confidence = $cryptoAnalysis['confidence'] ?? 0;
-        $rrRatio = $cryptoAnalysis['risk_reward'] ?? 0;
-        $entry = $cryptoAnalysis['entry'] ?? 0;
-        $stopLoss = $cryptoAnalysis['stop_loss'] ?? 0;
-        $takeProfit = $cryptoAnalysis['take_profit'] ?? 0;
-        $fee = $cryptoAnalysis['fee'] ?? 0;
-        $potentialProfit = $cryptoAnalysis['potential_profit'] ?? 0;
-        $potentialLoss = $cryptoAnalysis['potential_loss'] ?? 0;
-        $title = $cryptoAnalysis['title'] ?? 'Analysis';
-
-        // Calculate IDR values
-        $exchangeRate = 16000; // Default exchange rate
-        $entryUsd = $entry;
-        $entryIdr = $entry * $exchangeRate;
-        $stopLossUsd = $stopLoss;
-        $stopLossIdr = $stopLoss * $exchangeRate;
-        $takeProfitUsd = $takeProfit;
-        $takeProfitIdr = $takeProfit * $exchangeRate;
-        $feeUsd = $fee;
-        $feeIdr = $fee * $exchangeRate;
-        $potentialProfitUsd = $potentialProfit;
-        $potentialProfitIdr = $potentialProfit * $exchangeRate;
-        $potentialLossUsd = abs($potentialLoss);
-        $potentialLossIdr = abs($potentialLoss) * $exchangeRate;
-
-        $signalClass = $signal === 'BUY' ? 'buy' : ($signal === 'SELL' ? 'sell' : 'neutral');
-        $signalText = $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
-
-        // Process indicators for display
-        $hasIndicators = false;
-        $indicators = [];
-        if (isset($cryptoAnalysis['indicators']) && is_array($cryptoAnalysis['indicators'])) {
-            $indicators = $cryptoAnalysis['indicators'];
-            $hasIndicators = !empty($indicators);
-        }
+        dd($result);
 
         return $this->views($this->module(), $this->share([
             'model' => $model,
@@ -249,66 +208,8 @@ class CoinController extends Controller
             'historical_data' => $historicalData,
             'analysis_methods' => $analysisMethods,
             'current_provider' => $currentProvider,
-            'signal' => $signal,
-            'confidence' => $confidence,
-            'rrRatio' => $rrRatio,
-            'entry' => $entry,
-            'stopLoss' => $stopLoss,
-            'takeProfit' => $takeProfit,
-            'fee' => $fee,
-            'potentialProfit' => $potentialProfit,
-            'potentialLoss' => $potentialLoss,
-            'title' => $title,
-            'exchangeRate' => $exchangeRate,
-            'entryUsd' => $entryUsd,
-            'entryIdr' => $entryIdr,
-            'stopLossUsd' => $stopLossUsd,
-            'stopLossIdr' => $stopLossIdr,
-            'takeProfitUsd' => $takeProfitUsd,
-            'takeProfitIdr' => $takeProfitIdr,
-            'feeUsd' => $feeUsd,
-            'feeIdr' => $feeIdr,
-            'potentialProfitUsd' => $potentialProfitUsd,
-            'potentialProfitIdr' => $potentialProfitIdr,
-            'potentialLossUsd' => $potentialLossUsd,
-            'potentialLossIdr' => $potentialLossIdr,
-            'signalClass' => $signalClass,
-            'signalText' => $signalText,
-            'hasIndicators' => $hasIndicators,
-            'indicators' => $indicators,
+            'result' => $result,
         ]));
     }
-
-    /**
-     * Convert analysis result to view format
-     */
-    private function convertAnalysisResult($result, $symbol)
-    {
-        // Normalize signal
-        $signal = strtoupper($result->signal ?? 'NEUTRAL');
-        if ($signal === 'LONG') $signal = 'BUY';
-        elseif ($signal === 'SHORT') $signal = 'SELL';
-        elseif ($signal === 'HOLD') $signal = 'NEUTRAL';
-
-        return [
-            'symbol' => $symbol,
-            'title' => $result->title ?? 'Analysis',
-            'description' => $result->description ?? '',
-            'signal' => $signal,
-            'confidence' => (float) ($result->confidence ?? 50),
-            'risk_reward' => $result->risk_reward ?? '1:1',
-            'entry' => (float) ($result->entry ?? 0),
-            'price' => (float) ($result->price ?? 0),
-            'stop_loss' => (float) ($result->stop_loss ?? 0),
-            'take_profit' => (float) ($result->take_profit ?? 0),
-            'indicators' => array_map(function($value) {
-                return is_numeric($value) ? (float) $value : $value;
-            }, (array) ($result->indicators ?? [])),
-            'notes' => $result->notes ?? '',
-            'last_updated' => now()->format('Y-m-d H:i:s'),
-            'analysis_type' => $result->title ?? 'Analysis'
-        ];
-    }
-
 
 }

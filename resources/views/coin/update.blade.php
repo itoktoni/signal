@@ -34,7 +34,7 @@
                 <div class="col-12 col-md-8">
                     <h1 class="mb-2">
                         <i class="bi bi-graph-up"></i>
-                        {{ $crypto_analysis['analysis_type'] ?? ($analysis_methods[$analyst_method] ?? 'Basic Analysis') }} ({{ $timeframe }})
+                        {{ $crypto_analysis['analysis_type'] ?? ($analysis_methods[$analyst_method] ?? 'Basic Analysis') }}
                         <br>
                         @if($current_provider)
                             <small class="text-muted d-block mt-1">
@@ -52,8 +52,8 @@
                 </div>
                 <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
                     @if (isset($crypto_analysis) && !isset($crypto_analysis['error']))
-                        <span class="signal-badge {{ $signalClass }}">
-                            {{ $signalText }}
+                        <span class="signal-badge">
+                            {{ $signal }}
                         </span>
                     @endif
                 </div>
