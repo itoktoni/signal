@@ -5,11 +5,17 @@
         <div class="col-12">
             <x-card title="🎯 Konfigurasi Analisis">
                 <x-form :model="$model" method="GET" action="{{ route(module('getUpdate'), $model) }}">
-                    <x-select col="4" searchable name="coin_code" :value="request('coin_code', $model->coin_code)" :options="$coin" label="Select Coin"
+                    <x-select col="3" searchable name="coin_code" :value="request('coin_code', $model->coin_code)" :options="$coin" label="Select Coin"
                         required />
 
-                    <x-select name="analyst_method" :value="request('analyst_method', 'ma_rsi_volume_atr_macd')" :options="\App\Analysis\AnalysisServiceFactory::getAvailableMethods()" label="Select Analysis Method" required />
-                    <x-input col="2" type="number" name="amount" :value="request('amount', 100)" label="Trading Amount (USD)"
+                    <x-select col="5" name="analyst_method" :value="request('analyst_method', 'simple_ma')" :options="\App\Analysis\AnalysisServiceFactory::getAvailableMethods()" label="Select Analysis Method" required />
+                    <x-select col="2" name="timeframe" :value="request('timeframe', '4h')" :options="[
+                        '1h' => '1 Hour',
+                        '4h' => '4 Hours',
+                        '1d' => '1 Day',
+                        '1w' => '1 Week'
+                    ]" label="Timeframe" required />
+                    <x-input col="2" type="number" name="amount" :value="request('amount', 100)" label="Trade Amount"
                         step="0.01" min="1" placeholder="Enter amount to trade" />
 
                     <x-footer>
@@ -28,7 +34,7 @@
                 <div class="col-12 col-md-8">
                     <h1 class="mb-2">
                         <i class="bi bi-graph-up"></i>
-                        {{ $crypto_analysis['analysis_type'] ?? ($analysis_methods[$analyst_method] ?? 'Basic Analysis') }}
+                        {{ $crypto_analysis['analysis_type'] ?? ($analysis_methods[$analyst_method] ?? 'Basic Analysis') }} ({{ $timeframe }})
                         <br>
                         @if($current_provider)
                             <small class="text-muted d-block mt-1">
@@ -80,21 +86,11 @@
                                     </div>
 
                                     <div class="crypto-data-item">
-                                        <div class="crypto-data-label">Current Prices</div>
+                                        <div class="crypto-data-label">Current Price</div>
                                         <div class="crypto-data-value crypto-price-usd">
-                                            @if(isset($current_prices['binance']) && $current_prices['binance'])
-                                                Binance: ${{ number_format($current_prices['binance'], 3) }}
-                                            @else
-                                                Binance: N/A
-                                            @endif
+                                            ${{ number_format($crypto_analysis['price'], 3) }}
                                         </div>
-                                        <div class="crypto-price-idr">
-                                            @if(isset($current_prices['coingecko']) && $current_prices['coingecko'])
-                                                CoinGecko: ${{ number_format($current_prices['coingecko'], 3) }}
-                                            @else
-                                                CoinGecko: N/A
-                                            @endif
-                                        </div>
+                                        <div class="crypto-price-idr">Rp {{ number_format($crypto_analysis['price'] * 16000, 0) }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -212,11 +208,7 @@
                                 <div class="crypto-card-header">
                                     <h3 class="crypto-card-title">
                                         <i class="bi bi-graph-up"></i>
-                                        @if($analyst_method === 'support_resistance')
-                                            Price Chart with Support & Resistance
-                                        @elseif($analyst_method === 'simple_ma')
-                                            Price Chart with MA 20/50
-                                        @endif
+                                        Price Chart & Trading Levels
                                         @if($current_provider)
                                             <small class="text-muted d-block mt-1">
                                                 <i class="bi bi-cloud-arrow-down"></i>
@@ -265,332 +257,6 @@
 
     </div>
 
-     <style>
-        :root {
-            --crypto-primary: #2563eb;
-            --crypto-secondary: #7c3aed;
-            --crypto-success: #00b963;
-            --crypto-danger: #ef4444;
-            --crypto-warning: #f59e0b;
-            --crypto-dark: #1e293b;
-            --crypto-light: #f8fafc;
-            --crypto-card-bg: #ffffff;
-            --crypto-border: #e2e8f0;
-            --crypto-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        .crypto-header {
-            background: linear-gradient(135deg, var(--crypto-primary) 0%, var(--crypto-secondary) 100%);
-            color: white;
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: var(--crypto-shadow);
-        }
-
-        .description {
-            font-size: 2rem;
-        }
-
-        .crypto-card {
-            background: var(--crypto-card-bg);
-            border-radius: 16px;
-            box-shadow: var(--crypto-shadow);
-            border: 1px solid var(--crypto-border);
-            margin: 2rem;
-        }
-
-        .crypto-card:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-
-        .crypto-card-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--crypto-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .crypto-card-title {
-            font-size: 2rem;
-            font-weight: 600;
-            color: var(--crypto-dark);
-            margin: 0;
-        }
-
-        .crypto-card-body {
-            padding: 24px;
-        }
-
-        .signal-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 12px;
-            border-radius: 9999px;
-            font-weight: 600;
-            font-size: 1.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
-        }
-
-        .signal-badge.buy {
-            background-color: #dcfce7;
-            color: var(--crypto-success);
-        }
-
-        .signal-badge.sell {
-            background-color: #fee2e2;
-            color: var(--crypto-danger);
-        }
-
-        .signal-badge.neutral {
-            background-color: #fef3c7;
-            color: var(--crypto-warning);
-        }
-
-        .crypto-metric {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .crypto-metric-label {
-            font-size: 1.7rem;
-            color: #64748b;
-            font-weight: 500;
-        }
-
-        .crypto-metric-value {
-            font-size: 1.75rem;
-            font-weight: 600;
-            color: var(--crypto-dark);
-        }
-
-        .crypto-price {
-            font-size: 1.7rem;
-            font-weight: 700;
-        }
-
-        .crypto-grid {
-            display: grid;
-            gap: 24px;
-        }
-
-        .crypto-grid-cols-2 {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .crypto-grid-cols-3 {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-
-        .crypto-grid-cols-4 {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-        }
-
-        .crypto-section-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--crypto-dark);
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid var(--crypto-primary);
-            display: inline-block;
-        }
-
-        .crypto-data-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .crypto-data-item {
-            background: #f1f5f9;
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-        }
-
-        .crypto-data-label {
-            font-size: 1.5rem;
-            color: #64748b;
-            margin-bottom: 4px;
-        }
-
-        .crypto-data-value {
-            font-size: 1.525rem;
-            font-weight: 600;
-            color: var(--crypto-dark);
-        }
-
-        .crypto-price-usd {
-            color: var(--crypto-dark);
-            font-weight: 700;
-        }
-
-        .crypto-price-idr {
-            color: #64748b;
-            font-size: 1.5rem;
-        }
-
-        .crypto-indicator-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 16px;
-        }
-
-        .crypto-indicator-card {
-            background: #f8fafc;
-            border: 1px solid var(--crypto-border);
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-        }
-
-        .crypto-indicator-label {
-            font-size: 1.5rem;
-            color: #64748b;
-            margin-bottom: 8px;
-        }
-
-        .crypto-indicator-value {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--crypto-dark);
-        }
-
-        .crypto-profit-positive {
-            color: var(--crypto-success);
-        }
-
-        .crypto-profit-negative {
-            color: var(--crypto-danger);
-        }
-
-
-        .crypto-alert {
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-
-        .crypto-alert-success {
-            background-color: #dcfce7;
-            border-left: 4px solid var(--crypto-success);
-        }
-
-        .crypto-alert-warning {
-            background-color: #fef3c7;
-            border-left: 4px solid var(--crypto-warning);
-        }
-
-        .crypto-alert-danger {
-            background-color: #fee2e2;
-            border-left: 4px solid var(--crypto-danger);
-        }
-
-        .crypto-alert-info {
-            background-color: #dbeafe;
-            border-left: 4px solid var(--crypto-primary);
-        }
-
-        /* Table Styling */
-        .table {
-            margin-bottom: 0;
-        }
-
-        .table-hover tbody tr:hover {
-            background-color: #f8fafc;
-        }
-
-        .table thead th {
-            border-top: none;
-            font-weight: 600;
-            color: var(--crypto-dark);
-            background-color: #f8fafc;
-            padding: 1rem;
-        }
-
-        .table td {
-            vertical-align: middle;
-            border-color: var(--crypto-border);
-            padding: 1rem;
-        }
-
-        .table-responsive {
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        /* List Group Styling */
-        .list-group-item {
-            background: transparent;
-            border: none;
-            padding-left: 0;
-        }
-
-        .list-group-item:hover {
-            background-color: rgba(0, 0, 0, 0.05);
-        }
-
-        /* Badge Enhancements */
-        .badge {
-            font-size: 0.75rem;
-            padding: 4px 8px;
-        }
-
-        /* Status Indicators */
-        .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .status-dot.success {
-            background-color: var(--crypto-success);
-        }
-
-        .status-dot.danger {
-            background-color: var(--crypto-danger);
-        }
-
-        .status-dot.warning {
-            background-color: var(--crypto-warning);
-        }
-
-        .status-dot.neutral {
-            background-color: #6b7280;
-        }
-
-        .card{
-            padding-bottom: 1rem !important;
-        }
-
-
-        @media (max-width: 768px) {
-
-            .crypto-grid-cols-2,
-            .crypto-grid-cols-3,
-            .crypto-grid-cols-4 {
-                grid-template-columns: 1fr;
-            }
-
-            .crypto-header {
-                padding: 16px;
-            }
-
-            .crypto-card-body {
-                padding: 16px;
-            }
-        }
-    </style>
 
     @if (($analyst_method === 'support_resistance' || $analyst_method === 'simple_ma') && !empty($historical_data))
     <script type="module">
@@ -608,42 +274,6 @@
             low: parseFloat(item[3]),
             close: parseFloat(item[4])
         }));
-
-        // Calculate MA20 and MA50 data points
-        const ma20Data = [];
-        const ma50Data = [];
-
-        for (let i = 19; i < candlestickData.length; i++) {
-            // MA20
-            let sum20 = 0;
-            for (let j = i - 19; j <= i; j++) {
-                sum20 += candlestickData[j].close;
-            }
-            ma20Data.push({
-                time: candlestickData[i].time,
-                value: sum20 / 20
-            });
-        }
-
-        for (let i = 49; i < candlestickData.length; i++) {
-            // MA50
-            let sum50 = 0;
-            for (let j = i - 49; j <= i; j++) {
-                sum50 += candlestickData[j].close;
-            }
-            ma50Data.push({
-                time: candlestickData[i].time,
-                value: sum50 / 50
-            });
-        }
-
-        // Get support and resistance levels (only for support_resistance method)
-        const supportLevel = (@json($analyst_method) === 'support_resistance' && indicators.Support) ? parseFloat(indicators.Support) : null;
-        const resistanceLevel = (@json($analyst_method) === 'support_resistance' && indicators.Resistance) ? parseFloat(indicators.Resistance) : null;
-
-        // Get MA levels (for both methods)
-        const ma20Level = indicators.MA20 ? parseFloat(indicators.MA20) : null;
-        const ma50Level = indicators.MA50 ? parseFloat(indicators.MA50) : null;
 
         // Get entry and take profit levels from analysis result
         const entryLevel = @json($crypto_analysis['entry'] ?? null);
@@ -687,48 +317,6 @@
 
         candlestickSeries.setData(candlestickData);
 
-        // Add MA20 line series
-        const ma20LineSeries = chart.addLineSeries({
-            color: '#FF6B35',
-            lineWidth: 2,
-            title: 'MA20',
-        });
-        ma20LineSeries.setData(ma20Data);
-
-        // Add MA50 line series
-        const ma50LineSeries = chart.addLineSeries({
-            color: '#4CAF50',
-            lineWidth: 2,
-            title: 'MA50',
-        });
-        ma50LineSeries.setData(ma50Data);
-
-        // Add support line
-        if (supportLevel) {
-            const supportLine = {
-                price: supportLevel,
-                color: '#00C853', // Green for support
-                lineWidth: 3,
-                lineStyle: 2, // Dotted
-                axisLabelVisible: true,
-                title: 'Support',
-            };
-            candlestickSeries.createPriceLine(supportLine);
-        }
-
-        // Add resistance line
-        if (resistanceLevel) {
-            const resistanceLine = {
-                price: resistanceLevel,
-                color: '#FF1744', // Red for resistance
-                lineWidth: 3,
-                lineStyle: 2, // Dotted
-                axisLabelVisible: true,
-                title: 'Resistance',
-            };
-            candlestickSeries.createPriceLine(resistanceLine);
-        }
-
         // Add entry line (BLACK)
         if (entryLevel) {
             const entryLine = {
@@ -746,7 +334,7 @@
         if (stopLossLevel) {
             const stopLossLine = {
                 price: parseFloat(stopLossLevel),
-                color: '#F44336', // Red
+                color: '#FF0000', // Red
                 lineWidth: 3,
                 lineStyle: 0, // Solid
                 axisLabelVisible: true,
@@ -759,7 +347,7 @@
         if (takeProfitLevel) {
             const takeProfitLine = {
                 price: parseFloat(takeProfitLevel),
-                color: '#4CAF50', // Green
+                color: '#00FF00', // Green
                 lineWidth: 3,
                 lineStyle: 0, // Solid
                 axisLabelVisible: true,
@@ -772,7 +360,7 @@
         if (currentPriceLevel) {
             const currentPriceLine = {
                 price: parseFloat(currentPriceLevel),
-                color: '#2196F3', // Blue
+                color: '#0000FF', // Blue
                 lineWidth: 2,
                 lineStyle: 0, // Solid
                 axisLabelVisible: true,

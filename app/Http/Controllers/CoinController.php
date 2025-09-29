@@ -132,7 +132,8 @@ class CoinController extends Controller
         // Get parameters
         $coinCode = request('coin_code', $code);
         $amount = max(1, floatval(request('amount', 100)));
-        $analystMethod = request('analyst_method', 'ma_rsi_volume_atr_macd');
+        $analystMethod = request('analyst_method', 'simple_ma');
+        $timeframe = request('timeframe', '4h');
 
         // Find coin model
         $model = $this->model->find($coinCode);
@@ -149,20 +150,17 @@ class CoinController extends Controller
             // Create API manager and analysis service
             $apiManager = new ApiProviderManager(app(Settings::class));
             $analysisService = AnalysisServiceFactory::create($analystMethod, $apiManager);
-            // Set timeframe based on analysis method
-            $timeframe = ($analystMethod === 'support_resistance') ? '4h' : '1h';
 
-            // Perform analysis
+            // Perform analysis with selected timeframe
             $result = $analysisService->analyze($model->coin_code, $amount, $timeframe);
             $cryptoAnalysis = $this->convertAnalysisResult($result, $model->coin_code);
 
-            // Get historical data for chart
+            // Get historical data for chart with selected timeframe
             if ($analystMethod === 'support_resistance' || $analystMethod === 'simple_ma') {
-                $historicalData = $apiManager->getHistoricalData($model->coin_code, '4h', 100);
+                $historicalData = $apiManager->getHistoricalData($model->coin_code, $timeframe, 100);
             }
 
-            // Get current prices from both APIs
-            $currentPrices = $apiManager->getPricesFromBothAPIs($model->coin_code);
+            // Current price is already included in the analysis result
 
         } catch (\Exception $e) {
             Log::error('Analysis failed', [
@@ -175,13 +173,14 @@ class CoinController extends Controller
                 'error' => 'Analysis failed: ' . $e->getMessage(),
                 'symbol' => $model->coin_code,
                 'signal' => 'NEUTRAL',
-                'confidence' => 0
-            ];
-
-            $currentPrices = [
-                'binance' => null,
-                'coingecko' => null,
-                'symbol' => $model->coin_code
+                'confidence' => 0,
+                'entry' => 0,
+                'price' => 0,
+                'stop_loss' => 0,
+                'take_profit' => 0,
+                'risk_reward' => '1:1',
+                'indicators' => [],
+                'notes' => ''
             ];
         }
 
@@ -246,8 +245,8 @@ class CoinController extends Controller
             'amount' => $amount,
             'analyst_service' => $analysisService,
             'analyst_method' => $analystMethod,
+            'timeframe' => $timeframe,
             'historical_data' => $historicalData,
-            'current_prices' => $currentPrices,
             'analysis_methods' => $analysisMethods,
             'current_provider' => $currentProvider,
             'signal' => $signal,
@@ -299,6 +298,7 @@ class CoinController extends Controller
             'confidence' => (float) ($result->confidence ?? 50),
             'risk_reward' => $result->risk_reward ?? '1:1',
             'entry' => (float) ($result->entry ?? 0),
+            'price' => (float) ($result->price ?? 0),
             'stop_loss' => (float) ($result->stop_loss ?? 0),
             'take_profit' => (float) ($result->take_profit ?? 0),
             'indicators' => array_map(function($value) {
