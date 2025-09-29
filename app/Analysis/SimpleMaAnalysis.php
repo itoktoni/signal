@@ -9,6 +9,11 @@ class SimpleMaAnalysis implements AnalysisInterface
     protected ?ApiProviderInterface $apiProvider = null;
     protected float $currentPrice = 0.0;
 
+    public function __construct(ApiProviderInterface $apiProvider)
+    {
+        $this->apiProvider = $apiProvider;
+    }
+
     public function setApiProvider(ApiProviderInterface $apiProvider): void
     {
         $this->apiProvider = $apiProvider;
@@ -20,48 +25,45 @@ class SimpleMaAnalysis implements AnalysisInterface
             throw new \Exception('API Provider not set');
         }
 
-        // Get historical data
-        $historicalData = $this->apiProvider->getHistoricalData($symbol, $timeframe, 100);
-
+        $historicalData = $this->apiProvider->getHistoricalData($symbol, $timeframe, 150);
         if (empty($historicalData)) {
             throw new \Exception('No historical data available');
         }
 
-        // Get current price
-        $currentPrice = $this->apiProvider->getCurrentPrice($symbol);
-        $this->currentPrice = $currentPrice;
+        $this->currentPrice = $this->apiProvider->getCurrentPrice($symbol);
 
-        // Extract close prices from historical data
-        $closePrices = array_map(fn($candle) => (float) $candle[4], $historicalData);
+        $closePrices = array_map(fn($candle) => (float)$candle[4], $historicalData);
 
-        // Calculate indicators
+        // Indicators
         $ma20 = $this->calculateSMA($closePrices, 20);
         $ma50 = $this->calculateSMA($closePrices, 50);
+        $ema20 = $this->calculateEMA($closePrices, 20);
+        $ema50 = $this->calculateEMA($closePrices, 50);
+        $atr14 = $this->calculateATR($historicalData, 14);
 
-        // Determine signal
-        $signal = $this->getSignal($ma20, $ma50, $closePrices);
+        $signal = $this->getSignal($ma20, $ma50, $ema20, $ema50, $closePrices);
+        $suggestedEntry = $this->calculateSuggestedEntry($signal, $this->currentPrice);
+        $levels = $this->calculateLevels($signal, $suggestedEntry, $ma20, $ma50, $atr14);
 
-        // Calculate suggested entry price (different from current price)
-        $suggestedEntry = $this->calculateSuggestedEntry($signal, $currentPrice);
+        $confidence = $this->calculateConfidence($signal, $ma20, $ma50, $ema20, $ema50);
 
-        // Calculate trading levels (simple version)
-        $levels = $this->calculateLevels($signal, $suggestedEntry, $ma20, $ma50);
-
-        // Set indicators
         $this->indicators = [
             'MA20' => round($ma20, 4),
             'MA50' => round($ma50, 4),
-            'Current_Price' => round($currentPrice, 4),
-            'Suggested_Entry' => round($suggestedEntry, 4)
+            'EMA20' => round($ema20, 4),
+            'EMA50' => round($ema50, 4),
+            'ATR14' => round($atr14, 4),
+            'Current_Price' => round($this->currentPrice, 4),
+            'Suggested_Entry' => round($suggestedEntry, 4),
         ];
 
         return (object)[
-            'title' => "Simple MA Analysis for {$symbol} ({$timeframe})",
+            'title' => "Improved MA Analysis for {$symbol} ({$timeframe})",
             'description' => $this->getDescription(),
             'signal' => $signal,
-            'confidence' => 70,
-            'entry' => $suggestedEntry,  // Suggested entry price
-            'price' => $currentPrice,    // Current market price
+            'confidence' => $confidence,
+            'entry' => $suggestedEntry,
+            'price' => $this->currentPrice,
             'stop_loss' => $levels['stop_loss'],
             'take_profit' => $levels['take_profit'],
             'risk_reward' => $levels['risk_reward'],
@@ -72,19 +74,18 @@ class SimpleMaAnalysis implements AnalysisInterface
 
     public function getCode(): string
     {
-        return 'simple_ma';
+        return 'improved_ma';
     }
 
     public function getName(): string
     {
-        return 'Simple MA 20/50 Analysis';
+        return 'Improved MA/EMA Analysis';
     }
 
     public function getDescription(): string
     {
-        return 'Simple Moving Average analysis using MA20 and MA50. '
-              . 'BUY signal when MA20 crosses above MA50 and price is above MA20. '
-              . 'SELL signal when MA20 crosses below MA50 and price is below MA20.';
+        return 'Improved Moving Average analysis using SMA (20/50), EMA (20/50), and ATR(14) for risk management. '
+            . 'Signals are based on crossovers with trend confirmation.';
     }
 
     public function getIndicators(): array
@@ -97,100 +98,93 @@ class SimpleMaAnalysis implements AnalysisInterface
         return $this->notes;
     }
 
-    /**
-     * Calculate Simple Moving Average
-     */
     private function calculateSMA(array $prices, int $period): float
     {
         if (count($prices) < $period) {
             return end($prices);
         }
-
-        $sum = 0;
-        for ($i = count($prices) - $period; $i < count($prices); $i++) {
-            $sum += $prices[$i];
-        }
-
-        return $sum / $period;
+        return array_sum(array_slice($prices, -$period)) / $period;
     }
 
-    /**
-     * Get signal based on MA crossover and price position
-     */
-    private function getSignal(float $ma20, float $ma50, array $prices): string
+    private function calculateEMA(array $prices, int $period): float
     {
-        $currentPrice = end($prices);
-
-        // Check for crossover if we have enough data
-        if (count($prices) >= 51) { // Need at least 51 candles for previous calculation
-            $prevPrices = array_slice($prices, 0, -1);
-            $prevMa20 = $this->calculateSMA($prevPrices, 20);
-            $prevMa50 = $this->calculateSMA($prevPrices, 50);
-
-            // Bullish crossover: MA20 crosses above MA50 and price > MA20
-            if ($prevMa20 <= $prevMa50 && $ma20 > $ma50 && $currentPrice > $ma20) {
-                $this->notes = "MA20 crossed above MA50 and price is above MA20 - BUY signal";
-                return 'BUY';
-            }
-
-            // Bearish crossover: MA20 crosses below MA50 and price < MA20
-            if ($prevMa20 >= $prevMa50 && $ma20 < $ma50 && $currentPrice < $ma20) {
-                $this->notes = "MA20 crossed below MA50 and price is below MA20 - SELL signal";
-                return 'SELL';
-            }
+        if (count($prices) < $period) {
+            return end($prices);
         }
 
-        // No crossover, check current trend
-        if ($ma20 > $ma50 && $currentPrice > $ma20) {
-            $this->notes = "MA20 > MA50 and price > MA20 - bullish trend";
+        $k = 2 / ($period + 1);
+        $ema = $this->calculateSMA(array_slice($prices, 0, $period), $period);
+
+        for ($i = $period; $i < count($prices); $i++) {
+            $ema = ($prices[$i] * $k) + ($ema * (1 - $k));
+        }
+
+        return $ema;
+    }
+
+    private function calculateATR(array $candles, int $period): float
+    {
+        if (count($candles) < $period + 1) {
+            return 0.0;
+        }
+
+        $trs = [];
+        for ($i = 1; $i < count($candles); $i++) {
+            $high = (float)$candles[$i][2];
+            $low = (float)$candles[$i][3];
+            $prevClose = (float)$candles[$i - 1][4];
+
+            $tr = max([
+                $high - $low,
+                abs($high - $prevClose),
+                abs($low - $prevClose),
+            ]);
+            $trs[] = $tr;
+        }
+
+        return $this->calculateSMA($trs, $period);
+    }
+
+    private function getSignal(float $ma20, float $ma50, float $ema20, float $ema50, array $prices): string
+    {
+        $price = end($prices);
+
+        if ($ma20 > $ma50 && $ema20 > $ema50 && $price > $ma20) {
+            $this->notes = "Strong bullish alignment (MA20 > MA50, EMA20 > EMA50, price > MA20)";
             return 'BUY';
-        } elseif ($ma20 < $ma50 && $currentPrice < $ma20) {
-            $this->notes = "MA20 < MA50 and price < MA20 - bearish trend";
+        }
+        if ($ma20 < $ma50 && $ema20 < $ema50 && $price < $ma20) {
+            $this->notes = "Strong bearish alignment (MA20 < MA50, EMA20 < EMA50, price < MA20)";
             return 'SELL';
         }
 
-        $this->notes = "No clear signal - waiting for crossover";
+        $this->notes = "Mixed signals, trend unclear";
         return 'NEUTRAL';
     }
 
-    /**
-     * Calculate suggested entry price (different from current price)
-     */
     private function calculateSuggestedEntry(string $signal, float $currentPrice): float
     {
-        // Add a small buffer to current price as entry suggestion
-        // This accounts for slippage and provides a more realistic entry point
-        $buffer = 0.001; // 0.1% buffer
-
-        if ($signal === 'BUY') {
-            // For BUY, suggest entry slightly above current price
-            return $currentPrice * (1 + $buffer);
-        } elseif ($signal === 'SELL') {
-            // For SELL, suggest entry slightly below current price
-            return $currentPrice * (1 - $buffer);
-        } else {
-            // For NEUTRAL, use current price
-            return $currentPrice;
-        }
+        $buffer = 0.001;
+        return match ($signal) {
+            'BUY' => $currentPrice * (1 + $buffer),
+            'SELL' => $currentPrice * (1 - $buffer),
+            default => $currentPrice,
+        };
     }
 
-    /**
-     * Calculate trading levels (simplified)
-     */
-    private function calculateLevels(string $signal, float $entryPrice, float $ma20, float $ma50): array
+    private function calculateLevels(string $signal, float $entryPrice, float $ma20, float $ma50, float $atr): array
     {
-        $stopLoss = 0;
-        $takeProfit = 0;
+        $atr = max($atr, $entryPrice * 0.01); // fallback ATR = 1% jika data kurang
 
         if ($signal === 'BUY') {
-            $stopLoss = min($ma50, $ma20) * 0.98; // Below the lower MA
-            $takeProfit = $entryPrice * 1.05; // 5% profit target from entry
+            $stopLoss = $entryPrice - (1.5 * $atr);
+            $takeProfit = $entryPrice + (3 * $atr);
         } elseif ($signal === 'SELL') {
-            $stopLoss = max($ma50, $ma20) * 1.02; // Above the higher MA
-            $takeProfit = $entryPrice * 0.95; // 5% profit target from entry
+            $stopLoss = $entryPrice + (1.5 * $atr);
+            $takeProfit = $entryPrice - (3 * $atr);
         } else {
-            $stopLoss = $entryPrice * 0.95;
-            $takeProfit = $entryPrice * 1.05;
+            $stopLoss = $entryPrice - (1.2 * $atr);
+            $takeProfit = $entryPrice + (1.2 * $atr);
         }
 
         $risk = abs($entryPrice - $stopLoss);
@@ -198,17 +192,25 @@ class SimpleMaAnalysis implements AnalysisInterface
         $riskReward = $risk > 0 ? round($reward / $risk, 2) . ":1" : "1:1";
 
         return [
-            'stop_loss' => $stopLoss,
-            'take_profit' => $takeProfit,
+            'stop_loss' => round($stopLoss, 4),
+            'take_profit' => round($takeProfit, 4),
             'risk_reward' => $riskReward
         ];
     }
 
-    /**
-     * Get the current price of the analyzed symbol
-     */
-    public function getCurrentPrice(): float
+    private function calculateConfidence(string $signal, float $ma20, float $ma50, float $ema20, float $ema50): int
     {
-        return $this->currentPrice;
+        if ($signal === 'NEUTRAL') {
+            return 50;
+        }
+
+        $score = 60;
+        if ($ma20 > $ma50 && $ema20 > $ema50) {
+            $score += 20;
+        } elseif ($ma20 < $ma50 && $ema20 < $ema50) {
+            $score += 20;
+        }
+
+        return min($score, 90);
     }
 }

@@ -215,3 +215,15 @@ if (! function_exists('safeNumericValue')) {
         return $default;
     }
 }
+
+if (! function_exists('numberFormat')) {
+    function numberFormat($value, $comma = 3)
+    {
+        if(!empty($value) && is_numeric($value))
+        {
+            return number_format($value, $comma);
+        }
+
+        return 0;
+    }
+}

@@ -59,11 +59,4 @@ interface AnalysisInterface
      * @return string Any notes or results or suggestions from any calculation and analysis
      */
     public function getNotes(): string;
-
-    /**
-     * Get the current price of the analyzed symbol
-     *
-     * @return float The current price in USD
-     */
-    public function getCurrentPrice(): float;
 }

@@ -143,7 +143,6 @@ class CoinController extends Controller
         }
 
         // Initialize variables
-        $cryptoAnalysis = [];
         $historicalData = [];
 
         $result = false;
@@ -151,10 +150,10 @@ class CoinController extends Controller
         try {
             // Create API manager and analysis service
             $apiManager = new ApiProviderManager(app(Settings::class));
-            $analysisService = AnalysisServiceFactory::create($analystMethod, $apiManager);
+            $service = AnalysisServiceFactory::create($analystMethod, $apiManager);
 
             // Perform analysis with selected timeframe
-            $result = $analysisService->analyze($model->coin_code, $amount, $timeframe);
+            $result = $service->analyze($model->coin_code, $amount, $timeframe);
             $historicalData = $apiManager->getHistoricalData($model->coin_code, $timeframe, 100);
 
         } catch (\Exception $e) {
@@ -164,7 +163,7 @@ class CoinController extends Controller
                 'error' => $e->getMessage()
             ]);
 
-            $cryptoAnalysis = (Object)[
+            $result = (Object)[
                 'title' => 'title',
                 'description' => 'Analysis failed: ' . $e->getMessage(),
                 'signal' => 'NEUTRAL',
@@ -175,7 +174,7 @@ class CoinController extends Controller
                 'take_profit' => 0,
                 'risk_reward' => '1:1',
                 'indicators' => [],
-                'notes' => ''
+                'notes' => $e->getMessage(),
             ];
         }
 
@@ -195,14 +194,10 @@ class CoinController extends Controller
             $currentProvider = null;
         }
 
-        dd($result);
-
         return $this->views($this->module(), $this->share([
             'model' => $model,
             'coin' => $coin->toArray(),
-            'crypto_analysis' => $cryptoAnalysis,
             'amount' => $amount,
-            'analyst_service' => $analysisService,
             'analyst_method' => $analystMethod,
             'timeframe' => $timeframe,
             'historical_data' => $historicalData,
