@@ -188,7 +188,7 @@ class CoinGeckoApiProvider implements ApiProviderInterface
                 Log::warning("No CoinGecko coin IDs found for symbols: " . implode(', ', $symbols));
             }
 
-            $response = $this->client->get('/simple/price', [
+            $response = $this->client->get('simple/price', [
                 'query' => [
                     'ids' => implode(',', $coinIds),
                     'vs_currencies' => 'usd',
@@ -314,7 +314,7 @@ class CoinGeckoApiProvider implements ApiProviderInterface
                 Log::warning("No CoinGecko coin ID found for symbol: {$symbol}, trying direct lookup");
             }
 
-            $response = $this->client->get('coins/list', [
+            $response = $this->client->get('simple/price', [
                 'query' => [
                     'ids' => implode(',', $coinIds),
                     'vs_currencies' => 'usd',
@@ -443,7 +443,7 @@ class CoinGeckoApiProvider implements ApiProviderInterface
     private function convertSymbolToCoinGeckoId(string $symbol): string
     {
         // Get mapping from configuration
-        $coinMapping = config('crypto.coingecko.coin_id_mapping', []);
+        $coinMapping = config('crypto_symbol_mapping.coingecko', []);
 
         // Direct lookup first
         if (isset($coinMapping[$symbol])) {
@@ -456,6 +456,12 @@ class CoinGeckoApiProvider implements ApiProviderInterface
             return $coinMapping[$upperSymbol];
         }
 
+        // Try removing USDT suffix if present
+        $baseSymbol = str_replace('USDT', '', $upperSymbol);
+        if (isset($coinMapping[$baseSymbol . 'USDT'])) {
+            return $coinMapping[$baseSymbol . 'USDT'];
+        }
+
         // For unknown symbols, try to use the symbol as-is (CoinGecko might still find it)
         // Convert to lowercase as CoinGecko uses lowercase IDs
         return strtolower($symbol);
@@ -463,22 +469,23 @@ class CoinGeckoApiProvider implements ApiProviderInterface
 
     private function convertIntervalToDays(string $interval, int $limit): int
     {
-        // Convert interval to approximate days for CoinGecko
-        // Use fixed days parameter that works with CoinGecko free API
+        // Convert interval to days for CoinGecko OHLC API
+        // CoinGecko automatically chooses granularity based on days:
+        // 1 day = ~hourly, 7 days = ~4-hourly, 30+ days = ~daily
         $intervalDays = [
-            '1m' => 1,
-            '5m' => 7,    // Minimum 7 days for short intervals
-            '15m' => 14,  // Minimum 14 days for medium intervals
-            '30m' => 30,  // 30 days for longer intervals
-            '1h' => 30,   // 30 days for 1h interval
-            '4h' => 90,   // 90 days for 4h interval (max for free)
-            '1d' => 90,   // 90 days for daily (max for free)
+            '1m' => 1,    // 1 day for minute data (will get ~hourly)
+            '5m' => 1,    // 1 day for 5min data
+            '15m' => 1,   // 1 day for 15min data
+            '30m' => 1,   // 1 day for 30min data
+            '1h' => 7,    // 7 days for 1h data (will get ~4-hourly, but better than daily)
+            '4h' => 30,   // 30 days for 4h data
+            '1d' => 90,   // 90 days for daily data
         ];
 
-        $days = $intervalDays[$interval] ?? 30;
+        $days = $intervalDays[$interval] ?? 7;
 
-        // Ensure minimum days for sufficient data points
-        return max($days, 7);
+        // Ensure we don't exceed CoinGecko free tier limits (max 90 days)
+        return min($days, 90);
     }
 
     private function convertCoinGeckoToBinanceFormat(array $coingeckoData, string $interval): array

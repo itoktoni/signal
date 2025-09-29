@@ -16,10 +16,11 @@ interface AnalysisInterface
      *   - description: string - technology that used in the analysis with flow to reach the conclusion
      *   - signal: string - Trading signal ('BUY', 'SELL', or 'NEUTRAL')
      *   - confidence: float - Confidence percentage (0-100)
+     *   - price: float - Current price in USD
      *   - entry: float - Entry price in USD
      *   - stop_loss: float - Stop loss price in USD
      *   - take_profit: float - Take profit price in USD
-     *   - risk_reward: string - Risk-reward ratio
+     *   - risk_reward: string - Risk-reward ratio eg. '1:2'
 
      */
     public function analyze(string $symbol, float $amount = 100, string $timeframe = '1h', ?string $forcedApi = null): object;
@@ -58,4 +59,11 @@ interface AnalysisInterface
      * @return string Any notes or results or suggestions from any calculation and analysis
      */
     public function getNotes(): string;
+
+    /**
+     * Get the current price of the analyzed symbol
+     *
+     * @return float The current price in USD
+     */
+    public function getCurrentPrice(): float;
 }

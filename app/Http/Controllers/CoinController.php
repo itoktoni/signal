@@ -10,6 +10,7 @@ use App\Analysis\AnalysisServiceFactory;
 use App\Analysis\ApiProviderManager;
 use App\Settings\Settings;
 use App\Enums\AnalysisType;
+use ReflectionClass;
 
 class CoinController extends Controller
 {
@@ -128,126 +129,184 @@ class CoinController extends Controller
      */
     public function getUpdate($code)
     {
-        $code = request('coin_code', $code);
-
-        // Validate that the coin code exists
-        $model = $this->model->find($code);
-
-        // If coin doesn't exist in database, redirect with error
-        if (!$model) {
-            return redirect()->route($this->module('getData'))
-                ->with('error', "Coin '{$code}' not found. Please select a valid cryptocurrency.");
-        }
-
-        // Skip API provider validation - allow any symbol for analysis
-
-        // Get trading amount from query parameter (default to 100)
-        $amount = floatval(request('amount', 100));
-
-        // Get analysis method from query parameter (default to MA analysis)
+        // Get parameters
+        $coinCode = request('coin_code', $code);
+        $amount = max(1, floatval(request('amount', 100)));
         $analystMethod = request('analyst_method', 'ma_rsi_volume_atr_macd');
 
-        // Validate amount
-        if ($amount <= 0) {
-            $amount = 100;
+        // Find coin model
+        $model = $this->model->find($coinCode);
+        if (!$model) {
+            return redirect()->route($this->module('getData'))
+                ->with('error', "Coin '{$coinCode}' not found.");
         }
 
-        // Perform analysis using selected method
+        // Initialize variables
+        $cryptoAnalysis = [];
+        $historicalData = [];
+
         try {
-            // Create API provider manager
-            $settings = app(Settings::class);
-            $apiManager = new ApiProviderManager($settings);
-
-            // Use selected analysis service with dynamic amount
+            // Create API manager and analysis service
+            $apiManager = new ApiProviderManager(app(Settings::class));
             $analysisService = AnalysisServiceFactory::create($analystMethod, $apiManager);
-            $result = $analysisService->analyze($model->coin_code ?? 'BTCUSDT', $amount);
+            // Set timeframe based on analysis method
+            $timeframe = ($analystMethod === 'support_resistance') ? '4h' : '1h';
 
-            // Convert the new result structure to match the existing view expectations
-            $cryptoAnalysis = $this->convertAnalysisResult($result, $model->coin_code ?? 'BTCUSDT');
+            // Perform analysis
+            $result = $analysisService->analyze($model->coin_code, $amount, $timeframe);
+            $cryptoAnalysis = $this->convertAnalysisResult($result, $model->coin_code);
 
-            // Fetch historical data for chart if support resistance analysis
-            $historicalData = [];
-            if ($analystMethod === 'support_resistance') {
-                try {
-                    $historicalData = $apiManager->getHistoricalData($model->coin_code ?? 'BTCUSDT', '1h', 100);
-                } catch (\Exception $e) {
-                    Log::warning('Failed to fetch historical data for chart', [
-                        'coin_code' => $model->coin_code ?? 'Unknown',
-                        'error' => $e->getMessage()
-                    ]);
-                    $historicalData = [];
-                }
+            // Get historical data for chart
+            if ($analystMethod === 'support_resistance' || $analystMethod === 'simple_ma') {
+                $historicalData = $apiManager->getHistoricalData($model->coin_code, '4h', 100);
             }
 
+            // Get current prices from both APIs
+            $currentPrices = $apiManager->getPricesFromBothAPIs($model->coin_code);
+
         } catch (\Exception $e) {
-            // Log the error and return error response
-            Log::error('Crypto analysis failed', [
-                'coin_code' => $model->coin_code ?? 'Unknown',
-                'analyst_method' => $analystMethod,
-                'amount' => $amount,
+            Log::error('Analysis failed', [
+                'coin' => $model->coin_code,
+                'method' => $analystMethod,
                 'error' => $e->getMessage()
             ]);
 
             $cryptoAnalysis = [
-                'error' => $e->getMessage(),
-                'symbol' => $model->coin_code ?? 'Unknown',
-                'current_price' => null,
-                'analysis' => null
+                'error' => 'Analysis failed: ' . $e->getMessage(),
+                'symbol' => $model->coin_code,
+                'signal' => 'NEUTRAL',
+                'confidence' => 0
             ];
-            $historicalData = [];
+
+            $currentPrices = [
+                'binance' => null,
+                'coingecko' => null,
+                'symbol' => $model->coin_code
+            ];
         }
 
+        // Get coin options for dropdown
         $coin = Coin::getOptions('coin_code', 'coin_code');
+
+        // Get analysis methods and current API provider info
+        $analysisMethods = \App\Analysis\AnalysisServiceFactory::getAvailableMethods();
+        $currentProvider = null;
+        try {
+            $providerAnalysisService = \App\Analysis\AnalysisServiceFactory::create($analystMethod, $apiManager);
+            $reflection = new ReflectionClass($providerAnalysisService);
+            $property = $reflection->getProperty('apiProvider');
+            $property->setAccessible(true);
+            $currentProvider = $property->getValue($providerAnalysisService);
+        } catch (\Exception $e) {
+            $currentProvider = null;
+        }
+
+        // Process analysis data for display
+        $signal = $cryptoAnalysis['signal'] ?? 'NEUTRAL';
+        $confidence = $cryptoAnalysis['confidence'] ?? 0;
+        $rrRatio = $cryptoAnalysis['risk_reward'] ?? 0;
+        $entry = $cryptoAnalysis['entry'] ?? 0;
+        $stopLoss = $cryptoAnalysis['stop_loss'] ?? 0;
+        $takeProfit = $cryptoAnalysis['take_profit'] ?? 0;
+        $fee = $cryptoAnalysis['fee'] ?? 0;
+        $potentialProfit = $cryptoAnalysis['potential_profit'] ?? 0;
+        $potentialLoss = $cryptoAnalysis['potential_loss'] ?? 0;
+        $title = $cryptoAnalysis['title'] ?? 'Analysis';
+
+        // Calculate IDR values
+        $exchangeRate = 16000; // Default exchange rate
+        $entryUsd = $entry;
+        $entryIdr = $entry * $exchangeRate;
+        $stopLossUsd = $stopLoss;
+        $stopLossIdr = $stopLoss * $exchangeRate;
+        $takeProfitUsd = $takeProfit;
+        $takeProfitIdr = $takeProfit * $exchangeRate;
+        $feeUsd = $fee;
+        $feeIdr = $fee * $exchangeRate;
+        $potentialProfitUsd = $potentialProfit;
+        $potentialProfitIdr = $potentialProfit * $exchangeRate;
+        $potentialLossUsd = abs($potentialLoss);
+        $potentialLossIdr = abs($potentialLoss) * $exchangeRate;
+
+        $signalClass = $signal === 'BUY' ? 'buy' : ($signal === 'SELL' ? 'sell' : 'neutral');
+        $signalText = $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
+
+        // Process indicators for display
+        $hasIndicators = false;
+        $indicators = [];
+        if (isset($cryptoAnalysis['indicators']) && is_array($cryptoAnalysis['indicators'])) {
+            $indicators = $cryptoAnalysis['indicators'];
+            $hasIndicators = !empty($indicators);
+        }
 
         return $this->views($this->module(), $this->share([
             'model' => $model,
             'coin' => $coin->toArray(),
             'crypto_analysis' => $cryptoAnalysis,
             'amount' => $amount,
+            'analyst_service' => $analysisService,
             'analyst_method' => $analystMethod,
             'historical_data' => $historicalData,
+            'current_prices' => $currentPrices,
+            'analysis_methods' => $analysisMethods,
+            'current_provider' => $currentProvider,
+            'signal' => $signal,
+            'confidence' => $confidence,
+            'rrRatio' => $rrRatio,
+            'entry' => $entry,
+            'stopLoss' => $stopLoss,
+            'takeProfit' => $takeProfit,
+            'fee' => $fee,
+            'potentialProfit' => $potentialProfit,
+            'potentialLoss' => $potentialLoss,
+            'title' => $title,
+            'exchangeRate' => $exchangeRate,
+            'entryUsd' => $entryUsd,
+            'entryIdr' => $entryIdr,
+            'stopLossUsd' => $stopLossUsd,
+            'stopLossIdr' => $stopLossIdr,
+            'takeProfitUsd' => $takeProfitUsd,
+            'takeProfitIdr' => $takeProfitIdr,
+            'feeUsd' => $feeUsd,
+            'feeIdr' => $feeIdr,
+            'potentialProfitUsd' => $potentialProfitUsd,
+            'potentialProfitIdr' => $potentialProfitIdr,
+            'potentialLossUsd' => $potentialLossUsd,
+            'potentialLossIdr' => $potentialLossIdr,
+            'signalClass' => $signalClass,
+            'signalText' => $signalText,
+            'hasIndicators' => $hasIndicators,
+            'indicators' => $indicators,
         ]));
     }
 
     /**
-     * Convert new analysis result structure to match existing view expectations
+     * Convert analysis result to view format
      */
     private function convertAnalysisResult($result, $symbol)
     {
-        // Extract signal from the new result structure
-        $signal = strtoupper($result->signal); // Convert 'long'/'short'/'hold' to 'BUY'/'SELL'/'NEUTRAL'
-        if ($signal === 'LONG') {
-            $signal = 'BUY';
-        } elseif ($signal === 'SHORT') {
-            $signal = 'SELL';
-        } elseif ($signal === 'HOLD') {
-            $signal = 'NEUTRAL';
-        }
-
-        // Extract indicators
-        $indicators = [];
-
-        if (isset($result->indicators) && is_array($result->indicators)) {
-            $indicators = $result->indicators;
-        }
+        // Normalize signal
+        $signal = strtoupper($result->signal ?? 'NEUTRAL');
+        if ($signal === 'LONG') $signal = 'BUY';
+        elseif ($signal === 'SHORT') $signal = 'SELL';
+        elseif ($signal === 'HOLD') $signal = 'NEUTRAL';
 
         return [
             'symbol' => $symbol,
             'title' => $result->title ?? 'Analysis',
             'description' => $result->description ?? '',
             'signal' => $signal,
-            'confidence' => safeNumericValue($result, 'confidence', 50),
-            'risk_reward' => safeValue($result, 'risk_reward'),
-            'entry' => safeNumericValue($result, 'entry'),
-            'stop_loss' => safeNumericValue($result, 'stop_loss'),
-            'take_profit' => safeNumericValue($result, 'take_profit'),
-            'fee' => safeNumericValue($result, 'fee'),
-            'potential_profit' => safeNumericValue($result, 'potential_profit'),
-            'potential_loss' => safeNumericValue($result, 'potential_loss'),
-            'indicators' => $indicators,
-            'notes' => safeValue($result, 'notes', ''),
+            'confidence' => (float) ($result->confidence ?? 50),
+            'risk_reward' => $result->risk_reward ?? '1:1',
+            'entry' => (float) ($result->entry ?? 0),
+            'stop_loss' => (float) ($result->stop_loss ?? 0),
+            'take_profit' => (float) ($result->take_profit ?? 0),
+            'indicators' => array_map(function($value) {
+                return is_numeric($value) ? (float) $value : $value;
+            }, (array) ($result->indicators ?? [])),
+            'notes' => $result->notes ?? '',
             'last_updated' => now()->format('Y-m-d H:i:s'),
-            'analysis_type' => safeValue($result, 'title', 'Analysis')
+            'analysis_type' => $result->title ?? 'Analysis'
         ];
     }
 

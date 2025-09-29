@@ -2,7 +2,7 @@
 
 namespace App\Analysis;
 
-class SupportResistanceAnalysis implements AnalysisInterface
+class SimpleMaAnalysis implements AnalysisInterface
 {
     protected array $indicators = [];
     protected string $notes = '';
@@ -21,7 +21,7 @@ class SupportResistanceAnalysis implements AnalysisInterface
         }
 
         // Get historical data
-        $historicalData = $this->apiProvider->getHistoricalData($symbol, $timeframe, 200);
+        $historicalData = $this->apiProvider->getHistoricalData($symbol, $timeframe, 100);
 
         if (empty($historicalData)) {
             throw new \Exception('No historical data available');
@@ -37,56 +37,54 @@ class SupportResistanceAnalysis implements AnalysisInterface
         // Calculate indicators
         $ma20 = $this->calculateSMA($closePrices, 20);
         $ma50 = $this->calculateSMA($closePrices, 50);
-        $support = min(array_slice($closePrices, -50));
-        $resistance = max(array_slice($closePrices, -50));
 
-        // Determine signal based on MA crossover
+        // Determine signal
         $signal = $this->getSignal($ma20, $ma50, $closePrices);
 
-        // Calculate suggested entry price based on support/resistance levels
-        $suggestedEntry = $this->calculateSuggestedEntry($signal, $currentPrice, $support, $resistance);
+        // Calculate suggested entry price (different from current price)
+        $suggestedEntry = $this->calculateSuggestedEntry($signal, $currentPrice);
 
-        // Calculate trading levels
-        $levels = $this->calculateLevels($signal, $suggestedEntry, $support, $resistance);
+        // Calculate trading levels (simple version)
+        $levels = $this->calculateLevels($signal, $suggestedEntry, $ma20, $ma50);
 
         // Set indicators
         $this->indicators = [
             'MA20' => round($ma20, 4),
             'MA50' => round($ma50, 4),
-            'Support' => round($support, 4),
-            'Resistance' => round($resistance, 4),
             'Current_Price' => round($currentPrice, 4),
             'Suggested_Entry' => round($suggestedEntry, 4)
         ];
 
         return (object)[
-            'title' => "Support & Resistance Analysis for {$symbol} ({$timeframe})",
+            'title' => "Simple MA Analysis for {$symbol} ({$timeframe})",
             'description' => $this->getDescription(),
             'signal' => $signal,
-            'confidence' => 75,
+            'confidence' => 70,
             'entry' => $suggestedEntry,  // Suggested entry price
             'price' => $currentPrice,    // Current market price
             'stop_loss' => $levels['stop_loss'],
             'take_profit' => $levels['take_profit'],
             'risk_reward' => $levels['risk_reward'],
+            'indicators' => $this->indicators,
+            'notes' => $this->notes
         ];
     }
 
     public function getCode(): string
     {
-        return 'support_resistance';
+        return 'simple_ma';
     }
 
     public function getName(): string
     {
-        return 'Fibonacci Support/Resistance Strategy';
+        return 'Simple MA 20/50 Analysis';
     }
 
     public function getDescription(): string
     {
-        return 'MA 20/50 crossover dengan support/resistance analysis. '
-              . 'Entry point saat MA20 cross di atas MA50 (BUY) atau di bawah MA50 (SELL). '
-              . 'Stop loss di bawah support/resistance, take profit di resistance/support level.';
+        return 'Simple Moving Average analysis using MA20 and MA50. '
+              . 'BUY signal when MA20 crosses above MA50 and price is above MA20. '
+              . 'SELL signal when MA20 crosses below MA50 and price is below MA20.';
     }
 
     public function getIndicators(): array
@@ -117,55 +115,59 @@ class SupportResistanceAnalysis implements AnalysisInterface
     }
 
     /**
-     * Get signal based on MA crossover
+     * Get signal based on MA crossover and price position
      */
     private function getSignal(float $ma20, float $ma50, array $prices): string
     {
         $currentPrice = end($prices);
 
-        // Check for MA crossover
-        if (count($prices) >= 50) {
+        // Check for crossover if we have enough data
+        if (count($prices) >= 51) { // Need at least 51 candles for previous calculation
             $prevPrices = array_slice($prices, 0, -1);
             $prevMa20 = $this->calculateSMA($prevPrices, 20);
             $prevMa50 = $this->calculateSMA($prevPrices, 50);
 
-            // Bullish crossover: MA20 crosses above MA50
-            if ($prevMa20 <= $prevMa50 && $ma20 > $ma50) {
-                $this->notes = "MA20 crossed above MA50 - bullish signal";
+            // Bullish crossover: MA20 crosses above MA50 and price > MA20
+            if ($prevMa20 <= $prevMa50 && $ma20 > $ma50 && $currentPrice > $ma20) {
+                $this->notes = "MA20 crossed above MA50 and price is above MA20 - BUY signal";
                 return 'BUY';
             }
 
-            // Bearish crossover: MA20 crosses below MA50
-            if ($prevMa20 >= $prevMa50 && $ma20 < $ma50) {
-                $this->notes = "MA20 crossed below MA50 - bearish signal";
+            // Bearish crossover: MA20 crosses below MA50 and price < MA20
+            if ($prevMa20 >= $prevMa50 && $ma20 < $ma50 && $currentPrice < $ma20) {
+                $this->notes = "MA20 crossed below MA50 and price is below MA20 - SELL signal";
                 return 'SELL';
             }
         }
 
         // No crossover, check current trend
         if ($ma20 > $ma50 && $currentPrice > $ma20) {
-            $this->notes = "Bullish trend - MA20 > MA50";
+            $this->notes = "MA20 > MA50 and price > MA20 - bullish trend";
             return 'BUY';
         } elseif ($ma20 < $ma50 && $currentPrice < $ma20) {
-            $this->notes = "Bearish trend - MA20 < MA50";
+            $this->notes = "MA20 < MA50 and price < MA20 - bearish trend";
             return 'SELL';
         }
 
-        $this->notes = "No clear signal";
+        $this->notes = "No clear signal - waiting for crossover";
         return 'NEUTRAL';
     }
 
     /**
-     * Calculate suggested entry price based on support/resistance levels
+     * Calculate suggested entry price (different from current price)
      */
-    private function calculateSuggestedEntry(string $signal, float $currentPrice, float $support, float $resistance): float
+    private function calculateSuggestedEntry(string $signal, float $currentPrice): float
     {
+        // Add a small buffer to current price as entry suggestion
+        // This accounts for slippage and provides a more realistic entry point
+        $buffer = 0.001; // 0.1% buffer
+
         if ($signal === 'BUY') {
-            // For BUY, suggest entry above support level
-            return $support * 1.01; // 1% above support
+            // For BUY, suggest entry slightly above current price
+            return $currentPrice * (1 + $buffer);
         } elseif ($signal === 'SELL') {
-            // For SELL, suggest entry below resistance level
-            return $resistance * 0.99; // 1% below resistance
+            // For SELL, suggest entry slightly below current price
+            return $currentPrice * (1 - $buffer);
         } else {
             // For NEUTRAL, use current price
             return $currentPrice;
@@ -173,22 +175,22 @@ class SupportResistanceAnalysis implements AnalysisInterface
     }
 
     /**
-     * Calculate trading levels
+     * Calculate trading levels (simplified)
      */
-    private function calculateLevels(string $signal, float $entryPrice, float $support, float $resistance): array
+    private function calculateLevels(string $signal, float $entryPrice, float $ma20, float $ma50): array
     {
         $stopLoss = 0;
         $takeProfit = 0;
 
         if ($signal === 'BUY') {
-            $stopLoss = $support * 0.98; // Below support
-            $takeProfit = $resistance * 1.02; // Above resistance
+            $stopLoss = min($ma50, $ma20) * 0.98; // Below the lower MA
+            $takeProfit = $entryPrice * 1.05; // 5% profit target from entry
         } elseif ($signal === 'SELL') {
-            $stopLoss = $resistance * 1.02; // Above resistance
-            $takeProfit = $support * 0.98; // Below support
+            $stopLoss = max($ma50, $ma20) * 1.02; // Above the higher MA
+            $takeProfit = $entryPrice * 0.95; // 5% profit target from entry
         } else {
-            $stopLoss = $support * 0.95;
-            $takeProfit = $resistance * 1.05;
+            $stopLoss = $entryPrice * 0.95;
+            $takeProfit = $entryPrice * 1.05;
         }
 
         $risk = abs($entryPrice - $stopLoss);
@@ -204,8 +206,6 @@ class SupportResistanceAnalysis implements AnalysisInterface
 
     /**
      * Get the current price of the analyzed symbol
-     *
-     * @return float The current price in USD
      */
     public function getCurrentPrice(): float
     {

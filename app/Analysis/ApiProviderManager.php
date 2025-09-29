@@ -18,10 +18,19 @@ class ApiProviderManager
     }
 
     /**
-     * Initialize CoinGecko API provider only
+     * Initialize API providers
      */
     private function initializeProviders(): void
     {
+        // Initialize Binance API provider (higher priority)
+        try {
+            $provider = new \App\Analysis\Providers\BinanceApiProvider();
+            $this->providers[$provider->getCode()] = $provider;
+        } catch (\Exception $e) {
+            Log::error("Failed to initialize Binance API provider: " . $e->getMessage());
+        }
+
+        // Initialize CoinGecko API provider (fallback)
         try {
             $provider = new \App\Analysis\Providers\CoinGeckoApiProvider();
             $this->providers[$provider->getCode()] = $provider;
@@ -105,21 +114,34 @@ class ApiProviderManager
     }
 
     /**
-     * Get current price from CoinGecko
+     * Get current price from Binance (primary) or CoinGecko (fallback)
      */
     public function getCurrentPrice(string $symbol): float
     {
-        $provider = $this->providers['coingecko'] ?? null;
+        // Try Binance first (higher priority)
+        $binanceProvider = $this->providers['binance'] ?? null;
+        if ($binanceProvider && $binanceProvider->isAvailable()) {
+            try {
+                $price = $binanceProvider->getCurrentPrice($symbol);
+                if ($price > 0) {
+                    return $price;
+                }
+            } catch (\Exception $e) {
+                Log::warning("Binance API failed for {$symbol}, trying CoinGecko: " . $e->getMessage());
+            }
+        }
 
-        if (!$provider || !$provider->isAvailable()) {
-            throw new \Exception("CoinGecko API provider is not available");
+        // Fallback to CoinGecko
+        $coingeckoProvider = $this->providers['coingecko'] ?? null;
+        if (!$coingeckoProvider || !$coingeckoProvider->isAvailable()) {
+            throw new \Exception("No API providers available for getting current price");
         }
 
         try {
             // Get CoinGecko coin ID for the symbol
             $coinId = $this->getCoinGeckoCoinId($symbol);
 
-            $price = $provider->getCurrentPrice($coinId);
+            $price = $coingeckoProvider->getCurrentPrice($coinId);
 
             if ($price > 0) {
                 return $price;
@@ -130,6 +152,41 @@ class ApiProviderManager
             Log::error("CoinGecko API failed for {$symbol}: " . $e->getMessage());
             throw new \Exception("Failed to get current price for {$symbol}: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Get current prices from both Binance and CoinGecko APIs
+     */
+    public function getPricesFromBothAPIs(string $symbol): array
+    {
+        $prices = [
+            'binance' => null,
+            'coingecko' => null,
+            'symbol' => $symbol
+        ];
+
+        // Get price from Binance
+        $binanceProvider = $this->providers['binance'] ?? null;
+        if ($binanceProvider && $binanceProvider->isAvailable()) {
+            try {
+                $prices['binance'] = $binanceProvider->getCurrentPrice($symbol);
+            } catch (\Exception $e) {
+                Log::warning("Failed to get price from Binance for {$symbol}: " . $e->getMessage());
+            }
+        }
+
+        // Get price from CoinGecko
+        $coingeckoProvider = $this->providers['coingecko'] ?? null;
+        if ($coingeckoProvider && $coingeckoProvider->isAvailable()) {
+            try {
+                $coinId = $this->getCoinGeckoCoinId($symbol);
+                $prices['coingecko'] = $coingeckoProvider->getCurrentPrice($coinId);
+            } catch (\Exception $e) {
+                Log::warning("Failed to get price from CoinGecko for {$symbol}: " . $e->getMessage());
+            }
+        }
+
+        return $prices;
     }
 
     /**

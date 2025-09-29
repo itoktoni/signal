@@ -48,6 +48,15 @@ interface ApiProviderInterface
     public function getMultipleTickers(array $symbols): array;
 
     /**
+     * Get current price for a symbol
+     *
+     * @param string $symbol The trading pair symbol (e.g., 'BTCUSDT', 'bitcoin')
+     * @return float The current price
+     * @throws \Exception When API call fails
+     */
+    public function getCurrentPrice(string $symbol): float;
+
+    /**
      * Get symbol information and trading rules
      *
      * @param string|null $symbol Specific symbol to get info for, null for all

@@ -67,9 +67,10 @@ class AnalysisServiceFactory
 
             $instance = new $className();
 
-            // If ApiProviderManager is provided, inject the API provider
+            // If ApiProviderManager is provided, inject the API provider (prefer Binance)
             if ($apiManager && method_exists($instance, 'setApiProvider')) {
-                $provider = $apiManager->getProvider('coingecko');
+                // Try Binance first (higher priority), fallback to CoinGecko
+                $provider = $apiManager->getProvider('binance') ?? $apiManager->getProvider('coingecko');
                 if ($provider) {
                     $instance->setApiProvider($provider);
                 }
@@ -83,9 +84,10 @@ class AnalysisServiceFactory
 
         $instance = new $defaultClass();
 
-        // If ApiProviderManager is provided, inject the API provider
+        // If ApiProviderManager is provided, inject the API provider (prefer Binance)
         if ($apiManager && method_exists($instance, 'setApiProvider')) {
-            $provider = $apiManager->getProvider('coingecko');
+            // Try Binance first (higher priority), fallback to CoinGecko
+            $provider = $apiManager->getProvider('binance') ?? $apiManager->getProvider('coingecko');
             if ($provider) {
                 $instance->setApiProvider($provider);
             }

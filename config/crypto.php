@@ -40,11 +40,17 @@ return [
     ],
 
 
-    // API Provider Configuration - Only CoinGecko
+    // API Provider Configuration
     'api_providers' => [
-        'default' => 'coingecko',
-        'fallback_enabled' => false,
+        'default' => 'binance',
+        'fallback_enabled' => true,
         'providers' => [
+            'binance' => [
+                'name' => 'Binance API',
+                'enabled' => true,
+                'base_url' => 'https://api.binance.com/api/v3/',
+                'timeout' => 30,
+            ],
             'coingecko' => [
                 'name' => 'CoinGecko API',
                 'enabled' => true,

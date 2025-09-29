@@ -28,10 +28,14 @@
                 <div class="col-12 col-md-8">
                     <h1 class="mb-2">
                         <i class="bi bi-graph-up"></i>
-                        @php
-                            $analysisMethods = \App\Analysis\AnalysisServiceFactory::getAvailableMethods();
-                        @endphp
-                        {{ $crypto_analysis['analysis_type'] ?? ($analysisMethods[$analyst_method] ?? 'Basic Analysis') }}
+                        {{ $crypto_analysis['analysis_type'] ?? ($analysis_methods[$analyst_method] ?? 'Basic Analysis') }}
+                        <br>
+                        @if($current_provider)
+                            <small class="text-muted d-block mt-1">
+                                <i class="bi bi-cloud-arrow-down"></i>
+                                Using {{ $current_provider->getName() }} API
+                            </small>
+                        @endif
                     </h1>
                     <p class="mb-0">
                         <i class="bi bi-currency-bitcoin"></i>
@@ -42,12 +46,6 @@
                 </div>
                 <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
                     @if (isset($crypto_analysis) && !isset($crypto_analysis['error']))
-                        @php
-                            $signal = $crypto_analysis['signal'] ?? 'NEUTRAL';
-                            $signalClass = $signal === 'BUY' ? 'buy' : ($signal === 'SELL' ? 'sell' : 'neutral');
-                            $signalText =
-                                $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
-                        @endphp
                         <span class="signal-badge {{ $signalClass }}">
                             {{ $signalText }}
                         </span>
@@ -61,38 +59,6 @@
             <div class="col-12">
                 <x-card title="📊 Crypto Analysis Results">
                     @if (isset($crypto_analysis) && !isset($crypto_analysis['error']))
-                        @php
-                            // Standardized analysis result structure from all analysis services
-                            $signal = $crypto_analysis['signal'] ?? 'NEUTRAL';
-                            $confidence = $crypto_analysis['confidence'] ?? 0;
-                            $rrRatio = $crypto_analysis['risk_reward'] ?? 0;
-                            // Updated to match the new standardized format with unified fields
-                            $entry = $crypto_analysis['entry'] ?? 0;
-                            $stopLoss = $crypto_analysis['stop_loss'] ?? 0;
-                            $takeProfit = $crypto_analysis['take_profit'] ?? 0;
-                            $fee = $crypto_analysis['fee'] ?? 0;
-                            $potentialProfit = $crypto_analysis['potential_profit'] ?? 0;
-                            $potentialLoss = $crypto_analysis['potential_loss'] ?? 0;
-                            $title = $crypto_analysis['title'] ?? 'Analysis';
-
-                            // Calculate IDR values
-                            $exchangeRate = 16000; // Default exchange rate
-                            $entryUsd = $entry;
-                            $entryIdr = $entry * $exchangeRate;
-                            $stopLossUsd = $stopLoss;
-                            $stopLossIdr = $stopLoss * $exchangeRate;
-                            $takeProfitUsd = $takeProfit;
-                            $takeProfitIdr = $takeProfit * $exchangeRate;
-                            $feeUsd = $fee;
-                            $feeIdr = $fee * $exchangeRate;
-                            $potentialProfitUsd = $potentialProfit;
-                            $potentialProfitIdr = $potentialProfit * $exchangeRate;
-                            $potentialLossUsd = abs($potentialLoss);
-                            $potentialLossIdr = abs($potentialLoss) * $exchangeRate;
-
-                            $signalClass = $signal === 'BUY' ? 'buy' : ($signal === 'SELL' ? 'sell' : 'neutral');
-                            $signalText = $signal === 'BUY' ? '📈 LONG' : ($signal === 'SELL' ? '📉 SHORT' : '⏸️ NEUTRAL');
-                        @endphp
 
                         <!-- Key Metrics Overview -->
                         <div class="crypto-card">
@@ -114,11 +80,21 @@
                                     </div>
 
                                     <div class="crypto-data-item">
-                                        <div class="crypto-data-label">Current Price</div>
+                                        <div class="crypto-data-label">Current Prices</div>
                                         <div class="crypto-data-value crypto-price-usd">
-                                            ${{ number_format($entryUsd, 3) }}
+                                            @if(isset($current_prices['binance']) && $current_prices['binance'])
+                                                Binance: ${{ number_format($current_prices['binance'], 3) }}
+                                            @else
+                                                Binance: N/A
+                                            @endif
                                         </div>
-                                        <div class="crypto-price-idr">Rp {{ number_format($entryIdr, 0) }}</div>
+                                        <div class="crypto-price-idr">
+                                            @if(isset($current_prices['coingecko']) && $current_prices['coingecko'])
+                                                CoinGecko: ${{ number_format($current_prices['coingecko'], 3) }}
+                                            @else
+                                                CoinGecko: N/A
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -134,7 +110,7 @@
                             <div class="crypto-card-body">
                                 <div class="crypto-data-grid">
                                     <div class="crypto-data-item">
-                                        <div class="crypto-data-label">Entry Point</div>
+                                        <div class="crypto-data-label">Suggested Entry</div>
                                         <div class="crypto-data-value crypto-price-usd">
                                             ${{ number_format($entryUsd, 3) }}</div>
                                         <div class="crypto-price-idr">Rp {{ number_format($entryIdr, 0) }}</div>
@@ -157,91 +133,7 @@
                             </div>
                         </div>
 
-                        <!-- Fee Information
-                        <div class="crypto-card">
-                            <div class="crypto-card-header">
-                                <h3 class="crypto-card-title">
-                                    <i class="bi bi-currency-dollar"></i> Fee Information
-                                </h3>
-                            </div>
-                            <div class="crypto-card-body">
-                                <div class="crypto-data-grid">
-                                    <div class="crypto-data-item">
-                                        <div class="crypto-data-label">Total Fee (USD)</div>
-                                        <div class="crypto-data-value">${{ number_format($feeUsd, 4) }}</div>
-                                        @if ($amount > 0)
-                                            <div class="crypto-price-idr">
-                                                ({{ number_format(($feeUsd / $amount) * 100, 2) }}% of
-                                                trade)</div>
-                                        @endif
-                                    </div>
-                                    <div class="crypto-data-item">
-                                        <div class="crypto-data-label">Total Fee (IDR)</div>
-                                        <div class="crypto-data-value">Rp {{ number_format($feeIdr, 0) }}</div>
-                                        @if ($amount > 0)
-                                            <div class="crypto-price-idr">
-                                                ({{ number_format(($feeIdr / ($amount * 16000)) * 100, 2) }}% of trade)
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                                @if (isset($crypto_analysis['fee']) &&
-                                        is_array($crypto_analysis['fee']) &&
-                                        isset($crypto_analysis['fee']['description']))
-                                    <div class="mt-3 p-3 bg-light rounded">
-                                        <small class="text-muted">{{ $crypto_analysis['fee']['description'] }}</small>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-
-                        -->
-
-                        <!-- Profit/Loss Potential
-                        <div class="crypto-card">
-                            <div class="crypto-card-header">
-                                <h3 class="crypto-card-title">
-                                    <i class="bi bi-graph-up-arrow"></i> Profit & Loss Potential
-                                </h3>
-                            </div>
-                            <div class="crypto-card-body">
-                                <div class="crypto-data-grid">
-                                    <div class="crypto-data-item">
-                                        <div class="crypto-data-label">Potential Profit</div>
-                                        <div class="crypto-data-value crypto-profit-positive">
-                                            ${{ number_format($potentialProfitUsd, 2) }}</div>
-                                        <div class="crypto-price-idr crypto-profit-positive">Rp
-                                            {{ number_format($potentialProfitIdr, 0) }}</div>
-                                        @if ($amount > 0)
-                                            <div class="crypto-price-idr">
-                                                ({{ number_format(($potentialProfitUsd / $amount) * 100, 1) }}%)</div>
-                                        @endif
-                                    </div>
-                                    <div class="crypto-data-item">
-                                        <div class="crypto-data-label">Potential Loss</div>
-                                        <div class="crypto-data-value crypto-profit-negative">
-                                            ${{ number_format($potentialLossUsd, 2) }}</div>
-                                        <div class="crypto-price-idr crypto-profit-negative">Rp
-                                            {{ number_format($potentialLossIdr, 0) }}</div>
-                                        @if ($amount > 0)
-                                            <div class="crypto-price-idr">
-                                                ({{ number_format((abs($potentialLossUsd) / $amount) * 100, 1) }}%)</div>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        -->
-
                         <!-- Technical Indicators -->
-                        @php
-                            $hasIndicators = false;
-                            if (isset($crypto_analysis['indicators']) && is_array($crypto_analysis['indicators'])) {
-                                $indicators = $crypto_analysis['indicators'];
-                                $hasIndicators = !empty($indicators);
-                            }
-                        @endphp
 
                         <!-- Analysis Description -->
                         @if (isset($crypto_analysis['description']) && !empty($crypto_analysis['description']))
@@ -314,12 +206,23 @@
                             </div>
                         @endif
 
-                        <!-- Chart for Support Resistance Analysis -->
-                        @if ($analyst_method === 'support_resistance' && !empty($historical_data))
+                        <!-- Chart for Analysis -->
+                        @if (($analyst_method === 'support_resistance' || $analyst_method === 'simple_ma') && !empty($historical_data))
                             <div class="crypto-card">
                                 <div class="crypto-card-header">
                                     <h3 class="crypto-card-title">
-                                        <i class="bi bi-graph-up"></i> Price Chart with Support & Resistance
+                                        <i class="bi bi-graph-up"></i>
+                                        @if($analyst_method === 'support_resistance')
+                                            Price Chart with Support & Resistance
+                                        @elseif($analyst_method === 'simple_ma')
+                                            Price Chart with MA 20/50
+                                        @endif
+                                        @if($current_provider)
+                                            <small class="text-muted d-block mt-1">
+                                                <i class="bi bi-cloud-arrow-down"></i>
+                                                Powered by {{ $current_provider->getName() }}
+                                            </small>
+                                        @endif
                                     </h3>
                                 </div>
                                 <div class="crypto-card-body">
@@ -480,6 +383,10 @@
 
         .crypto-grid-cols-3 {
             grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .crypto-grid-cols-4 {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
         }
 
         .crypto-section-title {
@@ -670,7 +577,8 @@
         @media (max-width: 768px) {
 
             .crypto-grid-cols-2,
-            .crypto-grid-cols-3 {
+            .crypto-grid-cols-3,
+            .crypto-grid-cols-4 {
                 grid-template-columns: 1fr;
             }
 
@@ -684,7 +592,7 @@
         }
     </style>
 
-    @if ($analyst_method === 'support_resistance' && !empty($historical_data))
+    @if (($analyst_method === 'support_resistance' || $analyst_method === 'simple_ma') && !empty($historical_data))
     <script type="module">
         import { createChart, ColorType } from 'https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.mjs';
 
@@ -729,17 +637,19 @@
             });
         }
 
-        // Get support and resistance levels
-        const supportLevel = indicators.Support ? parseFloat(indicators.Support) : null;
-        const resistanceLevel = indicators.Resistance ? parseFloat(indicators.Resistance) : null;
+        // Get support and resistance levels (only for support_resistance method)
+        const supportLevel = (@json($analyst_method) === 'support_resistance' && indicators.Support) ? parseFloat(indicators.Support) : null;
+        const resistanceLevel = (@json($analyst_method) === 'support_resistance' && indicators.Resistance) ? parseFloat(indicators.Resistance) : null;
 
-        // Get MA levels
+        // Get MA levels (for both methods)
         const ma20Level = indicators.MA20 ? parseFloat(indicators.MA20) : null;
         const ma50Level = indicators.MA50 ? parseFloat(indicators.MA50) : null;
 
         // Get entry and take profit levels from analysis result
         const entryLevel = @json($crypto_analysis['entry'] ?? null);
+        const stopLossLevel = @json($crypto_analysis['stop_loss'] ?? null);
         const takeProfitLevel = @json($crypto_analysis['take_profit'] ?? null);
+        const currentPriceLevel = @json($crypto_analysis['price'] ?? null); // Current market price
 
         // Create chart
         const chart = createChart(document.getElementById('tradingview-chart'), {
@@ -819,12 +729,12 @@
             candlestickSeries.createPriceLine(resistanceLine);
         }
 
-        // Add entry line
+        // Add entry line (BLACK)
         if (entryLevel) {
             const entryLine = {
                 price: parseFloat(entryLevel),
-                color: '#4CAF50',
-                lineWidth: 2,
+                color: '#000000', // Black
+                lineWidth: 3,
                 lineStyle: 0, // Solid
                 axisLabelVisible: true,
                 title: 'Entry',
@@ -832,17 +742,43 @@
             candlestickSeries.createPriceLine(entryLine);
         }
 
-        // Add take profit line
+        // Add stop loss line (RED)
+        if (stopLossLevel) {
+            const stopLossLine = {
+                price: parseFloat(stopLossLevel),
+                color: '#F44336', // Red
+                lineWidth: 3,
+                lineStyle: 0, // Solid
+                axisLabelVisible: true,
+                title: 'Stop Loss',
+            };
+            candlestickSeries.createPriceLine(stopLossLine);
+        }
+
+        // Add take profit line (GREEN)
         if (takeProfitLevel) {
             const takeProfitLine = {
                 price: parseFloat(takeProfitLevel),
-                color: '#2196F3',
-                lineWidth: 2,
+                color: '#4CAF50', // Green
+                lineWidth: 3,
                 lineStyle: 0, // Solid
                 axisLabelVisible: true,
                 title: 'Take Profit',
             };
             candlestickSeries.createPriceLine(takeProfitLine);
+        }
+
+        // Add current price line (BLUE)
+        if (currentPriceLevel) {
+            const currentPriceLine = {
+                price: parseFloat(currentPriceLevel),
+                color: '#2196F3', // Blue
+                lineWidth: 2,
+                lineStyle: 0, // Solid
+                axisLabelVisible: true,
+                title: 'Current Price',
+            };
+            candlestickSeries.createPriceLine(currentPriceLine);
         }
 
 
