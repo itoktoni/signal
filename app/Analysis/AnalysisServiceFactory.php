@@ -65,23 +65,33 @@ class AnalysisServiceFactory
         if (isset($classes[$method])) {
             $className = $classes[$method]['class'];
 
-            // If ApiProviderManager is provided, inject it
-            if ($apiManager) {
-                return new $className($apiManager);
+            $instance = new $className();
+
+            // If ApiProviderManager is provided, inject the API provider
+            if ($apiManager && method_exists($instance, 'setApiProvider')) {
+                $provider = $apiManager->getProvider('coingecko');
+                if ($provider) {
+                    $instance->setApiProvider($provider);
+                }
             }
 
-            return new $className();
+            return $instance;
         }
 
         // Default to first available analysis or MA Analysis
         $defaultClass = $classes[array_key_first($classes)]['class'] ?? \App\Analysis\SimpleAnalysis::class;
 
-        // If ApiProviderManager is provided, inject it
-        if ($apiManager) {
-            return new $defaultClass($apiManager);
+        $instance = new $defaultClass();
+
+        // If ApiProviderManager is provided, inject the API provider
+        if ($apiManager && method_exists($instance, 'setApiProvider')) {
+            $provider = $apiManager->getProvider('coingecko');
+            if ($provider) {
+                $instance->setApiProvider($provider);
+            }
         }
 
-        return new $defaultClass();
+        return $instance;
     }
 
     /**

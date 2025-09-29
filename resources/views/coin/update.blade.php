@@ -701,9 +701,41 @@
             close: parseFloat(item[4])
         }));
 
+        // Calculate MA20 and MA50 data points
+        const ma20Data = [];
+        const ma50Data = [];
+
+        for (let i = 19; i < candlestickData.length; i++) {
+            // MA20
+            let sum20 = 0;
+            for (let j = i - 19; j <= i; j++) {
+                sum20 += candlestickData[j].close;
+            }
+            ma20Data.push({
+                time: candlestickData[i].time,
+                value: sum20 / 20
+            });
+        }
+
+        for (let i = 49; i < candlestickData.length; i++) {
+            // MA50
+            let sum50 = 0;
+            for (let j = i - 49; j <= i; j++) {
+                sum50 += candlestickData[j].close;
+            }
+            ma50Data.push({
+                time: candlestickData[i].time,
+                value: sum50 / 50
+            });
+        }
+
         // Get support and resistance levels
         const supportLevel = indicators.Support ? parseFloat(indicators.Support) : null;
         const resistanceLevel = indicators.Resistance ? parseFloat(indicators.Resistance) : null;
+
+        // Get MA levels
+        const ma20Level = indicators.MA20 ? parseFloat(indicators.MA20) : null;
+        const ma50Level = indicators.MA50 ? parseFloat(indicators.MA50) : null;
 
         // Get entry and take profit levels from analysis result
         const entryLevel = @json($crypto_analysis['entry'] ?? null);
@@ -745,13 +777,29 @@
 
         candlestickSeries.setData(candlestickData);
 
+        // Add MA20 line series
+        const ma20LineSeries = chart.addLineSeries({
+            color: '#FF6B35',
+            lineWidth: 2,
+            title: 'MA20',
+        });
+        ma20LineSeries.setData(ma20Data);
+
+        // Add MA50 line series
+        const ma50LineSeries = chart.addLineSeries({
+            color: '#4CAF50',
+            lineWidth: 2,
+            title: 'MA50',
+        });
+        ma50LineSeries.setData(ma50Data);
+
         // Add support line
         if (supportLevel) {
             const supportLine = {
                 price: supportLevel,
-                color: '#2196F3',
-                lineWidth: 2,
-                lineStyle: 0, // Solid
+                color: '#00C853', // Green for support
+                lineWidth: 3,
+                lineStyle: 2, // Dotted
                 axisLabelVisible: true,
                 title: 'Support',
             };
@@ -762,9 +810,9 @@
         if (resistanceLevel) {
             const resistanceLine = {
                 price: resistanceLevel,
-                color: '#FF9800',
-                lineWidth: 2,
-                lineStyle: 0, // Solid
+                color: '#FF1744', // Red for resistance
+                lineWidth: 3,
+                lineStyle: 2, // Dotted
                 axisLabelVisible: true,
                 title: 'Resistance',
             };
@@ -796,6 +844,7 @@
             };
             candlestickSeries.createPriceLine(takeProfitLine);
         }
+
 
         // Fit content
         chart.timeScale().fitContent();
