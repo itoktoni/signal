@@ -165,6 +165,20 @@ class CoinController extends Controller
             // Convert the new result structure to match the existing view expectations
             $cryptoAnalysis = $this->convertAnalysisResult($result, $model->coin_code ?? 'BTCUSDT');
 
+            // Fetch historical data for chart if support resistance analysis
+            $historicalData = [];
+            if ($analystMethod === 'support_resistance') {
+                try {
+                    $historicalData = $apiManager->getHistoricalData($model->coin_code ?? 'BTCUSDT', '1h', 100);
+                } catch (\Exception $e) {
+                    Log::warning('Failed to fetch historical data for chart', [
+                        'coin_code' => $model->coin_code ?? 'Unknown',
+                        'error' => $e->getMessage()
+                    ]);
+                    $historicalData = [];
+                }
+            }
+
         } catch (\Exception $e) {
             // Log the error and return error response
             Log::error('Crypto analysis failed', [
@@ -180,6 +194,7 @@ class CoinController extends Controller
                 'current_price' => null,
                 'analysis' => null
             ];
+            $historicalData = [];
         }
 
         $coin = Coin::getOptions('coin_code', 'coin_code');
@@ -190,6 +205,7 @@ class CoinController extends Controller
             'crypto_analysis' => $cryptoAnalysis,
             'amount' => $amount,
             'analyst_method' => $analystMethod,
+            'historical_data' => $historicalData,
         ]));
     }
 

@@ -314,6 +314,20 @@
                             </div>
                         @endif
 
+                        <!-- Chart for Support Resistance Analysis -->
+                        @if ($analyst_method === 'support_resistance' && !empty($historical_data))
+                            <div class="crypto-card">
+                                <div class="crypto-card-header">
+                                    <h3 class="crypto-card-title">
+                                        <i class="bi bi-graph-up"></i> Price Chart with Support & Resistance
+                                    </h3>
+                                </div>
+                                <div class="crypto-card-body">
+                                    <div id="tradingview-chart" style="width: 100%; height: 400px;"></div>
+                                </div>
+                            </div>
+                        @endif
+
                         <!-- Analysis Notes -->
                         @if (isset($crypto_analysis['notes']) && !empty($crypto_analysis['notes']))
                             <div class="crypto-card">
@@ -669,5 +683,130 @@
             }
         }
     </style>
+
+    @if ($analyst_method === 'support_resistance' && !empty($historical_data))
+    <script type="module">
+        import { createChart, ColorType } from 'https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.mjs';
+
+        // Historical data from PHP
+        const historicalData = @json($historical_data);
+        const indicators = @json($crypto_analysis['indicators'] ?? []);
+
+        // Convert historical data to chart format
+        const candlestickData = historicalData.map(item => ({
+            time: Math.floor(item[0] / 1000), // Convert milliseconds to seconds
+            open: parseFloat(item[1]),
+            high: parseFloat(item[2]),
+            low: parseFloat(item[3]),
+            close: parseFloat(item[4])
+        }));
+
+        // Get support and resistance levels
+        const supportLevel = indicators.Support ? parseFloat(indicators.Support) : null;
+        const resistanceLevel = indicators.Resistance ? parseFloat(indicators.Resistance) : null;
+
+        // Get entry and take profit levels from analysis result
+        const entryLevel = @json($crypto_analysis['entry'] ?? null);
+        const takeProfitLevel = @json($crypto_analysis['take_profit'] ?? null);
+
+        // Create chart
+        const chart = createChart(document.getElementById('tradingview-chart'), {
+            layout: {
+                background: { type: ColorType.Solid, color: 'white' },
+                textColor: '#333',
+            },
+            width: document.getElementById('tradingview-chart').clientWidth,
+            height: 400,
+            grid: {
+                vertLines: { color: '#e1e1e1' },
+                horzLines: { color: '#e1e1e1' },
+            },
+            crosshair: {
+                mode: 1,
+            },
+            rightPriceScale: {
+                borderColor: '#cccccc',
+            },
+            timeScale: {
+                borderColor: '#cccccc',
+                timeVisible: true,
+                secondsVisible: false,
+            },
+        });
+
+        // Add candlestick series
+        const candlestickSeries = chart.addCandlestickSeries({
+            upColor: '#00C853',
+            downColor: '#FF1744',
+            borderVisible: false,
+            wickUpColor: '#00C853',
+            wickDownColor: '#FF1744',
+        });
+
+        candlestickSeries.setData(candlestickData);
+
+        // Add support line
+        if (supportLevel) {
+            const supportLine = {
+                price: supportLevel,
+                color: '#2196F3',
+                lineWidth: 2,
+                lineStyle: 0, // Solid
+                axisLabelVisible: true,
+                title: 'Support',
+            };
+            candlestickSeries.createPriceLine(supportLine);
+        }
+
+        // Add resistance line
+        if (resistanceLevel) {
+            const resistanceLine = {
+                price: resistanceLevel,
+                color: '#FF9800',
+                lineWidth: 2,
+                lineStyle: 0, // Solid
+                axisLabelVisible: true,
+                title: 'Resistance',
+            };
+            candlestickSeries.createPriceLine(resistanceLine);
+        }
+
+        // Add entry line
+        if (entryLevel) {
+            const entryLine = {
+                price: parseFloat(entryLevel),
+                color: '#4CAF50',
+                lineWidth: 2,
+                lineStyle: 0, // Solid
+                axisLabelVisible: true,
+                title: 'Entry',
+            };
+            candlestickSeries.createPriceLine(entryLine);
+        }
+
+        // Add take profit line
+        if (takeProfitLevel) {
+            const takeProfitLine = {
+                price: parseFloat(takeProfitLevel),
+                color: '#2196F3',
+                lineWidth: 2,
+                lineStyle: 0, // Solid
+                axisLabelVisible: true,
+                title: 'Take Profit',
+            };
+            candlestickSeries.createPriceLine(takeProfitLine);
+        }
+
+        // Fit content
+        chart.timeScale().fitContent();
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            chart.applyOptions({
+                width: document.getElementById('tradingview-chart').clientWidth
+            });
+        });
+    </script>
+    @endif
 
 </x-layout>

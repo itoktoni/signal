@@ -19,6 +19,7 @@
         "vite": "^7.0.4"
     },
     "dependencies": {
+        "lightweight-charts": "^5.0.8",
         "sweetalert2": "^11.23.0",
         "tom-select": "^2.4.3"
     }
