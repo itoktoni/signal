@@ -297,7 +297,11 @@
                                                                         {{ number_format($value, 4) }}
                                                                     @endif
                                                                 @else
-                                                                    {{ $value }}
+                                                                    @if (is_array($value))
+                                                                        {{ json_encode($value) }}
+                                                                    @else
+                                                                        {{ $value }}
+                                                                    @endif
                                                                 @endif
                                                             </span>
                                                         </td>

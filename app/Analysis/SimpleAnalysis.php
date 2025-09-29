@@ -289,9 +289,12 @@ class SimpleAnalysis implements AnalysisInterface
             'ema50' => $ema50,
             'ema200' => $ema200,
             'rsi' => $rsi,
-            'macd' => $macd,
+            'macd' => $macd['macd'], // Extract scalar value from array
+            'macd_signal' => $macd['signal'], // Extract scalar value from array
             'stochRsi' => $stochRsi,
-            'bbands' => $bbands,
+            'bbands_upper' => $bbands['upper'], // Extract scalar value from array
+            'bbands_middle' => $bbands['middle'], // Extract scalar value from array
+            'bbands_lower' => $bbands['lower'], // Extract scalar value from array
             'atr' => $atr,
         ];
     }
@@ -305,9 +308,9 @@ class SimpleAnalysis implements AnalysisInterface
         $prevPrice = prev($prices);
 
         // Simple buy/sell signals based on indicators
-        if ($indicators['rsi'] < 30 && $indicators['macd']['macd'] > $indicators['macd']['signal']) {
+        if ($indicators['rsi'] < 30 && $indicators['macd'] > $indicators['macd_signal']) {
             $signals[] = 'BUY';
-        } elseif ($indicators['rsi'] > 70 && $indicators['macd']['macd'] < $indicators['macd']['signal']) {
+        } elseif ($indicators['rsi'] > 70 && $indicators['macd'] < $indicators['macd_signal']) {
             $signals[] = 'SELL';
         }
 

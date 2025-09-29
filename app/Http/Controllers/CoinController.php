@@ -7,6 +7,8 @@ use App\Traits\ControllerHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Analysis\AnalysisServiceFactory;
+use App\Analysis\ApiProviderManager;
+use App\Settings\Settings;
 use App\Enums\AnalysisType;
 
 class CoinController extends Controller
@@ -128,7 +130,16 @@ class CoinController extends Controller
     {
         $code = request('coin_code', $code);
 
+        // Validate that the coin code exists
         $model = $this->model->find($code);
+
+        // If coin doesn't exist in database, redirect with error
+        if (!$model) {
+            return redirect()->route($this->module('getData'))
+                ->with('error', "Coin '{$code}' not found. Please select a valid cryptocurrency.");
+        }
+
+        // Skip API provider validation - allow any symbol for analysis
 
         // Get trading amount from query parameter (default to 100)
         $amount = floatval(request('amount', 100));
@@ -143,8 +154,12 @@ class CoinController extends Controller
 
         // Perform analysis using selected method
         try {
+            // Create API provider manager
+            $settings = app(Settings::class);
+            $apiManager = new ApiProviderManager($settings);
+
             // Use selected analysis service with dynamic amount
-            $analysisService = AnalysisServiceFactory::create($analystMethod);
+            $analysisService = AnalysisServiceFactory::create($analystMethod, $apiManager);
             $result = $analysisService->analyze($model->coin_code ?? 'BTCUSDT', $amount);
 
             // Convert the new result structure to match the existing view expectations
@@ -219,5 +234,6 @@ class CoinController extends Controller
             'analysis_type' => safeValue($result, 'title', 'Analysis')
         ];
     }
+
 
 }

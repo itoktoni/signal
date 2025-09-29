@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Models\Group;
 use App\Models\Menu;
+use App\Settings\Settings;
+use App\Settings\Drivers\FileDriver;
 use Illuminate\Support\Facades;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\View;
@@ -15,7 +17,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Bind Settings to FileDriver
+        $this->app->singleton(Settings::class, function ($app) {
+            $driver = new FileDriver(['path' => storage_path('app/settings.json')]);
+            return new Settings($driver);
+        });
     }
 
     /**
