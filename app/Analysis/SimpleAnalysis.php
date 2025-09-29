@@ -106,7 +106,7 @@ class SimpleAnalysis implements AnalysisInterface
             ]);
 
             // Generate recommendation
-            $recommendation = $this->generateRecommendation($signals, $currentPrice, $amount);
+            $recommendation = $this->generateRecommendation($signals, $currentPrice, $amount, $indicators);
 
             Log::info("SimpleAnalysis: Generated recommendation", [
                 'recommendation' => $recommendation
@@ -146,7 +146,7 @@ class SimpleAnalysis implements AnalysisInterface
     public function getName(): string { return 'Multi-Timeframe Advanced Analysis'; }
     public function getDescription(): string
     {
-        return 'Analisis multi-timeframe (1h,4h,1d) dengan filter EMA200, indikator RSI, MACD, Stochastic RSI, Bollinger Bands, ATR, Volume. Menggunakan risk/reward nyata dan confidence threshold.';
+        return 'Analisis multi-timeframe (1h,4h,1d) dengan filter EMA200, indikator RSI, MACD, Stochastic RSI, Bollinger Bands, ATR, Volume. Menggunakan risk/reward nyata dan confidence threshold. Includes trend analysis, trendline breaks, support/resistance breaks.';
     }
     public function getIndicators(): array { return $this->indicators; }
     public function getNotes(): string { return $this->notes; }
@@ -173,6 +173,20 @@ class SimpleAnalysis implements AnalysisInterface
                 break;
         }
 
+        // Trend analysis notes
+        if (isset($indicators['is_bullish'])) {
+            $notes[] = $indicators['is_bullish'] ? "The trend is still bullish." : "The trend is bearish or neutral.";
+        }
+        if (isset($indicators['trendline_broken'])) {
+            $notes[] = $indicators['trendline_broken'] ? "Trendline has been broken." : "Trendline is intact.";
+        }
+        if (isset($indicators['support_broken'])) {
+            $notes[] = $indicators['support_broken'] ? "Support level has been broken." : "Support level is holding.";
+        }
+        if (isset($indicators['resistance_broken'])) {
+            $notes[] = $indicators['resistance_broken'] ? "Resistance level has been broken." : "Resistance level is intact.";
+        }
+
         // Indicator-based notes
         if (isset($indicators['rsi'])) {
             $rsi = $indicators['rsi'];
@@ -195,7 +209,7 @@ class SimpleAnalysis implements AnalysisInterface
 
         // Risk/Reward note
         if (isset($recommendation['risk_reward_ratio'])) {
-            $notes[] = "Risk-reward ratio: {$recommendation['risk_reward_ratio']}.";
+            $notes[] = "Risk-reward ratio: 1:{$recommendation['risk_reward_ratio']}.";
         }
 
         return implode(" ", $notes);
@@ -318,6 +332,45 @@ class SimpleAnalysis implements AnalysisInterface
         ];
     }
 
+    // New helper: Identify support and resistance levels using recent highs/lows
+    private function identifySupportResistance(array $highs, array $lows, int $window = 20): array {
+        $window = min($window, count($highs));
+        if ($window < 2) {
+            return ['support' => 0, 'resistance' => 0];
+        }
+
+        $recentHighs = array_slice($highs, -$window);
+        $recentLows = array_slice($lows, -$window);
+
+        $resistance = max($recentHighs);
+        $support = min($recentLows);
+
+        return ['support' => $support, 'resistance' => $resistance];
+    }
+
+    // New helper: Check if trend is bullish (price above EMA200 and EMA20 > EMA50)
+    private function isBullish(array $indicators, float $currentPrice): bool {
+        return $currentPrice > $indicators['ema200'] && $indicators['ema20'] > $indicators['ema50'];
+    }
+
+    // New helper: Check if trendline broken (e.g., crossed EMA200 downwards for bullish trend break)
+    private function isTrendlineBroken(array $closes, float $ema200, float $currentPrice): bool {
+        $lastClose = end($closes);
+        $prevClose = prev($closes);
+        return ($prevClose > $ema200 && $lastClose < $ema200) || ($prevClose < $ema200 && $lastClose > $ema200);
+    }
+
+    // New helper: Check if support or resistance broken
+    private function isSupportBroken(float $currentPrice, float $support, array $closes): bool {
+        $lastClose = end($closes);
+        return $lastClose < $support && $currentPrice < $support;
+    }
+
+    private function isResistanceBroken(float $currentPrice, float $resistance, array $closes): bool {
+        $lastClose = end($closes);
+        return $lastClose > $resistance && $currentPrice > $resistance;
+    }
+
     private function calculateIndicators(array $prices): array
     {
         // Extract data for calculations
@@ -336,6 +389,7 @@ class SimpleAnalysis implements AnalysisInterface
         $stochRsi = $this->stochasticRsi($closes, min(14, count($closes)));
         $bbands = $this->bollingerBands($closes, min(20, count($closes)), 2);
         $atr = $this->atr($highs, $lows, $closes, min(14, count($closes)));
+        $srLevels = $this->identifySupportResistance($highs, $lows);
 
         return [
             'ema20' => $ema20,
@@ -349,6 +403,8 @@ class SimpleAnalysis implements AnalysisInterface
             'bbands_middle' => $bbands['middle'], // Extract scalar value from array
             'bbands_lower' => $bbands['lower'], // Extract scalar value from array
             'atr' => $atr,
+            'support' => $srLevels['support'],
+            'resistance' => $srLevels['resistance'],
         ];
     }
 
@@ -357,43 +413,153 @@ class SimpleAnalysis implements AnalysisInterface
         $signals = [];
 
         // Get the last price data
+        $closes = array_column($prices, 'close');
         $lastPrice = end($prices);
-        $prevPrice = prev($prices);
+        $prevPrice = prev($prices) ?: $lastPrice; // Fallback to last price if prevPrice is unavailable
 
-        // Simple buy/sell signals based on indicators
-        if ($indicators['rsi'] < 30 && $indicators['macd'] > $indicators['macd_signal']) {
+        // Trend analysis
+        $indicators['is_bullish'] = $this->isBullish($indicators, $currentPrice);
+        $indicators['trendline_broken'] = $this->isTrendlineBroken($closes, $indicators['ema200'], $currentPrice);
+        $indicators['support_broken'] = $this->isSupportBroken($currentPrice, $indicators['support'], $closes);
+        $indicators['resistance_broken'] = $this->isResistanceBroken($currentPrice, $indicators['resistance'], $closes);
+
+        // Calculate signal strength based on multiple indicators
+        $signalStrength = 0;
+
+        // RSI signals
+        if ($indicators['rsi'] < 35) { // Relaxed from 30 to 35 for more sensitivity
+            $signalStrength += 0.3; // Stronger buy signal
+        } elseif ($indicators['rsi'] > 65) { // Relaxed from 70 to 65
+            $signalStrength -= 0.3; // Stronger sell signal
+        }
+
+        // MACD signals
+        if ($indicators['macd'] > $indicators['macd_signal']) {
+            $signalStrength += 0.3; // Bullish momentum
+        } elseif ($indicators['macd'] < $indicators['macd_signal']) {
+            $signalStrength -= 0.3; // Bearish momentum
+        }
+
+        // Trend signals
+        if ($indicators['is_bullish']) {
+            $signalStrength += 0.2;
+        } elseif ($indicators['trendline_broken']) {
+            $signalStrength -= 0.2; // Trend break suggests reversal
+        }
+
+        // Support/Resistance signals
+        if ($indicators['resistance_broken']) {
+            $signalStrength += 0.3; // Breakout bullish signal
+        } elseif ($indicators['support_broken']) {
+            $signalStrength -= 0.3; // Breakdown bearish signal
+        }
+
+        // Volume confirmation (check if volume is increasing)
+        $recentVolumes = array_slice($volumes, -5);
+        $avgVolume = array_sum($recentVolumes) / max(1, count($recentVolumes));
+        $lastVolume = end($recentVolumes);
+        if ($lastVolume > $avgVolume * 1.2) { // Volume spike
+            $signalStrength *= 1.2; // Amplify signal strength with volume confirmation
+        }
+
+        // Generate signals based on signal strength
+        if ($signalStrength >= 0.5) {
             $signals[] = 'BUY';
-        } elseif ($indicators['rsi'] > 70 && $indicators['macd'] < $indicators['macd_signal']) {
+        } elseif ($signalStrength <= -0.5) {
             $signals[] = 'SELL';
         }
 
         return $signals;
     }
 
-    private function generateRecommendation(array $signals, float $currentPrice, float $amount): array
+    private function generateRecommendation(array $signals, float $currentPrice, float $amount, array $indicators): array
     {
+        $atr = $indicators['atr'] ?? 0;
+        $risk = $amount * 0.01; // 1% risk per trade
+        $positionSize = ($atr > 0 && $currentPrice > 0) ? ($risk / $atr) : ($amount / $currentPrice);
+
+        // Calculate dynamic confidence based on indicator alignment
+        $confidence = 50; // Base confidence
+        $rsi = $indicators['rsi'] ?? 50;
+        $macd_diff = abs($indicators['macd'] - $indicators['macd_signal']) / max(0.01, abs($indicators['macd']));
+        $is_bullish = $indicators['is_bullish'] ?? false;
+        $trendline_broken = $indicators['trendline_broken'] ?? false;
+        $support_broken = $indicators['support_broken'] ?? false;
+        $resistance_broken = $indicators['resistance_broken'] ?? false;
+
+        // Adjust confidence based on indicators
+        if ($rsi < 35 || $rsi > 65) {
+            $confidence += 10; // Strong RSI signal
+        }
+        if ($macd_diff > 0.1) {
+            $confidence += 10; // Strong MACD signal
+        }
+        if ($is_bullish) {
+            $confidence += 10; // Bullish trend adds confidence
+        }
+        if ($trendline_broken) {
+            $confidence -= 10; // Trend break reduces confidence
+        }
+        if ($resistance_broken || $support_broken) {
+            $confidence += 15; // Breakout/breakdown adds confidence
+        }
+        $confidence = min(90, max(30, $confidence)); // Clamp between 30-90
+
+        // Ensure stop-loss and take-profit are realistic
+        $stopLoss = $currentPrice - ($atr * 1);
+        $targetPrice = $currentPrice + ($atr * 3); // Aiming for 1:3 RR
+        if ($atr <= 0) {
+            // Fallback if ATR is invalid
+            $stopLoss = $currentPrice * 0.99; // 1% below entry
+            $targetPrice = $currentPrice * 1.03; // 3% above entry for 1:3 RR
+        }
+        // Ensure stop-loss is positive
+        $stopLoss = max($stopLoss, $currentPrice * 0.5); // Prevent negative or unrealistic stop-loss
+
+        // Calculate risk-reward ratio
+        $risk = ($currentPrice - $stopLoss);
+        $reward = ($targetPrice - $currentPrice);
+        $riskReward = ($risk > 0) ? abs($reward / $risk) : 1;
+
         if (in_array('BUY', $signals)) {
             return [
                 'action' => 'BUY',
-                'confidence' => 75,
-                'target_price' => $currentPrice * 1.05,
-                'stop_loss' => $currentPrice * 0.95,
-                'risk_reward_ratio' => 1.5,
+                'confidence' => $confidence,
+                'target_price' => $targetPrice,
+                'stop_loss' => $stopLoss,
+                'risk_reward_ratio' => round($riskReward, 2),
+                'position_size' => round($positionSize, 2),
             ];
         } elseif (in_array('SELL', $signals)) {
+            $stopLoss = $currentPrice + ($atr * 1);
+            $targetPrice = $currentPrice - ($atr * 3); // Aiming for 1:3 RR
+            if ($atr <= 0) {
+                $stopLoss = $currentPrice * 1.01; // 1% above entry
+                $targetPrice = $currentPrice * 0.97; // 3% below entry for 1:3 RR
+            }
+            $targetPrice = max($targetPrice, $currentPrice * 0.5); // Ensure target_price is positive
+            $risk = ($stopLoss - $currentPrice);
+            $reward = ($currentPrice - $targetPrice);
+            $riskReward = ($risk > 0) ? abs($reward / $risk) : 1;
             return [
                 'action' => 'SELL',
-                'confidence' => 75,
-                'target_price' => $currentPrice * 0.95,
-                'stop_loss' => $currentPrice * 1.05,
-                'risk_reward_ratio' => 1.5,
+                'confidence' => $confidence,
+                'target_price' => $targetPrice,
+                'stop_loss' => $stopLoss,
+                'risk_reward_ratio' => round($riskReward, 2),
+                'position_size' => round($positionSize, 2),
             ];
         }
 
+        // Default case with dynamic stop-loss and take-profit
         return [
             'action' => 'HOLD',
-            'confidence' => 50,
+            'confidence' => $confidence,
+            'target_price' => $targetPrice,
+            'stop_loss' => $stopLoss,
+            'risk_reward_ratio' => round($riskReward, 2),
             'message' => 'No strong signals detected',
+            'position_size' => round($positionSize, 2),
         ];
     }
 }
