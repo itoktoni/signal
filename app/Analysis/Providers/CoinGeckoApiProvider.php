@@ -16,11 +16,11 @@ class CoinGeckoApiProvider implements ApiProviderInterface
 
     public function __construct()
     {
-        $this->config = config('crypto.api_providers.providers.coingecko', []);
-        $this->rateLimitInfo = [
-            'requests_remaining' => $this->config['rate_limits']['requests_per_minute'] ?? 50,
-            'requests_per_minute' => $this->config['rate_limits']['requests_per_minute'] ?? 50,
-        ];
+        // $this->config = config('crypto.api_providers.providers.coingecko', []);
+        // $this->rateLimitInfo = [
+        //     'requests_remaining' => $this->config['rate_limits']['requests_per_minute'] ?? 50,
+        //     'requests_per_minute' => $this->config['rate_limits']['requests_per_minute'] ?? 50,
+        // ];
 
         $headers = [
             'User-Agent' => 'Laravel-Crypto-Analysis/1.0',
@@ -33,7 +33,7 @@ class CoinGeckoApiProvider implements ApiProviderInterface
         }
 
         $this->client = new Client([
-            'base_uri' => rtrim($this->config['base_url'] ?? 'https://api.coingecko.com/api/v3', '/') . '/',
+            'base_uri' => rtrim($this->config['base_url'] ?? 'https://api.coingecko.com/api/v3/', '/') . '/',
             'timeout' => $this->config['timeout'] ?? 30,
             'headers' => $headers,
         ]);
@@ -66,10 +66,10 @@ class CoinGeckoApiProvider implements ApiProviderInterface
             // Convert interval to days for CoinGecko
             $days = $this->convertIntervalToDays($interval, $limit);
 
-            $response = $this->client->get("/coins/{$coinId}/ohlc", [
+            $response = $this->client->get("coins/{$coinId}/ohlc", [
                 'query' => [
                     'vs_currency' => 'usd',
-                    'days' => min($days, 90), // CoinGecko free plan limit
+                    'days' => min($days, 90), // CoinGecko free plan supports up to 90 days
                 ],
             ]);
 
@@ -222,44 +222,49 @@ class CoinGeckoApiProvider implements ApiProviderInterface
 
     public function getSymbolInfo(?string $symbol = null): array
     {
-        $cacheKey = "coingecko_symbol_info";
+        // $cacheKey = "coingecko_symbol_info";
 
-        // Check cache first
-        $cached = Cache::get($cacheKey);
-        if ($cached && config('crypto.api_providers.fallback_enabled', true)) {
-            return $cached;
-        }
+        // // Check cache first
+        // $cached = Cache::get($cacheKey);
+        // if ($cached && config('crypto.api_providers.fallback_enabled', true)) {
+        //     return $cached;
+        // }
 
         try {
-            $params = [];
-            if ($symbol) {
-                $coinIds = $this->getCoinIdsFromSymbol($symbol);
-                if (!empty($coinIds)) {
-                    $params['ids'] = implode(',', $coinIds);
-                }
-            }
+            // $params = [];
+            // if ($symbol) {
+            //     $coinIds = $this->getCoinIdsFromSymbol($symbol);
+            //     if (!empty($coinIds)) {
+            //         $params['ids'] = implode(',', $coinIds);
+            //     }
+            // }
 
-            $response = $this->client->get('/coins/markets', [
-                'query' => array_merge($params, [
-                    'vs_currency' => 'usd',
-                    'order' => 'market_cap_desc',
-                    'per_page' => 250,
-                    'page' => 1,
-                    'sparkline' => 'false',
-                ]),
+            $curl = curl_init();
+
+            curl_setopt_array($curl, [
+            CURLOPT_URL => "https://api.coingecko.com/api/v3/coins/list", // Ganti dari pro-api ke api
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            // Hapus header API key jika pakai versi gratis
             ]);
 
-            $data = json_decode($response->getBody()->getContents(), true);
 
-            if (!is_array($data)) {
-                throw new \Exception('Invalid response from CoinGecko API');
-            }
+            $response = curl_exec($curl);
+            $err = curl_error($curl);
+
+            curl_close($curl);
+
+            $data = json_decode($response, true);
 
             // Update rate limit info
-            $this->updateRateLimitInfo($response);
+            //$this->updateRateLimitInfo($response);
 
             // Cache the result
-            Cache::put($cacheKey, $data, now()->addMinutes(30));
+            // Cache::put($cacheKey, $data, now()->addMinutes(30));
 
             return $data;
 
@@ -287,7 +292,7 @@ class CoinGeckoApiProvider implements ApiProviderInterface
                 throw new \Exception("No CoinGecko coin ID found for symbol: {$symbol}");
             }
 
-            $response = $this->client->get('/simple/price', [
+            $response = $this->client->get('coins/list', [
                 'query' => [
                     'ids' => implode(',', $coinIds),
                     'vs_currencies' => 'usd',
@@ -429,17 +434,21 @@ class CoinGeckoApiProvider implements ApiProviderInterface
     private function convertIntervalToDays(string $interval, int $limit): int
     {
         // Convert interval to approximate days for CoinGecko
+        // Use fixed days parameter that works with CoinGecko free API
         $intervalDays = [
             '1m' => 1,
-            '5m' => 1,
-            '15m' => 2,
-            '30m' => 3,
-            '1h' => 3,
-            '4h' => 7,
-            '1d' => max(30, $limit),
+            '5m' => 7,    // Minimum 7 days for short intervals
+            '15m' => 14,  // Minimum 14 days for medium intervals
+            '30m' => 30,  // 30 days for longer intervals
+            '1h' => 30,   // 30 days for 1h interval
+            '4h' => 90,   // 90 days for 4h interval (max for free)
+            '1d' => 90,   // 90 days for daily (max for free)
         ];
 
-        return $intervalDays[$interval] ?? 30;
+        $days = $intervalDays[$interval] ?? 30;
+
+        // Ensure minimum days for sufficient data points
+        return max($days, 7);
     }
 
     private function convertCoinGeckoToBinanceFormat(array $coingeckoData, string $interval): array

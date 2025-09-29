@@ -210,7 +210,7 @@ return [
 
     // API Provider Configuration
     'api_providers' => [
-        'default' => env('DEFAULT_API_PROVIDER', 'coinpaprika'),
+        'default' => env('DEFAULT_API_PROVIDER', 'coingecko'),
         'fallback_enabled' => env('API_FALLBACK_ENABLED', true),
         'rate_limit_cache_duration' => env('API_RATE_LIMIT_CACHE', 300), // 5 minutes
         'providers' => [
@@ -229,85 +229,16 @@ return [
             ],
             'coingecko' => [
                 'name' => 'CoinGecko API',
-                'priority' => 2, // Third priority
+                'priority' => 0, // Highest priority (default)
                 'enabled' => env('COINGECKO_API_ENABLED', true),
-                'base_url' => env('COINGECKO_API_URL', 'https://api.coingecko.com/api/v3'),
-                'api_key' => env('COINGECKO_API_KEY', ''),
+                'base_url' => env('COINGECKO_API_URL', 'https://api.coingecko.com/api/v3/'),
+                'api_key' => env('COINGECKO_API_KEY', ''), // Optional for free tier
                 'timeout' => env('COINGECKO_API_TIMEOUT', 30),
                 'retry_attempts' => env('COINGECKO_API_RETRY', 3),
                 'retry_delay' => env('COINGECKO_API_RETRY_DELAY', 2000),
                 'rate_limits' => [
                     'requests_per_minute' => env('COINGECKO_RATE_LIMIT', 50),
                     'requests_per_second' => env('COINGECKO_RATE_LIMIT_SECOND', 2),
-                ],
-            ],
-            'coincappro' => [
-                'name' => 'CoinCap Pro API',
-                'priority' => 0, // Highest priority
-                'enabled' => env('COINCAPPRO_API_ENABLED', true),
-                'base_url' => env('COINCAPPRO_API_URL', 'https://pro.coincap.io/'),
-                'api_key' => env('COINCAPPRO_API_KEY', ''), // Requires API key
-                'timeout' => env('COINCAPPRO_API_TIMEOUT', 30),
-                'retry_attempts' => env('COINCAPPRO_API_RETRY', 3),
-                'retry_delay' => env('COINCAPPRO_API_RETRY_DELAY', 2000),
-                'rate_limits' => [
-                    'requests_per_minute' => env('COINCAPPRO_RATE_LIMIT', 1000),
-                    'requests_per_second' => env('COINCAPPRO_RATE_LIMIT_SECOND', 5),
-                ],
-            ],
-            'freecryptoapi' => [
-                'name' => 'Free Crypto API',
-                'priority' => 3, // Fourth priority
-                'enabled' => env('FREECRYPTOAPI_ENABLED', true),
-                'base_url' => env('FREECRYPTOAPI_URL', 'https://freecryptoapi.com/api/v1'),
-                'api_key' => env('FREECRYPTOAPI_KEY', 'xccc177q0n8g9cf3t43n'),
-                'timeout' => env('FREECRYPTOAPI_TIMEOUT', 30),
-                'retry_attempts' => env('FREECRYPTOAPI_RETRY', 3),
-                'retry_delay' => env('FREECRYPTOAPI_RETRY_DELAY', 3000),
-                'rate_limits' => [
-                    'requests_per_minute' => env('FREECRYPTOAPI_RATE_LIMIT', 100),
-                    'requests_per_second' => env('FREECRYPTOAPI_RATE_LIMIT_SECOND', 2),
-                ],
-            ],
-            'coinlore' => [
-                'name' => 'CoinLore API',
-                'priority' => 4, // Fifth priority (fallback)
-                'enabled' => env('COINLORE_API_ENABLED', true),
-                'base_url' => env('COINLORE_API_URL', 'https://api.coinlore.net/api'),
-                'api_key' => env('COINLORE_API_KEY', ''), // Optional API key
-                'timeout' => env('COINLORE_API_TIMEOUT', 30),
-                'retry_attempts' => env('COINLORE_API_RETRY', 3),
-                'retry_delay' => env('COINLORE_API_RETRY_DELAY', 3000),
-                'rate_limits' => [
-                    'requests_per_minute' => env('COINLORE_RATE_LIMIT', 100),
-                    'requests_per_second' => env('COINLORE_RATE_LIMIT_SECOND', 2),
-                ],
-            ],
-            'coinpaprika' => [
-                'name' => 'Coinpaprika API',
-                'priority' => 0, // Highest priority (default)
-                'enabled' => env('COINPAPRIKA_API_ENABLED', true),
-                'base_url' => env('COINPAPRIKA_API_URL', 'https://api.coinpaprika.com/v1'),
-                'api_key' => env('COINPAPRIKA_API_KEY', ''), // Optional API key
-                'timeout' => env('COINPAPRIKA_API_TIMEOUT', 30),
-                'retry_attempts' => env('COINPAPRIKA_API_RETRY', 3),
-                'retry_delay' => env('COINPAPRIKA_API_RETRY_DELAY', 1000),
-                'rate_limits' => [
-                    'requests_per_minute' => env('COINPAPRIKA_RATE_LIMIT', 20000), // Free plan
-                    'requests_per_second' => env('COINPAPRIKA_RATE_LIMIT_SECOND', 10),
-                ],
-            ],
-            'coindesk' => [
-                'name' => 'CoinDesk API',
-                'priority' => 7, // Lower priority
-                'enabled' => env('COINDESK_API_ENABLED', true),
-                'base_url' => env('COINDESK_API_URL', 'https://api.coindesk.com/v1/'),
-                'timeout' => env('COINDESK_API_TIMEOUT', 30),
-                'retry_attempts' => env('COINDESK_API_RETRY', 3),
-                'retry_delay' => env('COINDESK_API_RETRY_DELAY', 2000),
-                'rate_limits' => [
-                    'requests_per_minute' => env('COINDESK_RATE_LIMIT', 1000), // Free plan
-                    'requests_per_second' => env('COINDESK_RATE_LIMIT_SECOND', 5),
                 ],
             ],
         ],

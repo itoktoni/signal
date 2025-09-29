@@ -24,12 +24,7 @@ class ApiProviderManager
     {
         $providerClasses = [
             \App\Analysis\Providers\BinanceApiProvider::class,
-            \App\Analysis\Providers\CoinCapProProvider::class,
             \App\Analysis\Providers\CoinGeckoApiProvider::class,
-            \App\Analysis\Providers\FreeCryptoApiProvider::class,
-            \App\Analysis\Providers\CoinLoreApiProvider::class,
-            \App\Analysis\Providers\CoinpaprikaApiProvider::class,
-            \App\Analysis\Providers\CoinDeskApiProvider::class,
         ];
 
         foreach ($providerClasses as $providerClass) {

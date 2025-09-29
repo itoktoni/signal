@@ -13,7 +13,7 @@
                     <div class="row">
                         <x-select name="perpage" label="Page" :options="['10' => '10', '20' => '20', '50' => '50', '100' => '100']" :value="request('perpage', 10)" col="1" id="perpage-select"/>
                         <x-select name="coin_watch" :options="[null => 'Select Watch', 1 => 'Watch']" :value="request('coin_watch', null)" col="3"/>
-                        <x-select name="filter" :options="[null => 'All Filter', 'coin_code' => 'Code', 'coin_base' => 'Name']" :value="request('filter', 'All Filter')" col="3"/>
+                        <x-select name="filter" :options="[null => 'All Filter', 'coin_code' => 'Code', 'coin_name' => 'Name']" :value="request('filter', 'All Filter')" col="3"/>
                         <x-input name="search" type="text" placeholder="Enter search term" :value="request('search')" col="4"/>
                     </div>
                     <div class="form-actions">
@@ -29,6 +29,8 @@
                                     <th class="checkbox-column"><input type="checkbox" class="checkall" /></th>
                                     <th class="text-center actions">Actions</th>
                                     <th>Code</th>
+                                    <th>Symbol</th>
+                                    <th>Name</th>
                                     <th>Price USD</th>
                                     <th>Price IDR</th>
                                 </tr>
@@ -54,6 +56,8 @@
                                             </div>
                                         </td>
                                         <td data-label="Code"><span class="{{ $item->coin_watch ? 'text-watch' : '' }}">{{ $item->coin_code }}</span></td>
+                                        <td data-label="Symbol">{{ $item->coin_symbol }}</td>
+                                        <td data-label="Name">{{ $item->coin_name }}</td>
                                         <td data-label="Price USD">{{ $item->coin_price_usd }}</td>
                                         <td data-label="Price IDR">{{ number_format($item->coin_price_idr) }}</td>
                                     </tr>
