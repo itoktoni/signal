@@ -248,6 +248,9 @@ class CoinGeckoApiProvider implements ApiProviderInterface
         //     return $cached;
         // }
 
+          ini_set('memory_limit', '512M');
+          set_time_limit(0);
+
         try {
             // $params = [];
             // if ($symbol) {
@@ -267,7 +270,7 @@ class CoinGeckoApiProvider implements ApiProviderInterface
             CURLOPT_TIMEOUT => 30,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "GET",
-            // Hapus header API key jika pakai versi gratis
+                //  "x-cg-pro-api-key: env('COINGECKO_API_KEY')" // Ganti dari X-CMC_PRO_API_KEY ke x-cg-pro-api-key
             ]);
 
 
