@@ -8,8 +8,7 @@ use App\Models\Coin;
 use App\Traits\ControllerHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Analysis\Providers\BinanceProvider;
-use App\Analysis\Providers\CoingeckoProvider;
+use App\Analysis\Providers\ProviderFactory;
 
 class CoinController extends Controller
 {
@@ -132,7 +131,8 @@ class CoinController extends Controller
         $coinCode = request('coin_code', $code);
         $timeframe = request('timeframe', '4h');
         $amount = max(1, floatval(request('amount', 100)));
-        $analystMethod = request('analyst_method', 'simple_ma');
+        $analystMethod = request('analyst_method', 'default_analysis');
+        $providerType = request('provider', 'binance');
 
         // Find coin model
         $model = $this->model->find($coinCode);
@@ -146,23 +146,26 @@ class CoinController extends Controller
 
         try {
 
-            $defaultApi = env('DEFAULT_API_PROVIDER', 'binance');
+            // Create provider based on user selection using factory pattern
+            try {
+                $provider = ProviderFactory::createProvider($providerType);
 
-            if($defaultApi == 'binance')
-            {
-                $provider = new BinanceProvider();
-            }
-            else
-            {
-                $provider = new CoingeckoProvider();
-            }
+            } catch (\Exception $e) {
 
-            if($analystMethod == 'keltner_channel')
-            {
-                $analysis = new DefaultAnalysis($provider);
+                // Fallback to default provider
+                $provider = ProviderFactory::createProvider('binance');
             }
 
-            $result = $analysis->analyze('bitcoin', 100, '1h');
+            // Automatically create analysis service based on selected method
+            try {
+
+                $analysis = AnalysisServiceFactory::createAnalysis($analystMethod, $provider);
+                $result = $analysis->analyze($coinCode, $amount, $timeframe);
+
+            } catch (\Exception $e) {
+                $result = $this->getError($e);
+            }
+
 
         } catch (\Exception $e) {
             Log::error('Analysis failed', [
@@ -174,20 +177,22 @@ class CoinController extends Controller
             $result = $this->getError($e);
         }
 
+
         // Get coin options for dropdown
         $coin = Coin::getOptions('coin_code', 'coin_code');
         $method = AnalysisServiceFactory::getAvailableMethods();
 
-        return $this->views($this->module(), $this->share([
+        return $this->views($this->module(), [
             'model' => $model,
             'coin' => $coin->toArray(),
             'amount' => $amount,
             'analyst_method' => $analystMethod,
             'timeframe' => $timeframe,
+            'provider_type' => $providerType,
             'current_provider' => $provider,
             'result' => $result,
             'method' => $method,
-        ]));
+        ]);
     }
 
     private function getError($error)

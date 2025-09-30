@@ -8,13 +8,14 @@
                     <x-select col="3" searchable name="coin_code" :value="request('coin_code', $model->coin_code)" :options="$coin" label="Select Coin"
                         required />
 
-                    <x-select col="5" name="analyst_method" :value="request('analyst_method', 'simple_ma')" :options="$method" label="Select Analysis Method" required />
+                    <x-select col="5" name="analyst_method" :value="request('analyst_method', 'keltner_channel')" :options="$method" label="Select Analysis Method" required />
                     <x-select col="2" name="timeframe" :value="request('timeframe', '4h')" :options="[
                         '1h' => '1 Hour',
                         '4h' => '4 Hours',
                         '1d' => '1 Day',
                         '1w' => '1 Week'
                     ]" label="Timeframe" required />
+                    <x-select col="3" name="provider" :value="request('provider', $provider_type ?? 'binance')" :options="App\Analysis\Providers\ProviderFactory::getAvailableProviders()" label="API Provider" required />
                     <x-input col="2" type="number" name="amount" :value="request('amount', 100)" label="Trade Amount"
                         step="0.01" min="1" placeholder="Enter amount to trade" />
 

@@ -12,7 +12,17 @@ class CoingeckoProvider implements MarketDataInterface
 
     public function __construct()
     {
-        $this->http = new Client(['timeout' => 10]);
+        $headers = [
+            'User-Agent' => 'Laravel-Crypto-Analysis/1.0',
+            'Accept' => 'application/json',
+        ];
+
+        // Add API key if provided
+        if (!empty($this->config['api_key'])) {
+            $headers['x-cg-demo-api-key'] = env('COINGECKO_API_KEY');
+        }
+
+        $this->http = new Client(['timeout' => 10, 'headers' => $headers]);
     }
 
     public function getCode(): string
@@ -30,7 +40,7 @@ class CoingeckoProvider implements MarketDataInterface
         // Coingecko pakai coin id, bukan pair langsung
         $coinId = strtolower(explode('USDT', $symbol)[0]);
 
-        $url = $this->baseUrl . "/coins/{$coinId}/market_chart";
+        $url = $this->baseUrl . "/coins/{$coinId}/ohlc";
         $response = $this->http->get($url, [
             'query' => [
                 'vs_currency' => 'usd',
@@ -42,15 +52,15 @@ class CoingeckoProvider implements MarketDataInterface
 
         // Normalisasi agar mirip format Binance
         $normalized = [];
-        foreach ($data['prices'] as $i => $price) {
+        foreach ($data as $i => $price) {
             $normalized[] = [
-                (string) $price[1], // open
+                (string) $price[0], // open
                 (string) $price[1], // high
-                (string) $price[1], // low
-                (string) $price[1], // close
-                (string) ($data['total_volumes'][$i][1] ?? 0), // volume
-                (int) $price[0], // closeTime
-                '0', '0', '0', '0',
+                (string) $price[2], // low
+                (string) $price[3], // close
+                (string) ($data['total_volumes'][$i][4] ?? 0), // volume
+                (int) $price[2], // closeTime
+                $price[1], $price[1], $price[1], $price[1],
             ];
         }
 

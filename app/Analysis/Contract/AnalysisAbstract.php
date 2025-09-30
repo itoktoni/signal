@@ -70,6 +70,11 @@ abstract class AnalysisAbstract implements MarketDataInterface
             ->where('symbol_api_coin', $symbol)
             ->first();
 
+        if(empty($coin))
+        {
+            return throw new \Exception("Symbol '{$symbol}' not found");
+        }
+
         return $coin->symbol_api_code ?? null;
     }
 

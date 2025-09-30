@@ -12,9 +12,12 @@ class DefaultAnalysis extends AnalysisAbstract
 
     public function analyze(string $symbol, float $amount = 100, string $timeframe = '1h', ?string $forcedApi = null): object
     {
+        // $historicalData = $this->getHistoricalData($symbol, $timeframe, 100);
+
         try {
             // Get historical data
             $historicalData = $this->getHistoricalData($symbol, $timeframe, 100);
+            // dd($historicalData);
 
             if (empty($historicalData) || count($historicalData) < 30) {
                 throw new \Exception('Insufficient historical data. Need at least 30 data points.');
