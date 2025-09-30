@@ -2,6 +2,7 @@
 
 namespace App\Analysis;
 
+use App\Analysis\Contract\MarketDataInterface;
 use App\Enums\AnalysisType;
 
 class AnalysisServiceFactory
@@ -37,7 +38,7 @@ class AnalysisServiceFactory
             if (class_exists($fullClassName)) {
                 try {
                     $reflection = new \ReflectionClass($fullClassName);
-                    if ($reflection->implementsInterface(AnalysisInterface::class) && !$reflection->isAbstract()) {
+                    if ($reflection->implementsInterface(MarketDataInterface::class) && !$reflection->isAbstract()) {
                         $instance = $reflection->newInstanceWithoutConstructor();
                         self::$analysisClasses[$instance->getCode()] = [
                             'class' => $fullClassName,
@@ -55,46 +56,6 @@ class AnalysisServiceFactory
         return self::$analysisClasses;
     }
 
-    /**
-     * Create an analysis service instance based on the method name
-     */
-    public static function create(string $method, ?ApiProviderManager $apiManager = null): AnalysisInterface
-    {
-        $classes = self::discoverAnalysisClasses();
-
-        if (isset($classes[$method])) {
-            $className = $classes[$method]['class'];
-
-            $instance = new $className();
-
-            // If ApiProviderManager is provided, inject the API provider (prefer Binance)
-            if ($apiManager && method_exists($instance, 'setApiProvider')) {
-                // Try Binance first (higher priority), fallback to CoinGecko
-                $provider = $apiManager->getProvider('binance') ?? $apiManager->getProvider('coingecko');
-                if ($provider) {
-                    $instance->setApiProvider($provider);
-                }
-            }
-
-            return $instance;
-        }
-
-        // Default to first available analysis or MA Analysis
-        $defaultClass = $classes[array_key_first($classes)]['class'] ?? \App\Analysis\DefaultAnalysis::class;
-
-        $instance = new $defaultClass();
-
-        // If ApiProviderManager is provided, inject the API provider (prefer Binance)
-        if ($apiManager && method_exists($instance, 'setApiProvider')) {
-            // Try Binance first (higher priority), fallback to CoinGecko
-            $provider = $apiManager->getProvider('binance') ?? $apiManager->getProvider('coingecko');
-            if ($provider) {
-                $instance->setApiProvider($provider);
-            }
-        }
-
-        return $instance;
-    }
 
     /**
      * Get list of available analysis methods for select dropdown

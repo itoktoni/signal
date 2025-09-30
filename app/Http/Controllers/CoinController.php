@@ -2,18 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Analysis\AnalysisServiceFactory;
+use App\Analysis\DefaultAnalysis;
 use App\Models\Coin;
 use App\Traits\ControllerHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Analysis\AnalysisServiceFactory;
-use App\Analysis\ApiProviderManager;
 use App\Analysis\Providers\BinanceProvider;
 use App\Analysis\Providers\CoingeckoProvider;
-use App\Analysis\TestAnalysis;
-use App\Settings\Settings;
-use App\Enums\AnalysisType;
-use ReflectionClass;
 
 class CoinController extends Controller
 {
@@ -134,9 +130,9 @@ class CoinController extends Controller
     {
         // Get parameters
         $coinCode = request('coin_code', $code);
+        $timeframe = request('timeframe', '4h');
         $amount = max(1, floatval(request('amount', 100)));
         $analystMethod = request('analyst_method', 'simple_ma');
-        $timeframe = request('timeframe', '4h');
 
         // Find coin model
         $model = $this->model->find($coinCode);
@@ -151,6 +147,7 @@ class CoinController extends Controller
         try {
 
             $defaultApi = env('DEFAULT_API_PROVIDER', 'binance');
+
             if($defaultApi == 'binance')
             {
                 $provider = new BinanceProvider();
@@ -160,7 +157,11 @@ class CoinController extends Controller
                 $provider = new CoingeckoProvider();
             }
 
-            $analysis = new TestAnalysis($provider);
+            if($analystMethod == 'keltner_channel')
+            {
+                $analysis = new DefaultAnalysis($provider);
+            }
+
             $result = $analysis->analyze('bitcoin', 100, '1h');
 
         } catch (\Exception $e) {
@@ -170,11 +171,12 @@ class CoinController extends Controller
                 'error' => $e->getMessage()
             ]);
 
-            $result = $this->getError();
+            $result = $this->getError($e);
         }
 
         // Get coin options for dropdown
         $coin = Coin::getOptions('coin_code', 'coin_code');
+        $method = AnalysisServiceFactory::getAvailableMethods();
 
         return $this->views($this->module(), $this->share([
             'model' => $model,
@@ -184,17 +186,18 @@ class CoinController extends Controller
             'timeframe' => $timeframe,
             'current_provider' => $provider,
             'result' => $result,
+            'method' => $method,
         ]));
     }
 
-    private function getError()
+    private function getError($error)
     {
         return (Object)[
             'title' => 'Analysis Error',
             'description' => [
                 'title' => 'Analysis Error',
                 'error' => 'Analysis failed',
-                'message' => $e->getMessage(),
+                'message' => $error->getMessage(),
                 'details' => 'Please check your internet connection and API availability'
             ],
             'signal' => 'NEUTRAL',
@@ -206,7 +209,7 @@ class CoinController extends Controller
             'risk_reward' => '1:1',
             'indicators' => [],
             'notes' => [
-                'analysis_notes' => 'Analysis failed: ' . $e->getMessage(),
+                'analysis_notes' => 'Analysis failed: ' . $error->getMessage(),
                 'signal_strength' => 'Unknown - analysis failed',
                 'market_condition' => 'Error state',
                 'risk_assessment' => 'Cannot assess - analysis failed',

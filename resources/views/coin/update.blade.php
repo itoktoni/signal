@@ -8,7 +8,7 @@
                     <x-select col="3" searchable name="coin_code" :value="request('coin_code', $model->coin_code)" :options="$coin" label="Select Coin"
                         required />
 
-                    <x-select col="5" name="analyst_method" :value="request('analyst_method', 'simple_ma')" :options="\App\Analysis\AnalysisServiceFactory::getAvailableMethods()" label="Select Analysis Method" required />
+                    <x-select col="5" name="analyst_method" :value="request('analyst_method', 'simple_ma')" :options="$method" label="Select Analysis Method" required />
                     <x-select col="2" name="timeframe" :value="request('timeframe', '4h')" :options="[
                         '1h' => '1 Hour',
                         '4h' => '4 Hours',

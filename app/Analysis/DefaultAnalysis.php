@@ -2,42 +2,26 @@
 
 namespace App\Analysis;
 
+use App\Analysis\Contract\AnalysisAbstract;
 use Illuminate\Support\Facades\Log;
 
-class DefaultAnalysis implements AnalysisInterface
+class DefaultAnalysis extends AnalysisAbstract
 {
-    protected array $indicators = [];
-    protected string $notes = '';
-    protected ?string $lastAnalyzedSymbol = null;
-
-    protected ?ApiProviderInterface $apiProvider = null;
-    protected float $currentPrice = 0.0;
-
-    public function setApiProvider(ApiProviderInterface $apiProvider): void
-    {
-        $this->apiProvider = $apiProvider;
-    }
+    private $indicators;
+    private $notes;
 
     public function analyze(string $symbol, float $amount = 100, string $timeframe = '1h', ?string $forcedApi = null): object
     {
         try {
-            if (!$this->apiProvider) {
-                throw new \Exception('API Provider not set');
-            }
-
-            Log::info("KeltnerChannel: Starting analysis for {$symbol}");
-
             // Get historical data
-            $historicalData = $this->apiProvider->getHistoricalData($symbol, $timeframe, 100);
+            $historicalData = $this->getHistoricalData($symbol, $timeframe, 100);
 
             if (empty($historicalData) || count($historicalData) < 30) {
                 throw new \Exception('Insufficient historical data. Need at least 30 data points.');
             }
 
             // Get current price
-            $currentPrice = $this->apiProvider->getCurrentPrice($symbol);
-            $this->currentPrice = $currentPrice;
-            $this->lastAnalyzedSymbol = $symbol;
+            $currentPrice = $this->getPrice($symbol);
 
             // Extract prices from historical data
             $closePrices = array_map(fn($candle) => (float) $candle[4], $historicalData);
@@ -84,8 +68,8 @@ class DefaultAnalysis implements AnalysisInterface
                 'take_profit' => $levels['take_profit'],
                 'risk_reward' => $levels['risk_reward'],
                 'indicators' => $this->indicators,
+                'historical' => $historicalData,
                 'notes' => $this->getNotes(),
-                'entry_strategy' => $this->getEntryStrategyFlow()
             ];
 
         } catch (\Exception $e) {
@@ -105,8 +89,8 @@ class DefaultAnalysis implements AnalysisInterface
                 'take_profit' => ($currentPrice ?? 0) * 1.02,
                 'risk_reward' => '1:1',
                 'indicators' => [],
+                'historical' => [],
                 'notes' => $this->getNotes(),
-                'entry_strategy' => $this->getEntryStrategyFlow()
             ];
         }
     }
@@ -121,7 +105,7 @@ class DefaultAnalysis implements AnalysisInterface
         return 'Default Analysis';
     }
 
-    public function getDescription(): array
+    private function getDescription(): array
     {
         return [
             'analysis_type' => 'Keltner Channel Analysis',
@@ -132,12 +116,7 @@ class DefaultAnalysis implements AnalysisInterface
         ];
     }
 
-    public function getIndicators(): array
-    {
-        return $this->indicators;
-    }
-
-    public function getNotes(): array
+    private function getNotes(): array
     {
         return [
             'main_notes' => $this->notes,
@@ -145,18 +124,6 @@ class DefaultAnalysis implements AnalysisInterface
             'market_condition' => $this->analyzeKeltnerMarketCondition(),
             'risk_level' => $this->assessKeltnerRiskLevel(),
             'execution_tips' => $this->getKeltnerExecutionTips()
-        ];
-    }
-
-    public function getEntryStrategyFlow(): array
-    {
-        return [
-            'strategy_name' => 'Keltner Channel Breakout Strategy',
-            'channel_components' => 'Middle: EMA20, Upper: EMA20 + 2×ATR, Lower: EMA20 - 2×ATR',
-            'breakout_signals' => 'BUY on Upper Channel breakout, SELL on Lower Channel breakout',
-            'entry_points' => 'Enter at channel breakout level',
-            'risk_management' => 'Stop Loss: 1.5x ATR from entry, Take Profit: 2:1 R:R ratio',
-            'execution_tips' => 'Wait for candle close above/below channel, Use limit orders at channel levels'
         ];
     }
 
@@ -422,35 +389,5 @@ class DefaultAnalysis implements AnalysisInterface
         if (strpos($this->notes, 'BUY') !== false) return 'BUY';
         if (strpos($this->notes, 'SELL') !== false) return 'SELL';
         return 'NEUTRAL';
-    }
-
-    /**
-     * Get historical data for analysis
-     */
-    public function getHistoricalData(string $symbol, string $timeframe = '1h', int $limit = 200): array
-    {
-        if (!$this->apiProvider) {
-            throw new \Exception('API Provider not set');
-        }
-
-        return $this->apiProvider->getHistoricalData($symbol, $timeframe, $limit);
-    }
-
-    /**
-     * Get current price
-     */
-    public function getPrice(string $symbol): float
-    {
-        if (!$this->apiProvider) {
-            throw new \Exception('API Provider not set');
-        }
-
-        // If we have a stored price and it's for the requested symbol, return it
-        if ($this->currentPrice && $this->lastAnalyzedSymbol === $symbol) {
-            return $this->currentPrice;
-        }
-
-        // Otherwise, fetch fresh price from API
-        return $this->apiProvider->getCurrentPrice($symbol);
     }
 }
