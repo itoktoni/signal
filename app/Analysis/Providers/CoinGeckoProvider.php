@@ -4,6 +4,7 @@ namespace App\Analysis\Providers;
 
 use App\Analysis\Contract\MarketDataInterface;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 class CoingeckoProvider implements MarketDataInterface
 {
@@ -12,17 +13,13 @@ class CoingeckoProvider implements MarketDataInterface
 
     public function __construct()
     {
-        $headers = [
-            'User-Agent' => 'Laravel-Crypto-Analysis/1.0',
-            'Accept' => 'application/json',
-        ];
-
-        // Add API key if provided
-        if (!empty($this->config['api_key'])) {
-            $headers['x-cg-demo-api-key'] = env('COINGECKO_API_KEY');
-        }
-
-        $this->http = new Client(['timeout' => 10, 'headers' => $headers]);
+        $this->http = new Client([
+            'timeout' => 10,
+            'headers' => [
+                'User-Agent' => 'Laravel-Crypto-Analysis/1.0',
+                'Accept' => 'application/json',
+            ]
+        ]);
     }
 
     public function getCode(): string
@@ -37,32 +34,57 @@ class CoingeckoProvider implements MarketDataInterface
 
     public function getHistoricalData(string $symbol, string $timeframe = '1h', int $limit = 200): array
     {
-        // Coingecko pakai coin id, bukan pair langsung
-        $coinId = strtolower(explode('USDT', $symbol)[0]);
+        // CoinGecko uses coin ID, not trading pairs
+        $coinId = strtolower($symbol);
+
+        // Map timeframe to appropriate days parameter for CoinGecko
+        $days = match($timeframe) {
+            '1h' => 1,    // 1 day for hourly data
+            '4h' => 7,    // 7 days for 4h data
+            '1d' => 90,   // 90 days for daily data
+            '1w' => 365,  // 365 days for weekly data
+            default => 90
+        };
 
         $url = $this->baseUrl . "/coins/{$coinId}/ohlc";
         $response = $this->http->get($url, [
             'query' => [
                 'vs_currency' => 'usd',
-                'days'        => 30, // default ambil 30 hari
+                'days' => $days
             ],
         ]);
 
         $data = json_decode($response->getBody()->getContents(), true);
 
-        // Normalisasi agar mirip format Binance
-        $normalized = [];
-        foreach ($data as $i => $price) {
-            $normalized[] = [
-                // time(), // closeTime
-                (string) $price[0], // open
-                (string) $price[1], // high
-                (string) $price[2], // low
-                (string) $price[3], // close
-                (string) 0, // volume
-                $price[1], $price[1], $price[1], $price[1],
-            ];
+        // Debug: Log the actual CoinGecko response
+
+        if (empty($data) || !isset($data[0])) {
+            Log::warning('CoinGecko OHLC returned empty data');
+            return [];
         }
+
+        // CoinGecko OHLC format is typically: [timestamp, open, high, low, close]
+        // Convert to our expected format: [open, high, low, close, volume, timestamp, ...]
+        $normalized = [];
+        foreach ($data as $ohlc) {
+            if (count($ohlc) >= 5) {
+                $normalized[] = [
+                    (int) $ohlc[0], // timestamp as closeTime
+                    (string) $ohlc[1], // open
+                    (string) $ohlc[2], // high
+                    (string) $ohlc[3], // low
+                    (string) $ohlc[4], // close
+                    '0', // volume (not available in CoinGecko OHLC)
+                    (int) $ohlc[0] / 1000, // timestamp as closeTime
+                    '0', '0', '0', '0',
+                ];
+            }
+        }
+
+        Log::info('CoinGecko data normalized', [
+            'original_count' => count($data),
+            'normalized_count' => count($normalized)
+        ]);
 
         return $normalized;
     }
