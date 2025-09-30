@@ -4,10 +4,12 @@ namespace App\Analysis;
 
 use Illuminate\Support\Facades\Log;
 
-class KeltnerChannelAnalysis implements AnalysisInterface
+class DefaultAnalysis implements AnalysisInterface
 {
     protected array $indicators = [];
     protected string $notes = '';
+    protected ?string $lastAnalyzedSymbol = null;
+
     protected ?ApiProviderInterface $apiProvider = null;
     protected float $currentPrice = 0.0;
 
@@ -35,6 +37,7 @@ class KeltnerChannelAnalysis implements AnalysisInterface
             // Get current price
             $currentPrice = $this->apiProvider->getCurrentPrice($symbol);
             $this->currentPrice = $currentPrice;
+            $this->lastAnalyzedSymbol = $symbol;
 
             // Extract prices from historical data
             $closePrices = array_map(fn($candle) => (float) $candle[4], $historicalData);
@@ -115,7 +118,7 @@ class KeltnerChannelAnalysis implements AnalysisInterface
 
     public function getName(): string
     {
-        return 'Keltner Channel Analysis';
+        return 'Default Analysis';
     }
 
     public function getDescription(): array
@@ -419,5 +422,35 @@ class KeltnerChannelAnalysis implements AnalysisInterface
         if (strpos($this->notes, 'BUY') !== false) return 'BUY';
         if (strpos($this->notes, 'SELL') !== false) return 'SELL';
         return 'NEUTRAL';
+    }
+
+    /**
+     * Get historical data for analysis
+     */
+    public function getHistoricalData(string $symbol, string $timeframe = '1h', int $limit = 200): array
+    {
+        if (!$this->apiProvider) {
+            throw new \Exception('API Provider not set');
+        }
+
+        return $this->apiProvider->getHistoricalData($symbol, $timeframe, $limit);
+    }
+
+    /**
+     * Get current price
+     */
+    public function getPrice(string $symbol): float
+    {
+        if (!$this->apiProvider) {
+            throw new \Exception('API Provider not set');
+        }
+
+        // If we have a stored price and it's for the requested symbol, return it
+        if ($this->currentPrice && $this->lastAnalyzedSymbol === $symbol) {
+            return $this->currentPrice;
+        }
+
+        // Otherwise, fetch fresh price from API
+        return $this->apiProvider->getCurrentPrice($symbol);
     }
 }

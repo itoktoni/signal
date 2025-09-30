@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Analysis\AnalysisServiceFactory;
 use App\Analysis\ApiProviderManager;
+use App\Analysis\Providers\BinanceProvider;
+use App\Analysis\Providers\CoingeckoProvider;
+use App\Analysis\TestAnalysis;
 use App\Settings\Settings;
 use App\Enums\AnalysisType;
 use ReflectionClass;
@@ -143,18 +146,22 @@ class CoinController extends Controller
         }
 
         // Initialize variables
-        $historicalData = [];
-
         $result = false;
 
         try {
-            // Create API manager and analysis service
-            $apiManager = new ApiProviderManager(app(Settings::class));
-            $service = AnalysisServiceFactory::create($analystMethod, $apiManager);
 
-            // Perform analysis with selected timeframe
-            $result = $service->analyze($model->coin_code, $amount, $timeframe);
-            $historicalData = $apiManager->getHistoricalData($model->coin_code, $timeframe, 100);
+            $defaultApi = env('DEFAULT_API_PROVIDER', 'binance');
+            if($defaultApi == 'binance')
+            {
+                $provider = new BinanceProvider();
+            }
+            else
+            {
+                $provider = new CoingeckoProvider();
+            }
+
+            $analysis = new TestAnalysis($provider);
+            $result = $analysis->analyze('bitcoin', 100, '1h');
 
         } catch (\Exception $e) {
             Log::error('Analysis failed', [
@@ -163,47 +170,11 @@ class CoinController extends Controller
                 'error' => $e->getMessage()
             ]);
 
-            $result = (Object)[
-                'title' => 'Analysis Error',
-                'description' => [
-                    'title' => 'Analysis Error',
-                    'error' => 'Analysis failed',
-                    'message' => $e->getMessage(),
-                    'details' => 'Please check your internet connection and API availability'
-                ],
-                'signal' => 'NEUTRAL',
-                'confidence' => 0,
-                'entry' => 0,
-                'price' => 0,
-                'stop_loss' => 0,
-                'take_profit' => 0,
-                'risk_reward' => '1:1',
-                'indicators' => [],
-                'notes' => [
-                    'analysis_notes' => 'Analysis failed: ' . $e->getMessage(),
-                    'signal_strength' => 'Unknown - analysis failed',
-                    'market_condition' => 'Error state',
-                    'risk_assessment' => 'Cannot assess - analysis failed',
-                    'execution_tips' => 'Please try again later or check API connectivity'
-                ],
-            ];
+            $result = $this->getError();
         }
 
         // Get coin options for dropdown
         $coin = Coin::getOptions('coin_code', 'coin_code');
-
-        // Get analysis methods and current API provider info
-        $analysisMethods = \App\Analysis\AnalysisServiceFactory::getAvailableMethods();
-        $currentProvider = null;
-        try {
-            $providerAnalysisService = \App\Analysis\AnalysisServiceFactory::create($analystMethod, $apiManager);
-            $reflection = new ReflectionClass($providerAnalysisService);
-            $property = $reflection->getProperty('apiProvider');
-            $property->setAccessible(true);
-            $currentProvider = $property->getValue($providerAnalysisService);
-        } catch (\Exception $e) {
-            $currentProvider = null;
-        }
 
         return $this->views($this->module(), $this->share([
             'model' => $model,
@@ -211,11 +182,37 @@ class CoinController extends Controller
             'amount' => $amount,
             'analyst_method' => $analystMethod,
             'timeframe' => $timeframe,
-            'historical_data' => $historicalData,
-            'analysis_methods' => $analysisMethods,
-            'current_provider' => $currentProvider,
+            'current_provider' => $provider,
             'result' => $result,
         ]));
+    }
+
+    private function getError()
+    {
+        return (Object)[
+            'title' => 'Analysis Error',
+            'description' => [
+                'title' => 'Analysis Error',
+                'error' => 'Analysis failed',
+                'message' => $e->getMessage(),
+                'details' => 'Please check your internet connection and API availability'
+            ],
+            'signal' => 'NEUTRAL',
+            'confidence' => 0,
+            'entry' => 0,
+            'price' => 0,
+            'stop_loss' => 0,
+            'take_profit' => 0,
+            'risk_reward' => '1:1',
+            'indicators' => [],
+            'notes' => [
+                'analysis_notes' => 'Analysis failed: ' . $e->getMessage(),
+                'signal_strength' => 'Unknown - analysis failed',
+                'market_condition' => 'Error state',
+                'risk_assessment' => 'Cannot assess - analysis failed',
+                'execution_tips' => 'Please try again later or check API connectivity'
+            ],
+        ];
     }
 
 }

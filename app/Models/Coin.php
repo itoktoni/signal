@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\DefaultEntity;
 use App\Traits\Filterable;
 use App\Traits\ModelHelper;
 use Illuminate\Database\Eloquent\Model;
 
 class Coin extends Model
 {
-    use Filterable, ModelHelper;
+    use Filterable, ModelHelper, DefaultEntity;
 
     protected $fillable = [
         'coin_code',
@@ -83,6 +84,11 @@ class Coin extends Model
                               ->orWhere('last_analyzed_at', '<', now()->subMinute());
                     })
                     ->get();
+    }
+
+    public function has_symbol()
+    {
+        return $this->hasMany(SymbolApi::class, SymbolApi::field_key(), self::field_key());
     }
 
 }

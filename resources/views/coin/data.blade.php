@@ -46,13 +46,15 @@
                                         <td class="checkbox-column"><input type="checkbox" class="row-checkbox" value="{{ $item->id }}" /></td>
                                         <td data-label="Actions">
                                             <div class="action-table">
-                                                <a href="{{ route(module('getUpdate'), $item) }}" class="button primary">
-                                                    <i class="bi bi-magic"></i>
-                                                </a>
 
                                                  <a href="{{ route(module('getWatch'), $item) }}" class="button success">
+                                                    <i class="bi bi-check-square"></i>
+                                                </a>
+
+                                                 <a href="{{ route(module('getUpdate'), $item) }}" class="button primary">
                                                     <i class="bi bi-search"></i>
                                                 </a>
+
                                             </div>
                                         </td>
                                         <td data-label="Code"><span class="{{ $item->coin_watch ? 'text-watch' : '' }}">{{ $item->coin_code }}</span></td>

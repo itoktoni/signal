@@ -80,7 +80,7 @@ class AnalysisServiceFactory
         }
 
         // Default to first available analysis or MA Analysis
-        $defaultClass = $classes[array_key_first($classes)]['class'] ?? \App\Analysis\SimpleAnalysis::class;
+        $defaultClass = $classes[array_key_first($classes)]['class'] ?? \App\Analysis\DefaultAnalysis::class;
 
         $instance = new $defaultClass();
 

@@ -4,59 +4,91 @@ namespace App\Analysis;
 
 interface AnalysisInterface
 {
-    /**
-     * Analyze a cryptocurrency symbol and return a standardized result object
-     *
-     * @param string $symbol The cryptocurrency symbol to analyze (e.g., 'BTCUSDT')
-     * @param float $amount The trading amount in USD
-     * @param string $timeframe The timeframe for analysis (e.g., '1h', '4h', '1d')
-     * @param string|null $forcedApi Force specific API provider (optional)
-     * @return object Standardized result object containing:
-     *   - title: string - Analysis title
-     *   - description: string - technology that used in the analysis with flow to reach the conclusion
-     *   - signal: string - Trading signal ('BUY', 'SELL', or 'NEUTRAL')
-     *   - confidence: float - Confidence percentage (0-100)
-     *   - price: float - Current price in USD
-     *   - entry: float - Entry price in USD
-     *   - stop_loss: float - Stop loss price in USD
-     *   - take_profit: float - Take profit price in USD
-     *   - risk_reward: string - Risk-reward ratio eg. '1:2'
-
-     */
-    public function analyze(string $symbol, float $amount = 100, string $timeframe = '1h', ?string $forcedApi = null): object;
-
      /**
-     * Get the name/identifier of this analysis method
+     * Get the unique code identifier for this analysis method
+     * (used in UI dropdowns or database storage)
      *
-     * @return string The code name that used in ui dropdown and database (e.g., 'support_resistance', 'moving_average')
+     * Example: 'moving_average', 'support_resistance'
+     *
+     * @return string
      */
     public function getCode(): string;
 
     /**
-     * Get the name/identifier of this analysis method
+     * Get the human-readable name of this analysis method
      *
-     * @return string The analysis method name
+     * Example: 'Moving Average Analysis'
+     *
+     * @return string
      */
     public function getName(): string;
 
     /**
-     * Get the description of this analysis method
+     * Perform a cryptocurrency analysis and return a standardized result object
      *
-     * @return array The technology that used in the analysis with flow to reach the conclusion
+     * @param string      $symbol     The trading pair to analyze (e.g., 'BTCUSDT')
+     * @param float       $amount     Trading amount in USD
+     * @param string      $timeframe  The timeframe for analysis (e.g., '1h', '4h', '1d')
+     * @param string|null $forcedApi  Force a specific API provider (optional)
+     *
+     * @return object {
+     *   title: string,          // Analysis title
+     *   description: array,     // Step-by-step explanation of the analysis flow
+     *   signal: string,         // Trading signal: 'BUY' | 'SELL' | 'NEUTRAL'
+     *   confidence: float,      // Confidence level (0–100)
+     *   price: float,           // Current market price in USD
+     *   entry: float,           // Suggested entry price
+     *   stop_loss: float,       // Suggested stop loss price
+     *   take_profit: float,     // Suggested take profit price
+     *   risk_reward: string,    // Risk-reward ratio (e.g., '1:2')
+     *   indicators: array,      // Indicators used, key-value pairs (e.g., ['SMA' => 100, 'EMA' => 50])
+     *   notes: array            // Extra notes or recommendations
+     * }
      */
-    public function getDescription(): array;
+    public function analyze(
+        string $symbol,
+        float $amount = 100,
+        string $timeframe = '1h',
+        ?string $forcedApi = null
+    ): object;
 
     /**
-     * Get the indicators used in the analysis
+     * Retrieve historical OHLCV (Open, High, Low, Close, Volume) data
      *
-     * @return array The indicators used in the analysis using key value pair ['name' => value] eg ['SMA' => 100, 'EMA' => 50]
+     * Expected format:
+     * [
+     *   [
+     *     (string) open,
+     *     (string) high,
+     *     (string) low,
+     *     (string) close,
+     *     (string) volume,
+     *     (int) closeTime,
+     *     (string) quoteAssetVolume,
+     *     (int) numberOfTrades,
+     *     (string) takerBuyBaseVolume,
+     *     (string) takerBuyQuoteVolume
+     *   ],
+     *   ...
+     * ]
+     *
+     * @param string $symbol    The trading pair
+     * @param string $timeframe The timeframe (default '1h')
+     * @param int    $limit     Number of data points (default 200)
+     *
+     * @return array
      */
-    public function getIndicators(): array;
+    public function getHistoricalData(
+        string $symbol,
+        string $timeframe = '1h',
+        int $limit = 200
+    ): array;
 
     /**
-     * Get any notes or results or suggestions from any calculation and analysis
+     * Get the current market price for a symbol
      *
-     * @return array Any notes or results or suggestions from any calculation and analysis
+     * @param string $symbol The trading pair
+     * @return float Current price in USD
      */
-    public function getNotes(): array;
+    public function getPrice(string $symbol): float;
 }

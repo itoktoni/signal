@@ -285,12 +285,12 @@
     </div>
 
 
-    @if (!empty($historical_data))
+    @if (!empty($result->historical))
     <script type="module">
         import { createChart, ColorType } from 'https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.mjs';
 
         // Historical data from PHP
-        const historicalData = @json($historical_data);
+        const historicalData = @json($result->historical);
 
         // Convert historical data to chart format
         const candlestickData = historicalData.map(item => ({
