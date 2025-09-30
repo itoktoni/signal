@@ -15,7 +15,7 @@ class AnalysisServiceFactory
     private static array $analysisClasses = [];
 
     /**
-     * Get all available analysis classes
+     * Discover all analysis classes in the app/Analysis directory
      */
     private static function discoverAnalysisClasses(): array
     {
@@ -23,19 +23,37 @@ class AnalysisServiceFactory
             return self::$analysisClasses;
         }
 
-        // Hardcoded for now since auto-discovery is complex
-        self::$analysisClasses = [
-            'keltner_channel' => [
-                'class' => 'App\\Analysis\\DefaultAnalysis',
-                'name' => 'Default Analysis',
-                'code' => 'keltner_channel'
-            ]
-        ];
+        // Construct path manually since Laravel helpers may not be available
+        $analysisPath = __DIR__; // This is app/Analysis directory
+        $files = glob($analysisPath . '/*.php');
 
-        Log::info('Analysis classes discovered', [
-            'classes' => self::$analysisClasses,
-            'available_methods' => array_keys(self::$analysisClasses)
-        ]);
+        foreach ($files as $file) {
+            $className = basename($file, '.php');
+            $fullClassName = 'App\\Analysis\\' . $className;
+
+            // Skip interfaces and abstract classes
+            if ($className === 'AnalysisInterface' || $className === 'AnalysisService') {
+                continue;
+            }
+
+            // Check if class exists and implements AnalysisInterface
+            if (class_exists($fullClassName)) {
+                try {
+                    $reflection = new \ReflectionClass($fullClassName);
+                    if ($reflection->implementsInterface(MarketDataInterface::class) && !$reflection->isAbstract()) {
+                        $instance = $reflection->newInstanceWithoutConstructor();
+                        self::$analysisClasses[$instance->getCode()] = [
+                            'class' => $fullClassName,
+                            'name' => $instance->getName(),
+                            'code' => $instance->getCode()
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    // Skip classes that can't be instantiated without constructor
+                    continue;
+                }
+            }
+        }
 
         return self::$analysisClasses;
     }
