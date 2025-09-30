@@ -294,13 +294,20 @@
         const historicalData = @json($result->historical);
 
         // Convert historical data to chart format
-        const candlestickData = historicalData.map(item => ({
-            time: Math.floor(item[0] / 1000), // Convert milliseconds to seconds
-            open: parseFloat(item[1]),
-            high: parseFloat(item[2]),
-            low: parseFloat(item[3]),
-            close: parseFloat(item[4])
-        }));
+        console.log('Mapping historical data to candlestick format...');
+        const candlestickData = historicalData.map((item, index) => {
+            console.log(`Item ${index}:`, item);
+
+            // Chart expects: [timestamp, open, high, low, close]
+            // But our data is: [open, high, low, close, volume, timestamp, ...]
+            return {
+                time: Math.floor(item[5] / 1000), // Convert milliseconds to seconds (timestamp is at index 5)
+                open: parseFloat(item[0] || 0),   // open price (index 0)
+                high: parseFloat(item[1] || 0),   // high price (index 1)
+                low: parseFloat(item[2] || 0),    // low price (index 2)
+                close: parseFloat(item[3] || 0)   // close price (index 3)
+            };
+        });
 
         // Get entry and take profit levels from analysis result
         const entryLevel = @json($result->entry ?? null);

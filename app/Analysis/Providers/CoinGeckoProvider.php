@@ -54,12 +54,12 @@ class CoingeckoProvider implements MarketDataInterface
         $normalized = [];
         foreach ($data as $i => $price) {
             $normalized[] = [
+                // time(), // closeTime
                 (string) $price[0], // open
                 (string) $price[1], // high
                 (string) $price[2], // low
                 (string) $price[3], // close
-                (string) ($data['total_volumes'][$i][4] ?? 0), // volume
-                (int) $price[2], // closeTime
+                (string) 0, // volume
                 $price[1], $price[1], $price[1], $price[1],
             ];
         }
