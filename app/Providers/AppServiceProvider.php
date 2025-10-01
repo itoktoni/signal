@@ -9,6 +9,8 @@ use App\Settings\Drivers\FileDriver;
 use Illuminate\Support\Facades;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Artisan;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,12 +34,23 @@ class AppServiceProvider extends ServiceProvider
         // Load helpers
         require_once app_path('Helpers/Global.php');
 
-        $menu = Menu::orderBy('menu_sort')->get();
-        $group = Group::orderBy('group_sort')->get();
-
-        // Share controller context with all views
-        Facades\View::composer('*', function (View $view) use($menu, $group){
+        // Share controller context with all views (lazy loading for database data)
+        Facades\View::composer('*', function (View $view) {
             $context = $this->getControllerContext();
+
+            // Load menu and group data only when needed (lazy loading)
+            $menu = collect();
+            $group = collect();
+
+            try {
+                $menu = Menu::orderBy('menu_sort')->get();
+                $group = Group::orderBy('group_sort')->get();
+            } catch (\Exception $e) {
+                // Database not ready or tables don't exist
+                $menu = collect();
+                $group = collect();
+            }
+
             $context['menu'] = $menu;
             $context['group'] = $group;
             $view->with('context', $context);

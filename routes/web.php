@@ -25,8 +25,18 @@ Route::middleware([
         Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
         Route::get('/profile', [\App\Http\Controllers\UserController::class, 'getProfile'])->name('profile');
 
-        $menu   = Menu::all();
-        $groups = Group::orderBy('group_sort')->get();
+        // Load menu and group data with error handling for migrations
+        $menu = collect();
+        $groups = collect();
+
+        try {
+            $menu = Menu::all();
+            $groups = Group::orderBy('group_sort')->get();
+        } catch (\Exception $e) {
+            // Database not ready during migration
+            $menu = collect();
+            $groups = collect();
+        }
 
         foreach ($groups as $group) {
             Route::prefix($group->field_key)->group(function () use ($menu, $group) {
