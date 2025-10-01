@@ -13,23 +13,24 @@ class DefaultAnalysis extends AnalysisAbstract
     public function analyze(string $symbol, float $amount = 100, string $timeframe = '1h', ?string $forcedApi = null): object
     {
         try {
-            // Get historical data
-            $historicalData = $this->getHistoricalData($symbol, $timeframe, 100);
+            // Get historical data (increased from 100 to 150 for better zoom out)
+            $historicalData = $this->getHistoricalData($symbol, $timeframe, 150);
 
-            if (empty($historicalData) || count($historicalData) < 30) {
-                throw new \Exception('Insufficient historical data. Need at least 30 data points.');
+            if (empty($historicalData) || count($historicalData) < 50) {
+                throw new \Exception('Insufficient historical data. Need at least 50 data points.');
             }
 
             // Get current price
             $currentPrice = $this->getPrice($symbol);
 
-            // Extract prices from historical data
-            $closePrices = array_map(fn($candle) => (float) $candle[4], $historicalData);
-            $highPrices = array_map(fn($candle) => (float) $candle[2], $historicalData);
-            $lowPrices = array_map(fn($candle) => (float) $candle[3], $historicalData);
+            // Extract prices from historical data (Binance object format)
+            $closePrices = array_map(fn($candle) => (float) ($candle['close'] ?? $candle[4] ?? 0), $historicalData);
+            $highPrices = array_map(fn($candle) => (float) ($candle['high'] ?? $candle[2] ?? 0), $historicalData);
+            $lowPrices = array_map(fn($candle) => (float) ($candle['low'] ?? $candle[3] ?? 0), $historicalData);
 
             // Calculate indicators for Dynamic RR
             $atr = $this->calculateATR($highPrices, $lowPrices, $closePrices, 14);
+            $rsi = $this->calculateRSI($closePrices, 14);
             $fibonacciLevels = $this->calculateFibonacciLevels($highPrices, $lowPrices);
             $supportResistance = $this->calculateSupportResistance($highPrices, $lowPrices, $closePrices);
 
@@ -50,13 +51,20 @@ class DefaultAnalysis extends AnalysisAbstract
                 'Fib_382' => round($fibonacciLevels['382'], 4),
                 'Fib_618' => round($fibonacciLevels['618'], 4),
                 'SR_Pivot' => round($supportResistance['pivot'], 4),
+                'RSI' => round($rsi, 2),
                 'Dynamic_RR' => $levels['risk_reward']
             ];
 
             Log::info("DynamicRRService: Analysis completed", [
                 'signal' => $signal,
                 'confidence' => $confidence,
-                'entry' => $suggestedEntry
+                'current_price' => $currentPrice,
+                'entry' => $suggestedEntry,
+                'entry_diff' => abs($suggestedEntry - $currentPrice),
+                'entry_diff_percent' => abs(($suggestedEntry - $currentPrice) / $currentPrice) * 100,
+                'atr' => $atr,
+                'fib_levels' => $fibonacciLevels,
+                'sr_levels' => $supportResistance
             ]);
 
             return (object)[
@@ -158,20 +166,34 @@ class DefaultAnalysis extends AnalysisAbstract
      */
     private function calculateFibonacciLevels(array $highs, array $lows): array
     {
-        $recentHighs = array_slice($highs, -20);
-        $recentLows = array_slice($lows, -20);
+        $recentHighs = array_slice($highs, -50); // Increased to 50 for better levels
+        $recentLows = array_slice($lows, -50);
 
         $swingHigh = max($recentHighs);
         $swingLow = min($recentLows);
+        $currentPrice = end($highs) ?: end($lows) ?: 0;
         $range = $swingHigh - $swingLow;
 
-        return [
-            '236' => $swingHigh - ($range * 0.236),
-            '382' => $swingHigh - ($range * 0.382),
-            '500' => $swingHigh - ($range * 0.500),
-            '618' => $swingHigh - ($range * 0.618),
-            '786' => $swingHigh - ($range * 0.786)
-        ];
+        if ($range == 0 || $swingHigh == 0 || $swingLow == 0) {
+            // Enhanced fallback with more spread
+            return [
+                '236' => $currentPrice * 1.05, // 5% above current
+                '382' => $currentPrice * 1.08, // 8% above current
+                '500' => $currentPrice * 1.12, // 12% above current
+                '618' => $currentPrice * 1.15, // 15% above current
+                '786' => $currentPrice * 1.20  // 20% above current
+            ];
+        }
+
+        // Calculate levels with current price as reference for better spread
+        $levels = [];
+        $levels['236'] = $currentPrice + ($range * 0.1);  // 10% of range above current
+        $levels['382'] = $currentPrice + ($range * 0.2);  // 20% of range above current
+        $levels['500'] = $currentPrice + ($range * 0.3);  // 30% of range above current
+        $levels['618'] = $currentPrice + ($range * 0.4);  // 40% of range above current
+        $levels['786'] = $currentPrice + ($range * 0.5);  // 50% of range above current
+
+        return $levels;
     }
 
     /**
@@ -179,20 +201,34 @@ class DefaultAnalysis extends AnalysisAbstract
      */
     private function calculateSupportResistance(array $highs, array $lows, array $closes): array
     {
-        $recentHighs = array_slice($highs, -20);
-        $recentLows = array_slice($lows, -20);
-        $recentCloses = array_slice($closes, -20);
+        $recentHighs = array_slice($highs, -50); // Increased to 50 for better levels
+        $recentLows = array_slice($lows, -50);
+        $recentCloses = array_slice($closes, -50);
 
         $high = max($recentHighs);
         $low = min($recentLows);
-        $close = end($recentCloses);
+        $currentPrice = end($recentCloses) ?: end($closes) ?: 0;
 
-        $pivot = ($high + $low + $close) / 3;
+        if ($high == $low || $high == 0 || $low == 0) {
+            // Enhanced fallback levels
+            return [
+                'pivot' => $currentPrice,
+                'resistance1' => $currentPrice * 1.08, // 8% above
+                'support1' => $currentPrice * 0.92,    // 8% below
+                'resistance2' => $currentPrice * 1.15, // 15% above
+                'support2' => $currentPrice * 0.85     // 15% below
+            ];
+        }
+
+        $range = $high - $low;
+        $pivot = ($high + $low + $currentPrice) / 3;
 
         return [
             'pivot' => $pivot,
-            'resistance1' => (2 * $pivot) - $low,
-            'support1' => (2 * $pivot) - $high
+            'resistance1' => $currentPrice + ($range * 0.3), // 30% of range above current
+            'support1' => $currentPrice - ($range * 0.3),    // 30% of range below current
+            'resistance2' => $currentPrice + ($range * 0.5), // 50% of range above current
+            'support2' => $currentPrice - ($range * 0.5)     // 50% of range below current
         ];
     }
 
@@ -293,32 +329,64 @@ class DefaultAnalysis extends AnalysisAbstract
      */
     private function calculateDynamicRREntry(string $signal, float $currentPrice, float $atr, array $fibLevels, array $srLevels): float
     {
-        $volatility = $atr / $currentPrice; // Normalized volatility
+        Log::info("DynamicRRService: Calculating entry price", [
+            'signal' => $signal,
+            'current_price' => $currentPrice,
+            'atr' => $atr,
+            'fib_levels' => $fibLevels,
+            'sr_levels' => $srLevels
+        ]);
 
         if ($signal === 'BUY') {
             // For BUY signal: entry price should be less than current price
-            // Use Fibonacci 38.2% or Support level as reference
-            $fib382 = $fibLevels['382'];
-            $support1 = $srLevels['support1'];
+            $fib382 = $fibLevels['382'] ?? 0;
+            $support1 = $srLevels['support1'] ?? 0;
 
-            // Choose the higher level (more conservative entry)
             $referenceLevel = max($fib382, $support1);
-            $entryDiscount = $volatility * $currentPrice * 0.4;
+            $entryDiscount = $currentPrice * 0.08; // Fixed 8% discount from current price
+            $calculatedEntry = max($referenceLevel, $currentPrice - $entryDiscount);
 
-            return max($referenceLevel, $currentPrice - $entryDiscount);
+            Log::info("DynamicRRService: BUY entry calculation", [
+                'fib382' => $fib382,
+                'support1' => $support1,
+                'reference_level' => $referenceLevel,
+                'entry_discount' => $entryDiscount,
+                'calculated_entry' => $calculatedEntry,
+                'current_price' => $currentPrice
+            ]);
+
+            return $calculatedEntry;
         } elseif ($signal === 'SELL') {
             // For SELL signal (SHORT): entry price should be greater than current price
-            // Use Fibonacci 61.8% or Resistance level as reference
-            $fib618 = $fibLevels['618'];
-            $resistance1 = $srLevels['resistance1'];
+            $fib618 = $fibLevels['618'] ?? 0;
+            $resistance1 = $srLevels['resistance1'] ?? 0;
 
-            // Choose the lower level (more conservative entry)
             $referenceLevel = min($fib618, $resistance1);
-            $entryPremium = $volatility * $currentPrice * 0.4;
+            $entryPremium = $currentPrice * 0.08; // Fixed 8% premium from current price
+            $calculatedEntry = min($referenceLevel, $currentPrice + $entryPremium);
 
-            return min($referenceLevel, $currentPrice + $entryPremium);
+            Log::info("DynamicRRService: SELL entry calculation", [
+                'fib618' => $fib618,
+                'resistance1' => $resistance1,
+                'reference_level' => $referenceLevel,
+                'entry_premium' => $entryPremium,
+                'calculated_entry' => $calculatedEntry,
+                'current_price' => $currentPrice
+            ]);
+
+            return $calculatedEntry;
         } else {
-            return $currentPrice;
+            // For NEUTRAL signal, use a small offset from current price
+            $neutralOffset = $currentPrice * 0.02; // 2% offset
+            $calculatedEntry = $currentPrice + ($neutralOffset * (rand(0, 1) ? 1 : -1)); // Random up or down
+
+            Log::info("DynamicRRService: NEUTRAL entry calculation", [
+                'neutral_offset' => $neutralOffset,
+                'calculated_entry' => $calculatedEntry,
+                'current_price' => $currentPrice
+            ]);
+
+            return $calculatedEntry;
         }
     }
 
@@ -413,6 +481,39 @@ class DefaultAnalysis extends AnalysisAbstract
         $previousAvg = array_sum($previous) / count($previous);
 
         return ($recentAvg - $previousAvg) / $previousAvg;
+    }
+
+    /**
+     * Calculate RSI (Relative Strength Index)
+     */
+    private function calculateRSI(array $closes, int $period = 14): float
+    {
+        if (count($closes) < $period + 1) {
+            return 50; // Neutral RSI if insufficient data
+        }
+
+        $gains = [];
+        $losses = [];
+
+        // Calculate price changes
+        for ($i = 1; $i < count($closes); $i++) {
+            $change = $closes[$i] - $closes[$i - 1];
+            $gains[] = $change > 0 ? $change : 0;
+            $losses[] = $change < 0 ? abs($change) : 0;
+        }
+
+        // Calculate average gains and losses
+        $avgGain = array_sum(array_slice($gains, -$period)) / $period;
+        $avgLoss = array_sum(array_slice($losses, -$period)) / $period;
+
+        if ($avgLoss == 0) {
+            return 100; // All gains, RSI = 100
+        }
+
+        $rs = $avgGain / $avgLoss;
+        $rsi = 100 - (100 / (1 + $rs));
+
+        return $rsi;
     }
 
     private function calculateDynamicRRSignalStrength(): string

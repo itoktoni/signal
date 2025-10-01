@@ -275,7 +275,7 @@
                             </h3>
                         </div>
                         <div class="crypto-card-body">
-                            <div id="tradingview-chart" style="width: 100%; height: 400px;"></div>
+                            <div id="tradingview-chart" style="width: 100%; height: 500px;"></div>
                         </div>
                     </div>
 
@@ -300,14 +300,14 @@
         const takeProfitLevel = @json($result->take_profit ?? null);
         const currentPriceLevel = @json($result->price ?? null); // Current market price
 
-        // Create chart
+        // Create simple chart
         const chart = createChart(document.getElementById('tradingview-chart'), {
             layout: {
                 background: { type: ColorType.Solid, color: 'white' },
                 textColor: '#333',
             },
             width: document.getElementById('tradingview-chart').clientWidth,
-            height: 400,
+            height: 500,
             grid: {
                 vertLines: { color: '#e1e1e1' },
                 horzLines: { color: '#e1e1e1' },
@@ -322,10 +322,12 @@
                 borderColor: '#cccccc',
                 timeVisible: true,
                 secondsVisible: false,
+                barSpacing: 8, // Increase bar spacing for better visibility
+                minBarSpacing: 4,
             },
         });
 
-        // Add candlestick series
+        // Add simple candlestick series
         const candlestickSeries = chart.addCandlestickSeries({
             upColor: '#00C853',
             downColor: '#FF1744',
@@ -336,61 +338,76 @@
 
         candlestickSeries.setData(historicalData);
 
-        // Add entry line (BLACK)
+        // Zoom out to show more data
+        setTimeout(() => {
+            chart.timeScale().fitContent();
+            // Apply additional zoom out by adjusting the visible range
+            const timeRange = chart.timeScale().getVisibleRange();
+            if (timeRange) {
+                const range = timeRange.to - timeRange.from;
+                const padding = range * 0.1; // Add 10% padding on each side
+                chart.timeScale().setVisibleRange({
+                    from: timeRange.from - padding,
+                    to: timeRange.to + padding
+                });
+            }
+        }, 100);
+
+        // Add trading level lines (associated with price series)
+        if (takeProfitLevel) {
+            const takeProfitLine = {
+                price: parseFloat(takeProfitLevel),
+                color: '#27b376', // Green
+                lineWidth: 2,
+                lineStyle: 0, // Solid
+                axisLabelVisible: true,
+                title: 'TP',
+            };
+            candlestickSeries.createPriceLine(takeProfitLine);
+        }
+
         if (entryLevel) {
             const entryLine = {
                 price: parseFloat(entryLevel),
                 color: '#000000', // Black
-                lineWidth: 3,
+                lineWidth: 2,
                 lineStyle: 0, // Solid
                 axisLabelVisible: true,
-                title: 'Entry',
+                title: 'ENTRY',
             };
             candlestickSeries.createPriceLine(entryLine);
         }
 
-        // Add stop loss line (RED)
         if (stopLossLevel) {
             const stopLossLine = {
                 price: parseFloat(stopLossLevel),
-                color: '#FF0000', // Red
-                lineWidth: 3,
+                color: '#B30600', // Red
+                lineWidth: 2,
                 lineStyle: 0, // Solid
                 axisLabelVisible: true,
-                title: 'Stop Loss',
+                title: 'SL',
             };
             candlestickSeries.createPriceLine(stopLossLine);
-        }
-
-        // Add take profit line (GREEN)
-        if (takeProfitLevel) {
-            const takeProfitLine = {
-                price: parseFloat(takeProfitLevel),
-                color: '#00FF00', // Green
-                lineWidth: 3,
-                lineStyle: 0, // Solid
-                axisLabelVisible: true,
-                title: 'Take Profit',
-            };
-            candlestickSeries.createPriceLine(takeProfitLine);
         }
 
         // Add current price line (BLUE)
         if (currentPriceLevel) {
             const currentPriceLine = {
                 price: parseFloat(currentPriceLevel),
-                color: '#0000FF', // Blue
+                color: '#2196F3', // Blue
                 lineWidth: 2,
                 lineStyle: 0, // Solid
                 axisLabelVisible: true,
-                title: 'Current Price',
+                title: 'CURRENT',
             };
             candlestickSeries.createPriceLine(currentPriceLine);
         }
 
 
-        // Fit content
-        chart.timeScale().fitContent();
+        // Fit content with zoom out
+        setTimeout(() => {
+            chart.timeScale().fitContent();
+        }, 50);
 
         // Handle resize
         window.addEventListener('resize', () => {
