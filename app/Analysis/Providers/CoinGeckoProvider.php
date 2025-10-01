@@ -105,4 +105,34 @@ class CoingeckoProvider implements MarketDataInterface
 
         return (float) ($data[$coinId]['usd'] ?? 0);
     }
+
+    public function getSymbolInfo(): array
+    {
+        $url = $this->baseUrl . "/coins/list";
+        $response = $this->http->get($url);
+
+        $data = json_decode($response->getBody()->getContents(), true);
+
+        $parsing = [];
+
+        foreach ($data as $symbol) {
+            // Only process USDT pairs that are actively trading
+            if (!is_numeric($symbol['id']) && ctype_alnum($symbol['symbol']) && ctype_alnum($symbol['name']) && !(str_contains($symbol['id'], '_'))) {
+
+                $parsing[] = [
+                    'id' => $symbol['id'],
+                    'symbol' => $symbol['symbol'],
+                    'name' => $symbol['name'],
+                    'provider' => 'coingecko',
+                ];
+            }
+        }
+
+        if (empty($parsing) || !is_array($parsing)) {
+            Log::warning('CoinGecko getSymbolInfo returned empty or invalid data');
+            return [];
+        }
+
+        return $parsing;
+    }
 }

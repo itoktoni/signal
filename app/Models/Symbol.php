@@ -7,42 +7,42 @@ use App\Traits\Filterable;
 use App\Traits\ModelHelper;
 use Illuminate\Database\Eloquent\Model;
 
-class SymbolApi extends Model
+class Symbol extends Model
 {
     use Filterable, ModelHelper, DefaultEntity;
 
     protected $fillable = [
-        'symbol_api_id',
-        'symbol_api_coin',
-        'symbol_api_code',
-        'symbol_api_name',
-        'symbol_api_provider',
+        'symbol_id',
+        'symbol_coin',
+        'symbol_code',
+        'symbol_name',
+        'symbol_provider',
     ];
 
      protected $filterable = [
-        'symbol_api_coin',
-        'symbol_api_code',
-        'symbol_api_name',
-        'symbol_api_provider',
+        'symbol_coin',
+        'symbol_code',
+        'symbol_name',
+        'symbol_provider',
     ];
 
     protected $sortable = [
-        'symbol_api_coin',
-        'symbol_api_code',
-        'symbol_api_name',
-        'symbol_api_provider',
+        'symbol_coin',
+        'symbol_code',
+        'symbol_name',
+        'symbol_provider',
     ];
 
-    public $timestamps = true;
+    public $timestamps = false;
     public $incrementing = true;
     // protected $keyType = 'string';
 
-    protected $table = 'symbol_api';
-    protected $primaryKey = 'symbol_api_id';
+    protected $table = 'symbol';
+    protected $primaryKey = 'symbol_id';
 
     public static function field_name()
     {
-        return 'symbol_api_name';
+        return 'symbol_name';
     }
 
     public function getFieldNameAttribute()

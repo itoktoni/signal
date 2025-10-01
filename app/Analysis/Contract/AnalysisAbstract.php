@@ -3,7 +3,7 @@
 namespace App\Analysis\Contract;
 
 use App\Analysis\Contract\MarketDataInterface;
-use App\Models\SymbolApi;
+use App\Models\Symbol;
 
 abstract class AnalysisAbstract implements MarketDataInterface
 {
@@ -66,8 +66,8 @@ abstract class AnalysisAbstract implements MarketDataInterface
      */
     public function getSymbol(string $symbol): string
     {
-        $coin = SymbolApi::where('symbol_api_provider', $this->provider->getCode())
-            ->where('symbol_api_coin', $symbol)
+        $coin = Symbol::where('symbol_provider', $this->provider->getCode())
+            ->where('symbol_coin', $symbol)
             ->first();
 
         if(empty($coin))
@@ -75,7 +75,7 @@ abstract class AnalysisAbstract implements MarketDataInterface
             return throw new \Exception("Symbol '{$symbol}' not found");
         }
 
-        return $coin->symbol_api_code ?? null;
+        return $coin->symbol_code ?? null;
     }
 
     /**

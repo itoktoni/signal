@@ -88,7 +88,7 @@ class Coin extends Model
 
     public function has_symbol()
     {
-        return $this->hasMany(SymbolApi::class, SymbolApi::field_key(), self::field_key());
+        return $this->hasMany(Symbol::class, Symbol::field_key(), 'symbol_coin');
     }
 
 }
