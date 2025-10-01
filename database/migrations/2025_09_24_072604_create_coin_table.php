@@ -13,14 +13,12 @@ return new class extends Migration
     {
         Schema::create('coin', function (Blueprint $table) {
             $table->string('coin_code')->primary();
-            $table->boolean('coin_watch')->default(false);
-            $table->enum('coin_plan', ['long', 'short'])->nullable();
+            $table->string('coin_symbol')->nullable();
+            $table->string('coin_name')->nullable();
             $table->double('coin_price_usd')->nullable();
             $table->double('coin_price_idr')->nullable();
-            $table->double('coin_entry_usd')->nullable();
-            $table->double('coin_entry_idr')->nullable();
-            $table->string('coin_exchange')->nullable();
-            $table->timestamps();
+            $table->timestamp('coin_analyzed_at')->nullable();
+            $table->boolean('coin_watch')->default(false);
         });
     }
 
