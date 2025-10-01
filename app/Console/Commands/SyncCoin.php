@@ -19,7 +19,8 @@ class SyncCoin extends Command
         {--all : Fetch all coins from provider (no limit)}
         {--limit=1000 : Number of coins to fetch and sync to database}
         {--truncate : Truncate existing coin table before sync}
-        {--provider=coingecko : API provider to use (coingecko, binance)}';
+        {--master : Sync Master Coin First}
+        {--provider=binance : API provider to use (coingecko, binance)}';
 
     /**
      * The console command description.
@@ -37,6 +38,7 @@ class SyncCoin extends Command
         $all = $this->option('all');
         $limit = (int) $this->option('limit');
         $truncate = $this->option('truncate') === true || $this->option('truncate') === 'true' || $this->option('truncate') === 1;
+        $master = $this->option('master') === true || $this->option('master') === 'true' || $this->option('truncate') === 1;
 
         // Validate provider
         $availableProviders = ['coingecko', 'binance'];
@@ -65,7 +67,16 @@ class SyncCoin extends Command
             // Truncate table if requested
             if ($truncate) {
                 $this->info('🗑️ Truncating existing coin table...');
-                Symbol::where('symbol_provider', $providerCode)->delete();
+
+                if($master)
+                {
+                    Coin::truncate();
+                }
+                else
+                {
+                    Symbol::where('symbol_provider', $providerCode)->delete();
+                }
+
                 $this->info('✅ Coin table truncated');
             }
 
@@ -89,18 +100,27 @@ class SyncCoin extends Command
             $this->info("✅ Received " . count($coins) . " coins from {$providerName} API");
 
             // Process and sync to database
-            $synced = $this->syncToDatabase($coins, $limit);
+            $synced = $this->syncToDatabase($coins, $master, $limit);
 
             $this->info('🎉 Database sync completed successfully!');
             $this->info("📊 Total coins synced: {$synced}");
 
             // Display basic summary
-            $totalCoins = Symbol::count();
+
+            if($master)
+            {
+                $totalCoins = Coin::count();
+            }
+            else
+            {
+                $totalCoins = Symbol::count();
+            }
+
             $this->info("📋 Database now contains: {$totalCoins} total coins");
 
             return 0;
         } catch (\Exception $e) {
-            $this->error("❌ Error fetching {$providerName} coins: " . $e->getMessage());
+            $this->error("❌ Error fetching coins: " . $e->getMessage());
             $this->error('Stack trace: ' . $e->getTraceAsString());
             return 1;
         }
@@ -109,30 +129,49 @@ class SyncCoin extends Command
     /**
      * Sync coin list to database
      */
-    private function syncToDatabase(array $coins, ?int $limit): int
+    private function syncToDatabase(array $coins,$master, ?int $limit): int
     {
         $synced = 0;
 
         $this->info('💾 Saving coins to database...');
 
-        $coinsToProcess = $limit ? array_slice($coins, 0, $limit) : $coins;
-        foreach ($coinsToProcess as $coin) {
-            $coinData = [
-                'symbol_code' => $coin['id'],
-                'symbol_coin' => $coin['symbol'], // List endpoint doesn't include prices
-                'symbol_name' => $coin['name'],
-                'symbol_provider' => $coin['provider'],
-            ];
+        if($master)
+        {
+            $provider = $this->createProvider('binance');
+            $masterCoin = $provider->getSymbolInfo();
 
-            $existingCoin = Symbol::where('symbol_code', $coin['id'])
-                                    ->where('symbol_provider', $coin['provider'])
-                                    ->first();
+            foreach($masterCoin as $dataMaster)
+            {
+                $coinData[] = [
+                    'coin_code' => $dataMaster['symbol'],
+                    'coin_symbol' => strtolower($dataMaster['id']), // List endpoint doesn't include prices
+                    'coin_name' => $dataMaster['name'],
+                ];
+            }
 
-            if ($existingCoin) {
-                $existingCoin->update($coinData);
-            } else {
-                Symbol::create($coinData);
-                $synced++;
+            $synced = Coin::insert($coinData);
+        }
+        else
+        {
+            $coinsToProcess = $limit ? array_slice($coins, 0, $limit) : $coins;
+            foreach ($coinsToProcess as $coin) {
+                $coinData = [
+                    'symbol_code' => $coin['id'],
+                    'symbol_coin' => $coin['symbol'], // List endpoint doesn't include prices
+                    'symbol_name' => $coin['name'],
+                    'symbol_provider' => $coin['provider'],
+                ];
+
+                $existingCoin = Symbol::where('symbol_code', $coin['id'])
+                                        ->where('symbol_provider', $coin['provider'])
+                                        ->first();
+
+                if ($existingCoin) {
+                    $existingCoin->update($coinData);
+                } else {
+                    Symbol::create($coinData);
+                    $synced++;
+                }
             }
         }
 

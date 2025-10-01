@@ -64,7 +64,14 @@ trait ControllerHelper
             $successMessage = ucfirst($this->getModuleName()) . ' created successfully';
         }
 
-        $validate = request()->validate($this->model->rules(null, 'create'), $this->model->messages ?? []);
+        if(method_exists($this->model, 'rules'))
+        {
+            $validate = request()->validate($this->model->rules(null, 'create'), $this->model->messages ?? []);
+        }
+        else
+        {
+            $validate = request()->all();
+        }
 
         $data = $this->model->create(array_merge($data, $validate));
 
