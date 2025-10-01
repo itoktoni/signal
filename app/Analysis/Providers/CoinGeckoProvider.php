@@ -18,6 +18,7 @@ class CoingeckoProvider implements MarketDataInterface
             'headers' => [
                 'User-Agent' => 'Laravel-Crypto-Analysis/1.0',
                 'Accept' => 'application/json',
+                'x-cg-demo-api-key' => env('COINGECKO_API_KEY'),
             ]
         ]);
     }
@@ -50,7 +51,7 @@ class CoingeckoProvider implements MarketDataInterface
         $response = $this->http->get($url, [
             'query' => [
                 'vs_currency' => 'usd',
-                'days' => $days
+                'days' => 365
             ],
         ]);
 
@@ -67,18 +68,14 @@ class CoingeckoProvider implements MarketDataInterface
         // Convert to our expected format: [open, high, low, close, volume, timestamp, ...]
         $normalized = [];
         foreach ($data as $ohlc) {
-            if (count($ohlc) >= 5) {
-                $normalized[] = [
-                    (int) $ohlc[0], // timestamp as closeTime
-                    (string) $ohlc[1], // open
-                    (string) $ohlc[2], // high
-                    (string) $ohlc[3], // low
-                    (string) $ohlc[4], // close
-                    '0', // volume (not available in CoinGecko OHLC)
-                    (int) $ohlc[0], // timestamp as closeTime
-                    '0', '0', '0', '0',
-                ];
-            }
+            $normalized[] = [
+                // 'time' => $ohlc[0] / 1000.09, // timestamp as closeTime
+                'time' => $ohlc[0] / 1000, // timestamp as closeTime
+                'open' => $ohlc[1], // open
+                'high' => $ohlc[2], // high
+                'low' => $ohlc[3], // low
+                'close' => $ohlc[4], // close
+            ];
         }
 
         Log::info('CoinGecko data normalized', [

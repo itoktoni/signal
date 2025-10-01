@@ -26,14 +26,14 @@ class BinanceProvider implements MarketDataInterface
     }
 
 
-    public function getHistoricalData(string $symbol, string $timeframe = '1h', int $limit = 200): array
+    public function getHistoricalData(string $symbol, string $timeframe = '1d', int $limit = 180): array
     {
         $url = $this->baseUrl . "/klines";
         $response = $this->http->get($url, [
             'query' => [
                 'symbol'   => strtoupper($symbol),
-                'interval' => $timeframe,
-                'limit'    => $limit,
+                'interval' => '1d',
+                'limit'    => 180,
             ],
         ]);
 
@@ -43,7 +43,7 @@ class BinanceProvider implements MarketDataInterface
 
         foreach ($klines as $kline) {
             $formattedData[] = [
-                'time' => $kline[0], // Convert ms to seconds
+                'time' => $kline[0] / 1000, // Convert ms to seconds
                 'open' => (float)$kline[1],
                 'high' => (float)$kline[2],
                 'low' => (float)$kline[3],
@@ -67,6 +67,10 @@ class BinanceProvider implements MarketDataInterface
 
     public function getSymbolInfo(): array
     {
+        set_time_limit(0);
+        ini_set('memory_limit', '900M');
+        ini_set('max_execution_time', '120');
+
         $url = $this->baseUrl . "/exchangeInfo";
         $response = $this->http->get($url);
 
