@@ -285,6 +285,8 @@
 
     </div>
 
+    {{ dd($result) }}
+
 
     @if (!empty($result->historical))
     <script type="module">
@@ -342,7 +344,7 @@
             wickDownColor: '#FF1744',
         });
 
-        candlestickSeries.setData(candlestickData);
+        candlestickSeries.setData(historicalData);
 
         // Add entry line (BLACK)
         if (entryLevel) {

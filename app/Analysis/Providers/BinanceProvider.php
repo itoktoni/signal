@@ -37,7 +37,21 @@ class BinanceProvider implements MarketDataInterface
             ],
         ]);
 
-        return json_decode($response->getBody()->getContents(), true);
+        $klines = json_decode($response->getBody()->getContents(), true);
+
+        $formattedData = [];
+
+        foreach ($klines as $kline) {
+            $formattedData[] = [
+                'time' => $kline[0], // Convert ms to seconds
+                'open' => (float)$kline[1],
+                'high' => (float)$kline[2],
+                'low' => (float)$kline[3],
+                'close' => (float)$kline[4],
+            ];
+        }
+
+        return $formattedData;
     }
 
     public function getPrice(string $symbol): float

@@ -35,7 +35,6 @@ class DefaultAnalysis extends AnalysisAbstract
 
             // Determine signal based on Dynamic RR analysis
             [$signal, $confidence] = $this->getDynamicRRSignal($currentPrice, $atr, $fibonacciLevels, $supportResistance, $closePrices);
-
             // Calculate entry price based on signal
             $suggestedEntry = $this->calculateDynamicRREntry($signal, $currentPrice, $atr, $fibonacciLevels, $supportResistance);
 
@@ -92,7 +91,7 @@ class DefaultAnalysis extends AnalysisAbstract
                 'take_profit' => ($currentPrice ?? 0) * 1.02,
                 'risk_reward' => '1:1',
                 'indicators' => [],
-                'historical' => [],
+                'historical' => $historicalData,
                 'notes' => $this->getNotes(),
             ];
         }

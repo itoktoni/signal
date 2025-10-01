@@ -114,6 +114,7 @@ abstract class AnalysisAbstract implements MarketDataInterface
      *   entry: float,           // Suggested entry price
      *   stop_loss: float,       // Suggested stop loss price
      *   take_profit: float,     // Suggested take profit price
+     *   score: int,             // spediction score winrate (e.g., '1-100')
      *   risk_reward: string,    // Risk-reward ratio (e.g., '1:2')
      *   indicators: array,      // Indicators used, key-value pairs (e.g., ['SMA' => 100, 'EMA' => 50])
      *   historical: array,      // Get History OHLCV

@@ -75,7 +75,7 @@ class CoingeckoProvider implements MarketDataInterface
                     (string) $ohlc[3], // low
                     (string) $ohlc[4], // close
                     '0', // volume (not available in CoinGecko OHLC)
-                    (int) $ohlc[0] / 1000, // timestamp as closeTime
+                    (int) $ohlc[0], // timestamp as closeTime
                     '0', '0', '0', '0',
                 ];
             }
