@@ -177,10 +177,11 @@ class CoinController extends Controller
             $result = $this->getError($e);
         }
 
-
         // Get coin options for dropdown
         $coin = Coin::getOptions('coin_code', 'coin_code');
         $method = AnalysisServiceFactory::getAvailableMethods();
+
+        // dd($result);
 
         return $this->views($this->module(), [
             'model' => $model,

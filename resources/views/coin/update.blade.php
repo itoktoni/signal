@@ -8,16 +8,13 @@
                     <x-select col="3" searchable name="coin_code" :value="request('coin_code', $model->coin_code)" :options="$coin" label="Select Coin"
                         required />
 
-                    <x-select col="5" name="analyst_method" :value="request('analyst_method', 'keltner_channel')" :options="$method" label="Select Analysis Method" required />
-                    <x-select col="2" name="timeframe" :value="request('timeframe', '4h')" :options="[
+                    <x-select col="6" name="analyst_method" :value="request('analyst_method', 'keltner_channel')" :options="$method" label="Select Analysis Method" required />
+                    <x-select col="3" name="timeframe" :value="request('timeframe', '4h')" :options="[
                         '1h' => '1 Hour',
                         '4h' => '4 Hours',
                         '1d' => '1 Day',
                         '1w' => '1 Week'
                     ]" label="Timeframe" required />
-                    <x-select col="3" name="provider" :value="request('provider', $provider_type ?? 'binance')" :options="App\Analysis\Providers\ProviderFactory::getAvailableProviders()" label="API Provider" required />
-                    <x-input col="2" type="number" name="amount" :value="request('amount', 100)" label="Trade Amount"
-                        step="0.01" min="1" placeholder="Enter amount to trade" />
 
                     <x-footer>
                         <a href="{{ route(module('getData')) }}" class="button secondary">Back</a>
@@ -29,38 +26,33 @@
     </div>
 
     <div class="crypto-dashboard">
-        <!-- Crypto Analysis Header -->
-        <div class="crypto-header">
-            <div class="row align-items-center">
-                <div class="col-12 col-md-8">
-                    <h1 class="mb-2">
-                        <i class="bi bi-graph-up"></i>
-                        {{ $result->title ?? '' }}
-                        <br>
-                        @if($current_provider)
-                            <small class="text-muted d-block mt-1">
-                                <i class="bi bi-cloud-arrow-down"></i>
-                                Using {{ $current_provider->getName() }} API
-                            </small>
-                        @endif
-                    </h1>
-                    <p class="mb-0">
-                        <i class="bi bi-currency-bitcoin"></i>
-                        {{ $model->coin_code ?? 'Tidak Diketahui' }}
-                    </p>
-                </div>
-                <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
-                    <span class="signal-badge">
-                        {{ $result->signal ?? '-' }}
-                    </span>
-            </div>
-            </div>
-        </div>
 
         <!-- Crypto Analysis Content -->
         <div class="row">
             <div class="col-12">
-                <x-card title="📊 Crypto Analysis Results">
+                <x-card :title="$result->title">
+
+                     <!-- Chart for Analysis -->
+                    <div class="crypto-card">
+                        <div class="crypto-card-header">
+                            <h3 class="crypto-card-title">
+                                <i class="bi bi-graph-up"></i>
+                                Price Chart & Trading Levels
+                                @if($current_provider)
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="bi bi-cloud-arrow-down"></i>
+                                        Powered by {{ $current_provider->getName() }}
+                                    </small>
+                                @endif
+                            </h3>
+                        </div>
+                        <div class="crypto-card-body">
+                            <div id="tradingview-chart" style="width: 100%; height: 500px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Notes (Duplicate section removed - already handled above) -->
+
 
                     <!-- Key Metrics Overview -->
                     <div class="crypto-card">
@@ -70,7 +62,12 @@
                             </h3>
                         </div>
                         <div class="crypto-card-body">
-                            <div class="crypto-grid crypto-grid-cols-3">
+                            <div class="crypto-grid crypto-grid-cols-4">
+                                 <div class="crypto-data-item">
+                                    <div class="crypto-data-label">Signal</div>
+                                    <div class="crypto-data-value" style="font-size: 3rem">{{ $result->signal ?? '-' }}</div>
+                                </div>
+
                                 <div class="crypto-data-item">
                                     <div class="crypto-data-label">Confidence Level</div>
                                     <div class="crypto-data-value" style="font-size: 3rem">{{ $result->confidence ?? 0 }}%</div>
@@ -82,11 +79,8 @@
                                 </div>
 
                                 <div class="crypto-data-item">
-                                    <div class="crypto-data-label">Current Price</div>
-                                    <div class="crypto-data-value crypto-price-usd">
-                                        ${{ numberFormat($result->price, 3) }}
-                                    </div>
-                                    <div class="crypto-price-idr">Rp {{ numberFormat(usdToIdr($result->price), 0) }}</div>
+                                    <div class="crypto-data-label">Score</div>
+                                    <div class="crypto-data-value" style="font-size: 3rem">{{ $result->score ?? '' }}</div>
                                 </div>
                             </div>
                         </div>
@@ -102,10 +96,18 @@
                         <div class="crypto-card-body">
                             <div class="crypto-data-grid">
                                 <div class="crypto-data-item">
-                                    <div class="crypto-data-label">Suggested Entry</div>
+                                    <div class="crypto-data-label">Current Price</div>
                                     <div class="crypto-data-value crypto-price-usd">
+                                        ${{ numberFormat($result->price, 3) }}
+                                    </div>
+                                    <div class="crypto-price-idr">Rp {{ numberFormat(usdToIdr($result->price), 0) }}</div>
+                                </div>
+
+                                <div class="crypto-data-item">
+                                    <div class="crypto-data-label">Suggested Entry</div>
+                                    <div class="crypto-data-value text-primary">
                                         ${{ numberFormat($result->entry, 3) }}</div>
-                                    <div class="crypto-price-idr">Rp {{ numberFormat(usdToIdr($result->entry), 0) }}</div>
+                                    <div class="crypto-price-idr text-primary">Rp {{ numberFormat(usdToIdr($result->entry), 0) }}</div>
                                 </div>
                                 <div class="crypto-data-item">
                                     <div class="crypto-data-label">Stop Loss</div>
@@ -260,26 +262,7 @@
                         </div>
                     @endif
 
-                    <!-- Chart for Analysis -->
-                    <div class="crypto-card">
-                        <div class="crypto-card-header">
-                            <h3 class="crypto-card-title">
-                                <i class="bi bi-graph-up"></i>
-                                Price Chart & Trading Levels
-                                @if($current_provider)
-                                    <small class="text-muted d-block mt-1">
-                                        <i class="bi bi-cloud-arrow-down"></i>
-                                        Powered by {{ $current_provider->getName() }}
-                                    </small>
-                                @endif
-                            </h3>
-                        </div>
-                        <div class="crypto-card-body">
-                            <div id="tradingview-chart" style="width: 100%; height: 500px;"></div>
-                        </div>
-                    </div>
 
-                    <!-- Analysis Notes (Duplicate section removed - already handled above) -->
 
                 </x-card>
             </div>
@@ -357,11 +340,11 @@
         if (takeProfitLevel) {
             const takeProfitLine = {
                 price: parseFloat(takeProfitLevel),
-                color: '#27b376', // Green
+                color: '#0742f2', // Blue
                 lineWidth: 2,
                 lineStyle: 0, // Solid
                 axisLabelVisible: true,
-                title: 'TP',
+                title: 'TP ',
             };
             candlestickSeries.createPriceLine(takeProfitLine);
         }
@@ -369,11 +352,11 @@
         if (entryLevel) {
             const entryLine = {
                 price: parseFloat(entryLevel),
-                color: '#000000', // Black
+                color: '#000', // Black
                 lineWidth: 2,
                 lineStyle: 0, // Solid
                 axisLabelVisible: true,
-                title: 'ENTRY',
+                title: 'ENTRY ',
             };
             candlestickSeries.createPriceLine(entryLine);
         }
@@ -381,28 +364,14 @@
         if (stopLossLevel) {
             const stopLossLine = {
                 price: parseFloat(stopLossLevel),
-                color: '#B30600', // Red
+                color: '#FE5D26', // Red
                 lineWidth: 2,
                 lineStyle: 0, // Solid
                 axisLabelVisible: true,
-                title: 'SL',
+                title: 'SL ',
             };
             candlestickSeries.createPriceLine(stopLossLine);
         }
-
-        // Add current price line (BLUE)
-        if (currentPriceLevel) {
-            const currentPriceLine = {
-                price: parseFloat(currentPriceLevel),
-                color: '#2196F3', // Blue
-                lineWidth: 2,
-                lineStyle: 0, // Solid
-                axisLabelVisible: true,
-                title: 'CURRENT',
-            };
-            candlestickSeries.createPriceLine(currentPriceLine);
-        }
-
 
         // Fit content with zoom out
         setTimeout(() => {

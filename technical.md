@@ -1,9 +1,19 @@
+kamu adalah trader crypto terbaik dengan winrate > 70%,
+kamu akan membuat script untuk membantu kamu dalam merencanakan trade dan menentukan arah signal long atau short dan side ways
+
+buy : misalnya saat sudah menembus resistant, atau dekat dengan support bawah atau menggunakan fibonaci
+sell : jika market sudah jenuh dan potensi turun atau naik sudah sangat tinggi, atau membentuk trend bearish atau breakout suppport
+side ways : tentukan batas bawah (entry) dan atas (take profit) jika market sedang ranging
+
+buat script yang pasti berhasil untuk melihat dan menganalisa coin, misalnya saat ini sedang trend naik, kamu melihat harga break out resistant, buat entry, stop loss, take profit, dan kamu juga melihat volume perdagangan meningkat, dan indikator lainnya. buatkan script php yang men extend dari abstract class berikut .
+
+ambil data dari getHistorycal data dan pricePrice untuk mendapatkan harga saat ini untuk perhitungan kamu dan jangan pernah berikan value 0 atau null, dan karena ini rencana perdangan. walaupun harga berada di tengah dan tidak tepat untuk entry buy atau sell. mungkin kita bisa memberikan arahan untuk pasar yang ranging. sehingga kita bisa memberikan informasi jangan masuk di sekarang
+
 <?php
 
 namespace App\Analysis\Contract;
 
 use App\Analysis\Contract\MarketDataInterface;
-use App\Models\Coin;
 use App\Models\Symbol;
 
 abstract class AnalysisAbstract implements MarketDataInterface
@@ -66,14 +76,16 @@ abstract class AnalysisAbstract implements MarketDataInterface
      */
     public function getSymbol(string $symbol): string
     {
-        $coin = Coin::find($symbol);
+        $coin = Symbol::where('symbol_provider', $this->provider->getCode())
+            ->where('symbol_coin', $symbol)
+            ->first();
 
         if(empty($coin))
         {
             return throw new \Exception("Symbol '{$symbol}' not found");
         }
 
-        return $coin->coin_symbol;
+        return $coin->symbol_code ?? null;
     }
 
     /**

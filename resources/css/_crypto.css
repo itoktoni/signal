@@ -15,7 +15,7 @@
     background: linear-gradient(135deg, var(--crypto-primary) 0%, var(--crypto-secondary) 100%);
     color: white;
     border-radius: 16px;
-    padding: 24px;
+    padding: 2rem 24px;
     margin-bottom: 24px;
     box-shadow: var(--crypto-shadow);
 }
