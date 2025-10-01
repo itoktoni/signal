@@ -198,6 +198,8 @@
                                                         <span class="crypto-indicator-value">
                                                             @if (is_numeric($value))
                                                                 {{ numberFormat($value, 4) }}
+                                                            @elseif (is_array($value))
+                                                                {{ json_encode($value) }}
                                                             @else
                                                                 {{ $value }}
                                                             @endif

@@ -17,28 +17,28 @@ abstract class AnalysisAbstract implements MarketDataInterface
     /**
      * Retrieve historical OHLCV (Open, High, Low, Close, Volume) data
      *
-     * Expected format:
-     * [
-     *   [
-     *     (string) open,
-     *     (string) high,
-     *     (string) low,
-     *     (string) close,
-     *     (string) volume,
-     *     (int) closeTime,
-     *     (string) quoteAssetVolume,
-     *     (int) numberOfTrades,
-     *     (string) takerBuyBaseVolume,
-     *     (string) takerBuyQuoteVolume
-     *   ],
-     *   ...
-     * ]
      *
      * @param string $symbol    The trading pair
      * @param string $timeframe The timeframe (default '1h')
-     * @param int    $limit     Number of data points (default 200)
+     * @param int    $limit     Number of data points (default 500)
      *
      * @return array
+     * [
+     *   [
+     *      1499040000000,      // Open time
+     *      "0.01634790",       // Open
+     *      "0.80000000",       // High
+     *      "0.01575800",       // Low
+     *      "0.01577100",       // Close
+     *      "148976.11427815",  // Volume
+     *      1499644799999,      // Close time
+     *      "2434.19055334",    // Quote asset volume
+     *      308,                // Number of trades
+     *      "1756.87402397",    // Taker buy base asset volume
+     *      "28.46694368",      // Taker buy quote asset volume
+     *      "17928899.62484339" // Ignore.
+     *   ]
+     * ]
      */
     public function getHistoricalData(string $symbol, string $timeframe = '1h', int $limit = 200): array
     {
@@ -110,11 +110,11 @@ abstract class AnalysisAbstract implements MarketDataInterface
      *   description: array,     // Step-by-step explanation of the analysis flow
      *   signal: string,         // Trading signal: 'BUY' | 'SELL' | 'NEUTRAL'
      *   confidence: float,      // Confidence level (0–100)
+     *   score: int,             // spediction score winrate (e.g., '1-100')
      *   price: float,           // Current market price in USD
      *   entry: float,           // Suggested entry price
      *   stop_loss: float,       // Suggested stop loss price
      *   take_profit: float,     // Suggested take profit price
-     *   score: int,             // spediction score winrate (e.g., '1-100')
      *   risk_reward: string,    // Risk-reward ratio (e.g., '1:2')
      *   indicators: array,      // Indicators used, key-value pairs (e.g., ['SMA' => 100, 'EMA' => 50])
      *   historical: array,      // Get History OHLCV

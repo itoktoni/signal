@@ -25,15 +25,30 @@ class BinanceProvider implements MarketDataInterface
         return 'Binance';
     }
 
-
-    public function getHistoricalData(string $symbol, string $timeframe = '1d', int $limit = 180): array
+    /*
+     [
+        1499040000000,      // Open time
+        "0.01634790",       // Open
+        "0.80000000",       // High
+        "0.01575800",       // Low
+        "0.01577100",       // Close
+        "148976.11427815",  // Volume
+        1499644799999,      // Close time
+        "2434.19055334",    // Quote asset volume
+        308,                // Number of trades
+        "1756.87402397",    // Taker buy base asset volume
+        "28.46694368",      // Taker buy quote asset volume
+        "17928899.62484339" // Ignore.
+        ]
+    */
+    public function getHistoricalData(string $symbol, string $timeframe = '1d', int $limit = 500): array
     {
         $url = $this->baseUrl . "/klines";
         $response = $this->http->get($url, [
             'query' => [
                 'symbol'   => strtoupper($symbol),
-                'interval' => '1d',
-                'limit'    => 180,
+                'interval' => $timeframe,
+                'limit'    => $limit,
             ],
         ]);
 
@@ -48,6 +63,12 @@ class BinanceProvider implements MarketDataInterface
                 'high' => (float)$kline[2],
                 'low' => (float)$kline[3],
                 'close' => (float)$kline[4],
+                'volume' => (float)$kline[5],
+                'close_time' => (float)$kline[6],
+                'quote_asset_volume' => (float)$kline[7],
+                'number_of_trade' => (float)$kline[8],
+                'taker_buy_base_asset_volume' => (float)$kline[9],
+                'taker_buy_quote_asset_volume' => (float)$kline[10],
             ];
         }
 
