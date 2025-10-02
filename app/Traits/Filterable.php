@@ -27,9 +27,18 @@ trait Filterable
         }
 
         // Filter by search term based on filter field
-        if ($request->filled('search') && $request->filled('filter') && $request->filter !== 'All Filter') {
-            $field = $this->mapFilterField($request->filter);
-            $query->where($field, 'like', '%'.$request->search.'%');
+        if ($request->filled('search')) {
+
+            $field = $request->filter;
+
+            if($field)
+            {
+                $query->where($field, 'like', '%'.$request->search.'%');
+            }
+            else
+            {
+                $query->where(self::getKeyName(), 'like', '%'.$request->search.'%');
+            }
         }
 
         // Apply sorting
@@ -65,23 +74,6 @@ trait Filterable
     {
         $map = [
             'username' => 'name',
-            // Add more mappings as needed
-        ];
-
-        return $map[$field] ?? $field;
-    }
-
-    /**
-     * Map filter field names to database columns.
-     *
-     * @param  string  $field
-     * @return string
-     */
-    protected function mapFilterField($field)
-    {
-        $map = [
-            'Username' => 'name',
-            'Role' => 'role',
             // Add more mappings as needed
         ];
 
