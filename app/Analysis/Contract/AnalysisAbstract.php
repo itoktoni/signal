@@ -104,19 +104,26 @@ abstract class AnalysisAbstract implements MarketDataInterface
      * @param string|null $forcedApi  Force a specific API provider (optional)
      *
      * @return object {
-     *   title: string,          // Analysis title
-     *   description: array,     // jelaskan lebih detail tentang bagaimana cara kamu menganalisa, dan step by step yang kamu lakukan untuk menaganalisa coin tersebut
-     *   signal: string,         // Trading signal: 'BUY' atau 'SELL' lihat tingkat keberhasilan misalnya buy keberhasilan 70% sedangkan sell 20%, maka tampilkan yang 70%
-     *   confidence: float,      // Confidence level (0–100) tingkat akurasi indikator misalnya untuk signal buy, harga dekat dengan support dan rsi sudah diatas harga, pembalikan arah untuk uptrend
-     *   score: int,             // spediction score winrate (e.g., '1-100') tingkat keberhasilan recomendasi ini, misalnya dengan semua indikator yang dipakai, semua menunjukan bullish dan harga sangat bagus untuk entry maka hitung semua indikator dan berikan score jika lebih dari 70% maka signal bagus
-     *   price: float,           // Current market price in USD
-     *   entry: float,           // buat fungsi untuk menghitung kapan yang tepat untuk entry, misalnya kamu merekomendasi buy, harga sekarang $100, dan sudah menembus resistant, kamu bisa merekomendasikan untuk entry saat retrace kebawah misalnya di $98
-     *   stop_loss: float,       // misalnya harga sudah berada di support, dan rawan sekali untuk break out karena koin tersebut baru dan kamu bisa melihat history dari perdangan sebelumnya apakah coin ini pernah turun sampai 20% lebih maka kamu bisa merekomendasikan stoploss dibawah sedikit dibawah support
-     *   take_profit: float,     // kamu bisa merekomendasikan take provit di next resistant atau menggunakan indicator lain seperti fibonacci retracement
-     *   risk_reward: string,    // Risk-reward ratio (e.g., '1:2')
-     *   indicators: array,      // Indicators yang kamu gunakan untuk menganalisa, buat key value dalam bentuk array key-value pairs (e.g., ['SMA' => 100, 'EMA' => 50])
-     *   historical: array,      // Get History OHLCV
-     *   notes: array            // catatan suggestion dari kamu misalnya, jangan entry dulu, tunggu konfirmasi breakout di harga $900 misalnya,
+     *   title: string,             // Analysis title
+     *   description: array,        // jelaskan lebih detail tentang bagaimana cara kamu menganalisa, dan step by step yang kamu lakukan untuk menaganalisa coin tersebut
+     *   signal: string,            // Trading signal: 'BUY' atau 'SELL' lihat tingkat keberhasilan misalnya buy keberhasilan 70% sedangkan sell 20%, maka tampilkan yang 70%
+     *   confidence: float,         // Confidence level (0–100) tingkat akurasi indikator misalnya untuk signal buy, harga dekat dengan support dan rsi sudah diatas harga, pembalikan arah untuk uptrend
+     *   score: int,                // spediction score winrate (e.g., '1-100') tingkat keberhasilan recomendasi ini, misalnya dengan semua indikator yang dipakai, semua menunjukan bullish dan harga sangat bagus untuk entry maka hitung semua indikator dan berikan score jika lebih dari 70% maka signal bagus
+     *   price: float,              // Current market price in USD
+     *   entry: float,              // buat fungsi untuk menghitung kapan yang tepat untuk entry, misalnya kamu merekomendasi buy, harga sekarang $100, dan sudah menembus resistant, kamu bisa merekomendasikan untuk entry saat retrace kebawah misalnya di $98
+     *   stop_loss: float,          // misalnya harga sudah berada di support, dan rawan sekali untuk break out karena koin tersebut baru dan kamu bisa melihat history dari perdangan sebelumnya apakah coin ini pernah turun sampai 20% lebih maka kamu bisa merekomendasikan stoploss dibawah sedikit dibawah support
+     *   take_profit: float,        // kamu bisa merekomendasikan take provit di next resistant atau menggunakan indicator lain seperti fibonacci retracement
+     *   risk_reward: string,       // Risk-reward ratio (e.g., '1:2')
+     *   indicators: array,         // Indicators yang kamu gunakan untuk menganalisa, buat key value dalam bentuk array key-value pairs (e.g., ['SMA' => 100, 'EMA' => 50])
+     *   historical: array,         // Get History OHLCV
+     *   notes: array               // catatan suggestion dari kamu misalnya, jangan entry dulu, tunggu konfirmasi breakout di harga $900 misalnya,
+     *   patterns : array,          // Detected patterns dengan details
+     *   market_phase : string,     // Current market condition
+     *   volatility_factor : float, // ATR-based volatility measure
+     *   support_levels : array,    // Identified support levels
+     *   resistance_levels : array, // Identified resistance levels
+     *   trend_direction : string,  // Bullish/Bearish/Sideways
+     *   trend_strength : float,    // Kekuatan trend (0-100)
      * }
      */
     abstract public function analyze(

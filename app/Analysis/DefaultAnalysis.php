@@ -10,6 +10,11 @@ class DefaultAnalysis extends AnalysisAbstract
     private $indicators;
     private $notes;
 
+    public function __construct(\App\Analysis\Contract\MarketDataInterface $provider)
+    {
+        parent::__construct($provider);
+    }
+
     public function analyze(string $symbol, float $amount = 100, string $timeframe = '1h', ?string $forcedApi = null): object
     {
         try {
@@ -72,14 +77,22 @@ class DefaultAnalysis extends AnalysisAbstract
                 'description' => $this->getDescription(),
                 'signal' => $signal,
                 'confidence' => $confidence,
-                'entry' => $suggestedEntry,
+                'score' => $this->calculateScore($signal, $confidence),
                 'price' => $currentPrice,
+                'entry' => $suggestedEntry,
                 'stop_loss' => $levels['stop_loss'],
                 'take_profit' => $levels['take_profit'],
                 'risk_reward' => $levels['risk_reward'],
                 'indicators' => $this->indicators,
                 'historical' => $historicalData,
                 'notes' => $this->getNotes(),
+                'patterns' => $this->detectPatterns($historicalData),
+                'market_phase' => $this->determineMarketPhase($closePrices),
+                'volatility_factor' => $this->calculateVolatilityFactor($highPrices, $lowPrices, $closePrices),
+                'support_levels' => $this->identifySupportLevels($lowPrices),
+                'resistance_levels' => $this->identifyResistanceLevels($highPrices),
+                'trend_direction' => $this->determineTrendDirection($closePrices),
+                'trend_strength' => $this->calculateTrendStrength($closePrices),
             ];
 
         } catch (\Exception $e) {
@@ -93,14 +106,22 @@ class DefaultAnalysis extends AnalysisAbstract
                 'description' => $this->getDescription(),
                 'signal' => 'NEUTRAL',
                 'confidence' => 30,
-                'entry' => $currentPrice ?? 0,
+                'score' => 30,
                 'price' => $currentPrice ?? 0,
+                'entry' => $currentPrice ?? 0,
                 'stop_loss' => ($currentPrice ?? 0) * 0.98,
                 'take_profit' => ($currentPrice ?? 0) * 1.02,
                 'risk_reward' => '1:1',
                 'indicators' => [],
-                'historical' => $historicalData,
+                'historical' => $historicalData ?? [],
                 'notes' => $this->getNotes(),
+                'patterns' => [],
+                'market_phase' => 'sideways',
+                'volatility_factor' => 0.02,
+                'support_levels' => [],
+                'resistance_levels' => [],
+                'trend_direction' => 'neutral',
+                'trend_strength' => 0,
             ];
         }
     }
@@ -169,9 +190,20 @@ class DefaultAnalysis extends AnalysisAbstract
         $recentHighs = array_slice($highs, -50); // Increased to 50 for better levels
         $recentLows = array_slice($lows, -50);
 
+        if (empty($recentHighs) || empty($recentLows)) {
+            $currentPrice = !empty($highs) ? $highs[count($highs) - 1] : (!empty($lows) ? $lows[count($lows) - 1] : 0);
+            return [
+                '236' => $currentPrice * 1.05,
+                '382' => $currentPrice * 1.08,
+                '500' => $currentPrice * 1.12,
+                '618' => $currentPrice * 1.15,
+                '786' => $currentPrice * 1.20
+            ];
+        }
+
         $swingHigh = max($recentHighs);
         $swingLow = min($recentLows);
-        $currentPrice = end($highs) ?: end($lows) ?: 0;
+        $currentPrice = $highs[count($highs) - 1] ?? $lows[count($lows) - 1] ?? 0;
         $range = $swingHigh - $swingLow;
 
         if ($range == 0 || $swingHigh == 0 || $swingLow == 0) {
@@ -205,9 +237,20 @@ class DefaultAnalysis extends AnalysisAbstract
         $recentLows = array_slice($lows, -50);
         $recentCloses = array_slice($closes, -50);
 
+        if (empty($recentHighs) || empty($recentLows) || empty($recentCloses)) {
+            $currentPrice = (!empty($closes) ? $closes[count($closes) - 1] : 0);
+            return [
+                'pivot' => $currentPrice,
+                'resistance1' => $currentPrice * 1.08,
+                'support1' => $currentPrice * 0.92,
+                'resistance2' => $currentPrice * 1.15,
+                'support2' => $currentPrice * 0.85
+            ];
+        }
+
         $high = max($recentHighs);
         $low = min($recentLows);
-        $currentPrice = end($recentCloses) ?: end($closes) ?: 0;
+        $currentPrice = $closes[count($closes) - 1] ?? 0;
 
         if ($high == $low || $high == 0 || $low == 0) {
             // Enhanced fallback levels
@@ -589,5 +632,151 @@ class DefaultAnalysis extends AnalysisAbstract
         if (strpos($this->notes, 'BUY') !== false) return 'BUY';
         if (strpos($this->notes, 'SELL') !== false) return 'SELL';
         return 'NEUTRAL';
+    }
+
+    private function calculateScore(string $signal, float $confidence): int
+    {
+        $baseScore = $confidence;
+        if ($signal === 'BUY') {
+            return min(100, $baseScore + 10);
+        } elseif ($signal === 'SELL') {
+            return min(100, $baseScore + 5);
+        }
+        return min(100, $baseScore);
+    }
+
+    private function detectPatterns(array $historicalData): array
+    {
+        $patterns = [];
+        $closes = array_column($historicalData, 'close');
+
+        if (count($closes) < 20) {
+            return $patterns;
+        }
+
+        // Simple pattern detection
+        $recent = array_slice($closes, -10);
+        $previous = array_slice($closes, -20, 10);
+
+        $recentAvg = array_sum($recent) / count($recent);
+        $previousAvg = array_sum($previous) / count($previous);
+
+        if ($recentAvg > $previousAvg * 1.02) {
+            $patterns[] = 'bullish_trend';
+        } elseif ($recentAvg < $previousAvg * 0.98) {
+            $patterns[] = 'bearish_trend';
+        } else {
+            $patterns[] = 'sideways';
+        }
+
+        return $patterns;
+    }
+
+    private function determineMarketPhase(array $closePrices): string
+    {
+        if (count($closePrices) < 20) {
+            return 'unknown';
+        }
+
+        $recent = array_slice($closePrices, -10);
+        $previous = array_slice($closePrices, -20, 10);
+
+        $recentAvg = array_sum($recent) / count($recent);
+        $previousAvg = array_sum($previous) / count($previous);
+
+        $change = ($recentAvg - $previousAvg) / $previousAvg;
+
+        if ($change > 0.02) {
+            return 'bullish';
+        } elseif ($change < -0.02) {
+            return 'bearish';
+        }
+
+        return 'sideways';
+    }
+
+    private function calculateVolatilityFactor(array $highs, array $lows, array $closes): float
+    {
+        if (count($closes) < 14 || empty($closes)) {
+            return 0.02;
+        }
+
+        $atr = $this->calculateATR($highs, $lows, $closes, 14);
+        $currentPrice = $closes[count($closes) - 1];
+
+        return $currentPrice > 0 ? $atr / $currentPrice : 0.02;
+    }
+
+    private function identifySupportLevels(array $lowPrices): array
+    {
+        if (count($lowPrices) < 20) {
+            return [];
+        }
+
+        $recent = array_slice($lowPrices, -50);
+        $levels = [];
+
+        // Find local minima
+        for ($i = 1; $i < count($recent) - 1; $i++) {
+            if ($recent[$i] < $recent[$i-1] && $recent[$i] < $recent[$i+1]) {
+                $levels[] = round($recent[$i], 4);
+            }
+        }
+
+        // Return unique levels, sorted
+        $levels = array_unique($levels);
+        sort($levels);
+
+        return array_slice($levels, -3); // Return top 3 support levels
+    }
+
+    private function identifyResistanceLevels(array $highPrices): array
+    {
+        if (count($highPrices) < 20) {
+            return [];
+        }
+
+        $recent = array_slice($highPrices, -50);
+        $levels = [];
+
+        // Find local maxima
+        for ($i = 1; $i < count($recent) - 1; $i++) {
+            if ($recent[$i] > $recent[$i-1] && $recent[$i] > $recent[$i+1]) {
+                $levels[] = round($recent[$i], 4);
+            }
+        }
+
+        // Return unique levels, sorted
+        $levels = array_unique($levels);
+        rsort($levels);
+
+        return array_slice($levels, -3); // Return top 3 resistance levels
+    }
+
+    private function determineTrendDirection(array $closePrices): string
+    {
+        if (count($closePrices) < 10) {
+            return 'neutral';
+        }
+
+        $trend = $this->calculateTrend($closePrices);
+
+        if ($trend > 0.01) {
+            return 'bullish';
+        } elseif ($trend < -0.01) {
+            return 'bearish';
+        }
+
+        return 'neutral';
+    }
+
+    private function calculateTrendStrength(array $closePrices): float
+    {
+        if (count($closePrices) < 10) {
+            return 0;
+        }
+
+        $trend = $this->calculateTrend($closePrices);
+        return min(100, abs($trend) * 1000); // Scale to 0-100
     }
 }
