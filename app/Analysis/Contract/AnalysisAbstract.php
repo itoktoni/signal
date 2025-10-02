@@ -4,7 +4,6 @@ namespace App\Analysis\Contract;
 
 use App\Analysis\Contract\MarketDataInterface;
 use App\Models\Coin;
-use App\Models\Symbol;
 
 abstract class AnalysisAbstract implements MarketDataInterface
 {

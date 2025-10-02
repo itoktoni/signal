@@ -243,7 +243,11 @@
                                                             </td>
                                                             <td>
                                                                 <span class="crypto-indicator-value">
+                                                                    @if (is_array($value))
+                                                                    {{ json_encode($value) }}
+                                                                    @else
                                                                     {{ $value }}
+                                                                    @endif
                                                                 </span>
                                                             </td>
                                                         </tr>

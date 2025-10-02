@@ -12,7 +12,7 @@ Fitur ini mengimplementasikan sistem analisa cryptocurrency yang komprehensif un
 
 #### Kriteria Penerimaan
 
-1. KETIKA trend pasar bullish MAKA sistem HARUS mengidentifikasi titik entry dengan mempertimbangkan indikator berikut: 
+1. KETIKA trend pasar bullish MAKA sistem HARUS mengidentifikasi titik entry dengan mempertimbangkan indikator berikut:
 
 ##### Buy in support level
 a. Identifikasi Trend Bullish
