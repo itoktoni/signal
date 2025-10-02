@@ -648,15 +648,24 @@ class DefaultAnalysis extends AnalysisAbstract
     private function detectPatterns(array $historicalData): array
     {
         $patterns = [];
+
+        if (empty($historicalData) || count($historicalData) < 20) {
+            return $patterns;
+        }
+
         $closes = array_column($historicalData, 'close');
 
-        if (count($closes) < 20) {
+        if (empty($closes) || count($closes) < 20) {
             return $patterns;
         }
 
         // Simple pattern detection
         $recent = array_slice($closes, -10);
         $previous = array_slice($closes, -20, 10);
+
+        if (empty($recent) || empty($previous)) {
+            return $patterns;
+        }
 
         $recentAvg = array_sum($recent) / count($recent);
         $previousAvg = array_sum($previous) / count($previous);

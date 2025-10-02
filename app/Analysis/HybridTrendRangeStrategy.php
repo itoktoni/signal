@@ -6,6 +6,11 @@ use App\Analysis\Contract\AnalysisAbstract;
 
 class HybridTrendRangeStrategy extends AnalysisAbstract
 {
+    public function __construct(\App\Analysis\Contract\MarketDataInterface $provider)
+    {
+        parent::__construct($provider);
+    }
+
     public function getCode(): string
     {
         return 'hybrid_trend_range_v5';
@@ -29,16 +34,17 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
             throw new \Exception("Insufficient data (min 60 candles required).");
         }
 
-        $opens = array_column($historical, 'open');
-        $closes = array_column($historical, 'close');
-        $highs = array_column($historical, 'high');
-        $lows = array_column($historical, 'low');
-        $volumes = array_column($historical, 'volume');
+        // Extract prices from historical data (same approach as DefaultAnalysis)
+        $opens = array_map(fn($candle) => (float) ($candle['open'] ?? $candle[1] ?? 0), $historical);
+        $closes = array_map(fn($candle) => (float) ($candle['close'] ?? $candle[4] ?? 0), $historical);
+        $highs = array_map(fn($candle) => (float) ($candle['high'] ?? $candle[2] ?? 0), $historical);
+        $lows = array_map(fn($candle) => (float) ($candle['low'] ?? $candle[3] ?? 0), $historical);
+        $volumes = array_map(fn($candle) => (float) ($candle['volume'] ?? $candle[5] ?? 0), $historical);
 
         $rsi = $this->calculateRSI($closes, 14);
         $ema20 = $this->calculateEMA($closes, 20);
         $ema50 = $this->calculateEMA($closes, 50);
-        $lastClose = end($closes);
+        $lastClose = !empty($closes) ? $closes[count($closes) - 1] : 0;
 
         // Support & Resistance (40 candle)
         $lookback = 40;
@@ -60,9 +66,11 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
         $isNearSupport = $currentPrice <= $support * 1.015;
         $isRanging = $rangePct >= 1.5 && $rangePct <= 6.0 && !$isAboveResistance;
         $avgVol20 = array_sum(array_slice($volumes, -20)) / 20;
-        $lastVol = end($volumes);
+        $lastVol = !empty($volumes) ? $volumes[count($volumes) - 1] : 0;
         $volumeRatio = $avgVol20 > 0 ? $lastVol / $avgVol20 : 1.0;
-        $isUptrend = end($ema20) > end($ema50) && $lastClose > end($ema50);
+        $lastEMA20 = !empty($ema20) ? $ema20[count($ema20) - 1] : 0;
+        $lastEMA50 = !empty($ema50) ? $ema50[count($ema50) - 1] : 0;
+        $isUptrend = $lastEMA20 > $lastEMA50 && $lastClose > $lastEMA50;
 
         // === INISIALISASI DEFAULT ===
         $entry = $currentPrice * 0.995;
@@ -73,9 +81,9 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
         $notes = [];
         $suggestions = [];
         $indicators = [
-            'RSI' => round(end($rsi), 2),
-            'EMA20' => round(end($ema20), 2),
-            'EMA50' => round(end($ema50), 2),
+            'RSI' => !empty($rsi) ? round($rsi[count($rsi) - 1], 2) : 50,
+            'EMA20' => !empty($ema20) ? round($ema20[count($ema20) - 1], 2) : 0,
+            'EMA50' => !empty($ema50) ? round($ema50[count($ema50) - 1], 2) : 0,
             'Resistance' => round($resistance, 2),
             'Support' => round($support, 2),
             'Bullish Candle' => $bullishCandle,
@@ -130,7 +138,7 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
             }
         }
         // 🔄 STRATEGI 5: RANGING + REVERSAL
-        elseif ($isRanging && $isNearSupport && end($rsi) < 62) {
+        elseif ($isRanging && $isNearSupport && (!empty($rsi) ? $rsi[count($rsi) - 1] : 50) < 62) {
             $entry = min($support * 1.002, $currentPrice * 0.998);
             $stopLoss = $support * 0.985;
             $takeProfit = $resistance;
@@ -145,7 +153,8 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
         // 🧭 DEFAULT: DYNAMIC SUPPORT
         else {
             $avgLow10 = array_sum(array_slice($lows, -10)) / 10;
-            $dynamicSupport = max($avgLow10, end($ema20));
+            $lastEMA20Value = !empty($ema20) ? $ema20[count($ema20) - 1] : 0;
+            $dynamicSupport = max($avgLow10, $lastEMA20Value);
             $entry = min($dynamicSupport * 1.001, $currentPrice * 0.996);
             $stopLoss = $entry * 0.978;
             $takeProfit = $entry * 1.032;
@@ -157,7 +166,8 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
             if ($bearishCandle) {
                 $suggestions[] = "🚨 SUDAH SAATNYA TAKE PROFIT — pola bearish muncul di zona target.";
             }
-            if (end($rsi) > 70) {
+            $lastRSIValue = !empty($rsi) ? $rsi[count($rsi) - 1] : 50;
+            if ($lastRSIValue > 70) {
                 $suggestions[] = "🚨 SUDAH SAATNYA TAKE PROFIT — RSI overbought di zona target.";
             }
         }
@@ -198,7 +208,13 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
             'indicators' => $indicators,
             'historical' => $historical,
             'notes' => $notes,
-            'suggestions' => $suggestions ?: ['ℹ️ Tunggu konfirmasi pola sebelum entry.'],
+            'patterns' => $this->detectPatterns($closes, $highs, $lows),
+            'market_phase' => $this->determineMarketPhase($closes),
+            'volatility_factor' => $this->calculateVolatilityFactor($highs, $lows, $closes),
+            'support_levels' => [$support],
+            'resistance_levels' => [$resistance],
+            'trend_direction' => $this->determineTrendDirection($closes),
+            'trend_strength' => $this->calculateTrendStrength($closes),
         ];
     }
 
@@ -210,6 +226,11 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
     {
         $n = count($closes);
         if ($n < 3) return null;
+
+        // Check if we have enough data points
+        if (!isset($opens[$n-3], $closes[$n-3], $opens[$n-2], $closes[$n-2], $opens[$n-1], $closes[$n-1], $highs[$n-1], $lows[$n-1])) {
+            return null;
+        }
 
         $c1o = $opens[$n-3]; $c1c = $closes[$n-3];
         $c2o = $opens[$n-2]; $c2c = $closes[$n-2];
@@ -256,6 +277,11 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
     {
         $n = count($closes);
         if ($n < 3) return null;
+
+        // Check if we have enough data points
+        if (!isset($opens[$n-3], $closes[$n-3], $opens[$n-2], $closes[$n-2], $opens[$n-1], $closes[$n-1], $highs[$n-1], $lows[$n-1])) {
+            return null;
+        }
 
         $c1o = $opens[$n-3]; $c1c = $closes[$n-3];
         $c2o = $opens[$n-2]; $c2c = $closes[$n-2];
@@ -346,7 +372,7 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
         if (!$isHandle) return null;
 
         $cupHigh = max($leftHigh, $rightHigh);
-        $currentPrice = end($closes);
+        $currentPrice = !empty($closes) ? $closes[count($closes) - 1] : 0;
         $isBreakout = $currentPrice > $cupHigh;
 
         if (!$isBreakout) return null;
@@ -381,11 +407,11 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
         if ($lowSlope >= $highSlope) return null;
 
         $wedgeHigh = max($windowHighs);
-        $currentClose = end($closes);
+        $currentClose = !empty($closes) ? $closes[count($closes) - 1] : 0;
         if ($currentClose <= $wedgeHigh) return null;
 
         $avgVolBefore = array_sum(array_slice($volumes, -25, 20)) / 20;
-        $lastVol = end($volumes);
+        $lastVol = !empty($volumes) ? $volumes[count($volumes) - 1] : 0;
         if ($lastVol < $avgVolBefore * 1.2) return null;
 
         return [
@@ -430,7 +456,7 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
 
         // Neckline: garis resistance dari puncak left & right shoulder
         $neckline = min($leftShoulderHigh, $rightShoulderHigh);
-        $currentPrice = end($closes);
+        $currentPrice = !empty($closes) ? $closes[count($closes) - 1] : 0;
 
         // Breakout: harga > neckline
         if ($currentPrice <= $neckline) return null;
@@ -500,10 +526,177 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
         $multiplier = 2.0 / ($period + 1);
 
         for ($i = $period; $i < count($prices); $i++) {
-            $nextEMA = ($prices[$i] * $multiplier) + (end($ema) * (1 - $multiplier));
+            $lastEMA = !empty($ema) ? $ema[count($ema) - 1] : $sma;
+            $nextEMA = ($prices[$i] * $multiplier) + ($lastEMA * (1 - $multiplier));
             $ema[] = $nextEMA;
         }
 
         return $ema;
+    }
+
+    private function detectPatterns(array $closes, array $highs, array $lows): array
+    {
+        $patterns = [];
+
+        // Check if we have enough data for pattern detection
+        if (count($closes) < 3 || count($highs) < 3 || count($lows) < 3) {
+            return $patterns;
+        }
+
+        // Check for bullish patterns
+        $opens = array_column($this->getHistoricalDataFromArrays($closes, $highs, $lows), 'open');
+        if (count($opens) >= 3) {
+            $recentOpens = array_slice($opens, -3);
+            $bullishCandle = $this->detectBullishReversal($recentOpens, $highs, $lows, $closes);
+
+            if ($bullishCandle) {
+                $patterns[] = 'bullish_' . strtolower(str_replace(' ', '_', $bullishCandle));
+            }
+
+            // Check for bearish patterns
+            $bearishCandle = $this->detectBearishReversal($recentOpens, $highs, $lows, $closes);
+
+            if ($bearishCandle) {
+                $patterns[] = 'bearish_' . strtolower(str_replace(' ', '_', $bearishCandle));
+            }
+        }
+
+        // Check for chart patterns
+        if ($this->detectCupAndHandle($closes, $highs, $lows, array_fill(0, count($closes), 100))) {
+            $patterns[] = 'cup_and_handle';
+        }
+
+        if ($this->detectFallingWedge($closes, $highs, $lows, array_fill(0, count($closes), 100))) {
+            $patterns[] = 'falling_wedge';
+        }
+
+        if ($this->detectInverseHeadAndShoulders($closes, $highs, $lows)) {
+            $patterns[] = 'inverse_head_and_shoulders';
+        }
+
+        return $patterns;
+    }
+
+    private function determineMarketPhase(array $closes): string
+    {
+        if (count($closes) < 20 || empty($closes)) {
+            return 'unknown';
+        }
+
+        $rsi = $this->calculateRSI($closes, 14);
+        $ema20 = $this->calculateEMA($closes, 20);
+        $ema50 = $this->calculateEMA($closes, 50);
+
+        if (empty($rsi) || empty($ema20) || empty($ema50)) {
+            return 'unknown';
+        }
+
+        $lastRSI = $rsi[count($rsi) - 1];
+        $lastEMA20 = $ema20[count($ema20) - 1];
+        $lastEMA50 = $ema50[count($ema50) - 1];
+        $lastClose = $closes[count($closes) - 1];
+
+        if ($lastClose > $lastEMA20 && $lastEMA20 > $lastEMA50 && $lastRSI > 50) {
+            return 'bullish';
+        } elseif ($lastClose < $lastEMA20 && $lastEMA20 < $lastEMA50 && $lastRSI < 50) {
+            return 'bearish';
+        }
+
+        return 'sideways';
+    }
+
+    private function calculateVolatilityFactor(array $highs, array $lows, array $closes): float
+    {
+        if (count($closes) < 14 || empty($closes)) {
+            return 0.02;
+        }
+
+        $atr = 0;
+        $trueRanges = [];
+
+        for ($i = 1; $i < min(count($closes), 15); $i++) {
+            if (isset($highs[$i], $lows[$i], $closes[$i], $closes[$i - 1])) {
+                $tr = max(
+                    $highs[$i] - $lows[$i],
+                    abs($highs[$i] - $closes[$i - 1]),
+                    abs($lows[$i] - $closes[$i - 1])
+                );
+                $trueRanges[] = $tr;
+            }
+        }
+
+        if (!empty($trueRanges)) {
+            $atr = array_sum($trueRanges) / count($trueRanges);
+        }
+
+        $currentPrice = $closes[count($closes) - 1];
+        return $currentPrice > 0 ? $atr / $currentPrice : 0.02;
+    }
+
+    private function determineTrendDirection(array $closes): string
+    {
+        if (count($closes) < 20 || empty($closes)) {
+            return 'neutral';
+        }
+
+        $ema20 = $this->calculateEMA($closes, 20);
+        $ema50 = $this->calculateEMA($closes, 50);
+
+        if (empty($ema20) || empty($ema50)) {
+            return 'neutral';
+        }
+
+        $lastEMA20 = $ema20[count($ema20) - 1];
+        $lastEMA50 = $ema50[count($ema50) - 1];
+
+        if ($lastEMA20 > $lastEMA50) {
+            return 'bullish';
+        } elseif ($lastEMA20 < $lastEMA50) {
+            return 'bearish';
+        }
+
+        return 'neutral';
+    }
+
+    private function calculateTrendStrength(array $closes): float
+    {
+        if (count($closes) < 20 || empty($closes)) {
+            return 0;
+        }
+
+        $ema20 = $this->calculateEMA($closes, 20);
+        $ema50 = $this->calculateEMA($closes, 50);
+
+        if (empty($ema20) || empty($ema50)) {
+            return 0;
+        }
+
+        $lastEMA20 = $ema20[count($ema20) - 1];
+        $lastEMA50 = $ema50[count($ema50) - 1];
+
+        if ($lastEMA50 == 0) {
+            return 0;
+        }
+
+        $trend = abs(($lastEMA20 - $lastEMA50) / $lastEMA50);
+        return min(100, $trend * 1000);
+    }
+
+    private function getHistoricalDataFromArrays(array $closes, array $highs, array $lows): array
+    {
+        $data = [];
+        $count = min(count($closes), count($highs), count($lows));
+
+        for ($i = 0; $i < $count; $i++) {
+            $data[] = [
+                'open' => $closes[$i] * 0.995, // Approximate open price
+                'high' => $highs[$i],
+                'low' => $lows[$i],
+                'close' => $closes[$i],
+                'volume' => 100 // Default volume
+            ];
+        }
+
+        return $data;
     }
 }
