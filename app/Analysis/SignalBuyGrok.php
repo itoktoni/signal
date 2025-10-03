@@ -106,7 +106,7 @@ class SignalBuyGrok extends AnalysisAbstract
 
             $this->setConclusionAndSuggestions($signal, $trendDirection, $patterns, $this->findNearestSupport($supportLevels, $currentPrice), $this->findNearestResistance($resistanceLevels, $currentPrice));
 
-            $description = $this->getDescription($symbol, $timeframe, $trendDirection, $patterns, $signal);
+            $description = $this->getDescription($symbol, $timeframe, $trendDirection, $patterns, $signal, count($historicalData));
 
             Log::info("AdvancedPatternAnalysis: Analysis completed", [
                 'symbol' => $symbol,
@@ -144,7 +144,7 @@ class SignalBuyGrok extends AnalysisAbstract
 
             return (object)[
                 'title' => $this->getName() . ' - Limited Data',
-                'description' => $this->getDescription($symbol, $timeframe, 'Unknown', [], 'NEUTRAL'),
+                'description' => $this->getDescription($symbol, $timeframe, 'Unknown', [], 'NEUTRAL', count($historicalData ?? [])),
                 'signal' => 'NEUTRAL',
                 'confidence' => 30,
                 'score' => 30,
@@ -167,10 +167,10 @@ class SignalBuyGrok extends AnalysisAbstract
         }
     }
 
-    private function getDescription(string $symbol, string $timeframe, string $trendDirection, array $patterns, string $signal): array
+    private function getDescription(string $symbol, string $timeframe, string $trendDirection, array $patterns, string $signal, int $candleCount = 0): array
     {
         $description = [];
-        $description[] = "Step 1: Mengambil data historis untuk {$symbol} pada timeframe {$timeframe} dengan " . count($historicalData ?? []) . " candles.";
+        $description[] = "Step 1: Mengambil data historis untuk {$symbol} pada timeframe {$timeframe} dengan {$candleCount} candles.";
         $description[] = "Step 2: Menghitung indikator teknikal: EMA (20,50,200), RSI, ATR.";
         $description[] = "Step 3: Mengidentifikasi swing highs/lows dan arah trend sebagai {$trendDirection}.";
         $description[] = "Step 4: Mendeteksi pola candlestick dan chart: " . implode(', ', $patterns) . ".";
