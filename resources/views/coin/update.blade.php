@@ -98,7 +98,7 @@
                                 <div class="crypto-data-item">
                                     <div class="crypto-data-label">Current Price</div>
                                     <div class="crypto-data-value crypto-price-usd">
-                                        ${{ numberFormat($result->price, 3) }}
+                                        ${{ numberFormat($result->price, 5) }}
                                     </div>
                                     <div class="crypto-price-idr">Rp {{ numberFormat(usdToIdr($result->price), 0) }}</div>
                                 </div>
@@ -106,20 +106,20 @@
                                 <div class="crypto-data-item">
                                     <div class="crypto-data-label">Suggested Entry</div>
                                     <div class="crypto-data-value text-primary">
-                                        ${{ numberFormat($result->entry, 3) }}</div>
+                                        ${{ numberFormat($result->entry, 5) }}</div>
                                     <div class="crypto-price-idr text-primary">Rp {{ numberFormat(usdToIdr($result->entry), 0) }}</div>
                                 </div>
                                 <div class="crypto-data-item">
                                     <div class="crypto-data-label">Stop Loss</div>
                                     <div class="crypto-data-value text-error">
-                                        ${{ numberFormat($result->stop_loss, 3) }}</div>
+                                        ${{ numberFormat($result->stop_loss, 5) }}</div>
                                     <div class="crypto-price-idr text-error">Rp
                                         {{ numberFormat(usdToIdr($result->stop_loss), 0) }}</div>
                                 </div>
                                 <div class="crypto-data-item">
                                     <div class="crypto-data-label">Take Profit</div>
                                     <div class="crypto-data-value text-success">
-                                        ${{ numberFormat($result->take_profit, 3) }}</div>
+                                        ${{ numberFormat($result->take_profit, 5) }}</div>
                                     <div class="crypto-price-idr text-success">Rp
                                         {{ numberFormat(usdToIdr($result->take_profit), 0) }}</div>
                                 </div>
@@ -199,7 +199,7 @@
                                                     <td>
                                                         <span class="crypto-indicator-value">
                                                             @if (is_numeric($value))
-                                                                {{ numberFormat($value, 4) }}
+                                                                {{ numberFormat($value, 5) }}
                                                             @elseif (is_array($value))
                                                                 {{ json_encode($value) }}
                                                             @else
@@ -312,6 +312,14 @@
                 barSpacing: 8, // Increase bar spacing for better visibility
                 minBarSpacing: 4,
             },
+            localization: {
+                priceFormatter: (price) => {
+                    let str = price.toFixed(5).replace('.', ',');
+                    let parts = str.split(',');
+                    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                    return parts.join(',');
+                }
+            },
         });
 
         // Add simple candlestick series
@@ -324,6 +332,19 @@
         });
 
         candlestickSeries.setData(historicalData);
+
+        // Set price format to 5 decimal places with European formatting (comma decimal, dot thousands)
+        candlestickSeries.applyOptions({
+            priceFormat: {
+                formatter: (price) => {
+                    let str = price.toFixed(5).replace('.', ',');
+                    let parts = str.split(',');
+                    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                    return parts.join(',');
+                },
+                minMove: 0.00001
+            }
+        });
 
         // Zoom out to show more data
         setTimeout(() => {
