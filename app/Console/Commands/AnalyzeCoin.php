@@ -3,18 +3,14 @@
 namespace App\Console\Commands;
 
 use App\Analysis\AnalysisServiceFactory;
-use App\Analysis\ApiProviderManager;
 use App\Analysis\Providers\ProviderFactory;
 use App\Models\Coin;
 use App\Services\TelegramService;
-use App\Settings\Settings;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class AnalyzeCoin extends Command
 {
-    private $provider;
-
     /**
      * The name and signature of the console command.
      *
@@ -33,16 +29,6 @@ class AnalyzeCoin extends Command
      * @var string
      */
     protected $description = 'Analyze a cryptocurrency using a specific method and send results to Telegram';
-
-    public function __construct()
-    {
-        parent::__construct();
-
-        $settingsManager = app('settings');
-        $driver = $settingsManager->driver();
-        $settings = new Settings($driver);
-        $provider = ProviderFactory::createProvider('binance');
-    }
 
     public function handle()
     {
@@ -63,12 +49,16 @@ class AnalyzeCoin extends Command
 
             foreach($scanCoin as $scan)
             {
-                $this->analize(strtoupper($scan->coin_symbol), $method);
+                $this->analize($scan->field_key, $method);
                 sleep(1);
-                Coin::find($scan->field_key())->update([
-                    'coin_updated_at' => now()
+                Coin::find($scan->field_key)->update([
+                    'updated_at' => now()
                 ]);
             }
+        }
+        else
+        {
+            $this->analize($symbol, $method);
         }
     }
 
@@ -76,12 +66,21 @@ class AnalyzeCoin extends Command
     {
         $telegram = new TelegramService();
 
-        try {
+        // Check if symbol exists in database (like web interface)
 
-            $analysisService = AnalysisServiceFactory::createAnalysis($method, $this->provider);
+        try {
+            // Create provider based on user selection using factory pattern
+            $forcedApi = $this->option('api') ? strtolower($this->option('api')) : 'binance';
+            try {
+                $provider = ProviderFactory::createProvider($forcedApi);
+            } catch (\Exception $e) {
+                // Fallback to default provider
+                $provider = ProviderFactory::createProvider('binance');
+            }
+
+            $analysisService = AnalysisServiceFactory::createAnalysis($method, $provider);
 
             $this->info('📊 Performing analysis...');
-            $forcedApi = $this->option('api') ? strtolower($this->option('api')) : null;
 
             // Hasil SimpleAnalysis (object sesuai AnalysisInterface)
             $result = $analysisService->analyze($symbol, 100, '5m', $forcedApi);
