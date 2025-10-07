@@ -54,6 +54,7 @@ Route::middleware([
             Route::get('/data', [\App\Http\Controllers\TradeController::class, 'getData'])->name('getData');
             Route::get('/create', [\App\Http\Controllers\TradeController::class, 'getCreate'])->name('getCreate');
             Route::post('/create', [\App\Http\Controllers\TradeController::class, 'postCreate'])->name('postCreate');
+            Route::match(['get', 'post'], '/trading-ajax', [\App\Http\Controllers\TradeController::class, 'handleTradingAjax'])->name('tradingAjax');
             Route::get('/show/{tradeId}', [\App\Http\Controllers\TradeController::class, 'getShow'])->name('getShow');
             Route::get('/update/{tradeId}', [\App\Http\Controllers\TradeController::class, 'getUpdate'])->name('getUpdate');
             Route::post('/update/{tradeId}', [\App\Http\Controllers\TradeController::class, 'postUpdate'])->name('postUpdate');

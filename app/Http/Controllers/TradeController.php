@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Trade;
 use App\Models\Coin;
 use App\Services\TradeService;
+use App\Services\TokocryptoIntegration;
 use App\Traits\ControllerHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -47,20 +48,168 @@ class TradeController extends Controller
     }
 
     /**
-     * Show the form for creating a new trade
+     * Show the Tokocrypto trading interface
      */
     public function getCreate()
     {
-        // Get available coins for trading
-        $coins = Coin::where('coin_watch', true)->pluck('coin_symbol', 'coin_code');
+        return view('trade.create');
+    }
 
-        // Get available trading pairs from exchange
-        $tradingPairs = $this->tradeService->getAvailableTradingPairs();
+    /**
+     * Handle AJAX requests for trading interface
+     */
+    public function handleTradingAjax()
+    {
+        try {
+            $action = request('action');
 
-        return $this->views($this->module(), [
-            'coins' => $coins,
-            'trading_pairs' => $tradingPairs,
-        ]);
+            switch ($action) {
+                case 'get_ticker':
+                    return $this->getTickerData();
+
+                case 'get_balance':
+                    return $this->getBalanceData();
+
+                case 'get_order_book':
+                    return $this->getOrderBookData();
+
+                case 'place_order':
+                    // Verify CSRF token for POST requests
+                    if (request()->isMethod('post')) {
+                        $token = request('_token') ?: request()->header('X-CSRF-TOKEN');
+                        if (!$token || !hash_equals(csrf_token(), $token)) {
+                            return response()->json(['success' => false, 'error' => 'CSRF token mismatch'], 419);
+                        }
+                    }
+                    return $this->placeOrderData();
+
+                default:
+                    return response()->json(['success' => false, 'error' => 'Unknown action: ' . $action]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Server error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get ticker data
+     */
+    private function getTickerData()
+    {
+        try {
+            $symbol = request('symbol', 'BTC/USDT');
+            $trading = new TokocryptoIntegration('', '', false);
+            $ticker = $trading->getTicker($symbol);
+
+            if (!$ticker) {
+                throw new \Exception('Unable to fetch ticker data');
+            }
+
+            return response()->json(['success' => true, 'data' => $ticker]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Get balance data
+     */
+    private function getBalanceData()
+    {
+        try {
+            if (empty(config('services.tokocrypto.api_key')) || empty(config('services.tokocrypto.api_secret'))) {
+                throw new \Exception('API credentials not configured');
+            }
+
+            $trading = new TokocryptoIntegration(
+                config('services.tokocrypto.api_key'),
+                config('services.tokocrypto.api_secret'),
+                config('services.tokocrypto.sandbox', false)
+            );
+            $balance = $trading->getBalance();
+
+            if ($balance === null) {
+                throw new \Exception('Unable to fetch balance data');
+            }
+
+            return response()->json(['success' => true, 'data' => $balance]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Get order book data
+     */
+    private function getOrderBookData()
+    {
+        try {
+            $symbol = request('symbol', 'BTC/USDT');
+            $limit = (int)request('limit', 10);
+            $trading = new TokocryptoIntegration('', '', false);
+            $orderBook = $trading->getOrderBook($symbol, $limit);
+
+            if (!$orderBook) {
+                throw new \Exception('Unable to fetch order book data');
+            }
+
+            return response()->json(['success' => true, 'data' => $orderBook]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Place order
+     */
+    private function placeOrderData()
+    {
+        try {
+            if (empty(config('services.tokocrypto.api_key')) || empty(config('services.tokocrypto.api_secret'))) {
+                throw new \Exception('API credentials not configured');
+            }
+
+            $side = request('side', 'buy');
+            $type = request('type', 'market');
+            $symbol = request('symbol', 'BTC/USDT');
+            $amount = (float)request('amount', 0);
+            $price = (float)request('price', 0);
+
+            if ($amount <= 0) {
+                throw new \Exception('Amount must be greater than 0');
+            }
+
+            $trading = new TokocryptoIntegration(
+                config('services.tokocrypto.api_key'),
+                config('services.tokocrypto.api_secret'),
+                config('services.tokocrypto.sandbox', false)
+            );
+
+            $result = null;
+            if ($type === 'limit') {
+                if ($price <= 0) {
+                    throw new \Exception('Price must be greater than 0 for limit orders');
+                }
+                $result = $side === 'buy'
+                    ? $trading->createLimitBuyOrder($symbol, $amount, $price)
+                    : $trading->createLimitSellOrder($symbol, $amount, $price);
+            } else {
+                $result = $side === 'buy'
+                    ? $trading->createMarketBuyOrder($symbol, $amount)
+                    : $trading->createMarketSellOrder($symbol, $amount);
+            }
+
+            if (!$result) {
+                throw new \Exception('Failed to place order');
+            }
+
+            return response()->json(['success' => true, 'data' => $result]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
     }
 
     /**
