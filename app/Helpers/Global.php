@@ -179,7 +179,7 @@ if (! function_exists('numberFormat')) {
     {
         if(!empty($value) && is_numeric($value))
         {
-            return number_format($value, $comma);
+            return number_format($value, $comma, ',', '.');
         }
 
         return 0;

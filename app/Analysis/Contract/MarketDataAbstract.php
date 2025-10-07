@@ -2,7 +2,6 @@
 
 namespace App\Analysis\Contract;
 
-
 abstract class AbstractAnalysis implements MarketDataInterface
 {
     protected MarketDataInterface $provider;

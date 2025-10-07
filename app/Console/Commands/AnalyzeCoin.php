@@ -3,15 +3,14 @@
 namespace App\Console\Commands;
 
 use App\Analysis\AnalysisServiceFactory;
-use App\Analysis\ApiProviderManager;
+use App\Analysis\Providers\ProviderFactory;
+use App\Models\Coin;
 use App\Services\TelegramService;
-use App\Settings\Settings;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class AnalyzeCoin extends Command
 {
-    private ApiProviderManager $apiManager;
-
     /**
      * The name and signature of the console command.
      *
@@ -19,7 +18,7 @@ class AnalyzeCoin extends Command
      */
     protected $signature = 'scan:coin
         {symbol : The cryptocurrency symbol to analyze (e.g., BTCUSDT)}
-        {method? : The analysis method to use (default: multi_tf_analysis)}
+        {method? : The analysis method to use (default: hma_breakout)}
         {--amount=100 : The trading amount in USD}
         {--api= : Force specific API provider (binance, coingecko, etc)}
         {--check-providers : Check available coins for all API providers}';
@@ -31,110 +30,68 @@ class AnalyzeCoin extends Command
      */
     protected $description = 'Analyze a cryptocurrency using a specific method and send results to Telegram';
 
-    /**
-     * Check available coins for all API providers
-     */
-    private function checkApiProviderCoins(): array
-    {
-        $this->info('🔍 Checking available coins for all API providers...');
-        $this->newLine();
-
-        $results = [];
-        $providers = $this->apiManager->getAvailableProviders();
-
-        foreach ($providers as $providerCode => $provider) {
-            $this->info("📊 Checking {$providerCode}...");
-
-            try {
-                $symbolInfo = $provider->getSymbolInfo();
-
-                if (is_array($symbolInfo)) {
-                    $coinCount = count($symbolInfo);
-                    $results[$providerCode] = $coinCount;
-
-                    $this->line("   ✅ {$providerCode}: {$coinCount} coins");
-                } else {
-                    $this->line("   ⚠️  {$providerCode}: Invalid response format");
-                    $results[$providerCode] = 0;
-                }
-            } catch (\Exception $e) {
-                $this->line("   ❌ {$providerCode}: " . $e->getMessage());
-                $results[$providerCode] = 0;
-            }
-        }
-
-        $this->newLine();
-        return $results;
-    }
-
-    public function __construct()
-    {
-        parent::__construct();
-
-        $settingsManager = app('settings');
-        $driver = $settingsManager->driver();
-        $settings = new Settings($driver);
-        $this->apiManager = new ApiProviderManager($settings);
-    }
-
     public function handle()
     {
-        // Check if we should check API providers
-        if ($this->option('check-providers')) {
-            $results = $this->checkApiProviderCoins();
-
-            // Find provider with most coins
-            $bestProvider = null;
-            $maxCoins = 0;
-
-            foreach ($results as $provider => $count) {
-                if ($count > $maxCoins) {
-                    $maxCoins = $count;
-                    $bestProvider = $provider;
-                }
-            }
-
-            if ($bestProvider) {
-                $this->info("🏆 Provider with most coins: {$bestProvider} ({$maxCoins} coins)");
-                $this->info("💡 Consider updating your main API provider in config/crypto.php");
-            }
-
-            return 0;
-        }
-
-        $symbol = strtoupper($this->argument('symbol'));
-        $method = $this->argument('method') ?? 'ma_rsi_volume_atr_macd';
+        $symbol = $this->argument('symbol');
+        $method = $this->argument('method') ?? 'hma_breakout';
         $amount = (float) $this->option('amount');
 
-        // Convert symbol format if needed (BTC -> BTCUSDT)
-        $symbolConverter = config('crypto.symbol_converter', []);
-        $fullSymbol = $symbolConverter[$symbol] ?? $symbol;
+        if($symbol == 'all')
+        {
+            $currentHour = Carbon::now()->startOfHour()->toTimeString();
 
-        // Check if the converted symbol exists, if not try the original symbol
-        $symbolToUse = $this->findWorkingSymbol($fullSymbol, $symbol);
+            $scanCoin = Coin::where('coin_watch', 1)
+                ->whereTime('updated_at', '!=', $currentHour)
+                ->orWhereNull('updated_at')
+                ->where('coin_watch', 1)
+                ->limit(env('LIMIT_SCAN_COIN', 2))
+                ->get();
 
-        $this->info("🔍 Analyzing {$symbol} using {$method} method...");
+            foreach($scanCoin as $scan)
+            {
+                $this->analize($scan->field_key, $method);
+                sleep(1);
+                Coin::find($scan->field_key)->update([
+                    'updated_at' => now()
+                ]);
+            }
+        }
+        else
+        {
+            $this->analize($symbol, $method);
+        }
+    }
 
-        $this->showApiProviderInfo($symbolToUse);
-
+    private function analize($symbol, $method)
+    {
         $telegram = new TelegramService();
 
+        // Check if symbol exists in database (like web interface)
+
         try {
-            $analysisService = AnalysisServiceFactory::create($method, $this->apiManager);
+            // Create provider based on user selection using factory pattern
+            $forcedApi = $this->option('api') ? strtolower($this->option('api')) : 'binance';
+            try {
+                $provider = ProviderFactory::createProvider($forcedApi);
+            } catch (\Exception $e) {
+                // Fallback to default provider
+                $provider = ProviderFactory::createProvider('binance');
+            }
+
+            $analysisService = AnalysisServiceFactory::createAnalysis($method, $provider);
 
             $this->info('📊 Performing analysis...');
-            $forcedApi = $this->option('api') ? strtolower($this->option('api')) : null;
 
             // Hasil SimpleAnalysis (object sesuai AnalysisInterface)
-            $result = $analysisService->analyze($symbolToUse, $amount, '1h', $forcedApi);
+            $result = $analysisService->analyze($symbol, 100, '5m', $forcedApi);
 
-            $currentPrice = $this->getCurrentPrice($symbolToUse);
+            $currentPrice = $result->price;
 
             $this->displayResults($symbol, $result, $currentPrice);
 
             if ($telegram->isConfigured()) {
                 $this->info('📤 Sending results to Telegram...');
-                $telegram->sendAnalysisResult($symbolToUse, $result, $currentPrice, $forcedApi ?? 'Auto');
+                $telegram->sendAnalysisResult($symbol, $result, $currentPrice, $forcedApi ?? 'Auto');
             }
 
             return 0;
@@ -144,7 +101,7 @@ class AnalyzeCoin extends Command
 
             if ($telegram->isConfigured()) {
                 $errorMessage = "❌ <b>Analysis Error</b>\n\n";
-                $errorMessage .= "Symbol: {$symbolToUse}\n";
+                $errorMessage .= "Symbol: {$symbol}\n";
                 $errorMessage .= "Method: {$method}\n";
                 $errorMessage .= "Error: " . $e->getMessage();
 
@@ -178,74 +135,6 @@ class AnalyzeCoin extends Command
         return $convertedSymbol;
     }
 
-    /**
-     * Check if a symbol exists in any of the available API providers
-     */
-    private function symbolExists(string $symbol): bool
-    {
-        try {
-            // Try to get data for this symbol from any provider
-            $this->apiManager->getHistoricalData($symbol, '1h', 10); // Reduced from 14 to 10 to work with CoinPaprika
-            return true;
-        } catch (\Exception $e) {
-            // If we get an exception about insufficient data, that's actually good - it means the symbol exists
-            if (strpos($e->getMessage(), 'Insufficient historical data') !== false) {
-                // Even if there's insufficient data, the symbol exists
-                $this->info("ℹ️  Symbol {$symbol} exists but has insufficient data");
-                return true;
-            }
-
-            // If we get an exception about the symbol not being found, it doesn't exist
-            if (strpos($e->getMessage(), 'not found') !== false ||
-                strpos($e->getMessage(), 'Invalid symbol') !== false ||
-                strpos($e->getMessage(), '404') !== false) {
-                $this->info("ℹ️  Symbol {$symbol} not found in data source");
-                return false;
-            }
-
-            // Any other exception means there might be a connectivity issue, but we can't determine if the symbol exists
-            $this->info("ℹ️  Unable to determine if symbol {$symbol} exists due to: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    private function getCurrentPrice(string $symbol): float
-    {
-        try {
-            return $this->apiManager->getCurrentPrice($symbol);
-        } catch (\Exception $e) {
-            $this->warn("⚠️  Could not fetch current price: " . $e->getMessage());
-            return 0;
-        }
-    }
-
-    private function showApiProviderInfo(string $symbol): void
-    {
-        $forcedApi = $this->option('api');
-        $coinMapping = config('crypto.coin_api_mapping', []);
-        $apiConfigs = config('crypto.api_providers.providers', []);
-
-        if ($forcedApi) {
-            $apiCode = strtolower($forcedApi);
-            if (isset($apiConfigs[$apiCode])) {
-                $apiConfig = $apiConfigs[$apiCode];
-                $this->line("🌐 Using Forced API: " . strtoupper($apiCode));
-                $this->line("   URL: " . ($apiConfig['base_url'] ?? 'Unknown'));
-            } else {
-                $this->warn("⚠️  Unknown API provider: {$apiCode}");
-            }
-        } else {
-            $primaryApi = $coinMapping['primary_api'][$symbol] ?? 'binance';
-            $fallbackApis = $coinMapping['fallback_apis'][$symbol] ?? [$primaryApi, 'coingecko'];
-
-            $this->line("🌐 Intelligent API Routing:");
-            $this->line("   Primary API: " . strtoupper($primaryApi));
-            $this->line("   Fallback APIs: " . implode(', ', array_map('strtoupper', $fallbackApis)));
-        }
-
-        $this->newLine();
-    }
-
     private function displayResults(string $symbol, object $result, float $currentPrice): void
     {
         $rupiah = getUsdToIdrRate();
@@ -255,7 +144,8 @@ class AnalyzeCoin extends Command
         $this->info(str_repeat('=', 50));
 
         $this->line("📌 Title: {$result->title}");
-        $this->line("📝 Method: {$result->description}");
+        $descriptionText = is_array($result->description) ? implode(" | ", $result->description) : $result->description;
+        $this->line("📝 Method: {$descriptionText}");
         $this->line("📊 Signal: {$result->signal}");
         $this->line("💯 Confidence: {$result->confidence}%");
         $this->line("💵 Current Price: $" . number_format($currentPrice, 2));
