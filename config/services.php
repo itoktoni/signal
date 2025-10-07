@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'tokocrypto' => [
+        'api_key' => env('TOKOCRYPTO_API_KEY'),
+        'secret' => env('TOKOCRYPTO_SECRET'),
+        'sandbox' => env('TOKOCRYPTO_SANDBOX', true),
+    ],
+
 ];

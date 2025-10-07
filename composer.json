@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.2",
         "bensampo/laravel-enum": "^6.12",
+        "ccxt/ccxt": "^1.93",
         "dietercoopman/laravel-showsql": "^1.6",
         "doctrine/dbal": "^4.3",
         "izniburak/laravel-auto-routes": "^2.1",

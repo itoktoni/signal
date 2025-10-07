@@ -47,5 +47,25 @@ Route::middleware([
                 }
             });
         }
+
+        // Trade module routes
+        Route::prefix('trade')->name('trade.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\TradeController::class, 'index'])->name('index');
+            Route::get('/data', [\App\Http\Controllers\TradeController::class, 'getData'])->name('getData');
+            Route::get('/create', [\App\Http\Controllers\TradeController::class, 'getCreate'])->name('getCreate');
+            Route::post('/create', [\App\Http\Controllers\TradeController::class, 'postCreate'])->name('postCreate');
+            Route::get('/show/{tradeId}', [\App\Http\Controllers\TradeController::class, 'getShow'])->name('getShow');
+            Route::get('/update/{tradeId}', [\App\Http\Controllers\TradeController::class, 'getUpdate'])->name('getUpdate');
+            Route::post('/update/{tradeId}', [\App\Http\Controllers\TradeController::class, 'postUpdate'])->name('postUpdate');
+            Route::get('/delete/{tradeId}', [\App\Http\Controllers\TradeController::class, 'getDelete'])->name('getDelete');
+            Route::post('/delete/{tradeId}', [\App\Http\Controllers\TradeController::class, 'postDelete'])->name('postDelete');
+            Route::post('/bulk-delete', [\App\Http\Controllers\TradeController::class, 'postBulkDelete'])->name('postBulkDelete');
+
+            // Trade execution routes
+            Route::post('/execute/{tradeId}', [\App\Http\Controllers\TradeController::class, 'postExecute'])->name('postExecute');
+            Route::post('/cancel/{tradeId}', [\App\Http\Controllers\TradeController::class, 'postCancel'])->name('postCancel');
+            Route::get('/status/{tradeId}', [\App\Http\Controllers\TradeController::class, 'getStatus'])->name('getStatus');
+            Route::get('/sync', [\App\Http\Controllers\TradeController::class, 'getSync'])->name('getSync');
+        });
     }
 });
