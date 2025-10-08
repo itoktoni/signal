@@ -18,13 +18,23 @@ class TradeController extends Controller
 
     protected $model;
     protected $tradeService;
-    protected $tokocryptoIntegration;
 
-    public function __construct(Trade $model, TradeService $tradeService, TokocryptoIntegration $tokocryptoIntegration)
+    public function __construct(Trade $model, TradeService $tradeService)
     {
         $this->model = $model;
         $this->tradeService = $tradeService;
-        $this->tokocryptoIntegration = $tokocryptoIntegration;
+    }
+
+    /**
+     * Get TokocryptoIntegration instance with credentials
+     */
+    private function getTokocryptoIntegration()
+    {
+        $apiKey = config('services.tokocrypto.api_key', env('TOKOCRYPTO_API_KEY'));
+        $secret = config('services.tokocrypto.secret', env('TOKOCRYPTO_API_SECRET'));
+        $sandbox = config('services.tokocrypto.sandbox', env('TOKOCRYPTO_SANDBOX', true));
+
+        return new TokocryptoIntegration($apiKey, $secret, $sandbox);
     }
 
     /**
@@ -121,7 +131,8 @@ class TradeController extends Controller
     {
         try {
             $symbol = request('symbol', 'BTC/USDT');
-            $ticker = $this->tokocryptoIntegration->getTicker($symbol);
+            $tokocryptoIntegration = $this->getTokocryptoIntegration();
+            $ticker = $tokocryptoIntegration->getTicker($symbol);
 
             if (!$ticker) {
                 throw new \Exception('Unable to fetch ticker data');
@@ -143,7 +154,8 @@ class TradeController extends Controller
                 throw new \Exception('API credentials not configured');
             }
 
-            $balance = $this->tokocryptoIntegration->getBalance();
+            $tokocryptoIntegration = $this->getTokocryptoIntegration();
+            $balance = $tokocryptoIntegration->getBalance();
 
             if ($balance === null) {
                 throw new \Exception('Unable to fetch balance data');
@@ -171,7 +183,8 @@ class TradeController extends Controller
         try {
             $symbol = request('symbol', 'BTC/USDT');
             $limit = (int)request('limit', 10);
-            $orderBook = $this->tokocryptoIntegration->getOrderBook($symbol, $limit);
+            $tokocryptoIntegration = $this->getTokocryptoIntegration();
+            $orderBook = $tokocryptoIntegration->getOrderBook($symbol, $limit);
 
             if (!$orderBook) {
                 throw new \Exception('Unable to fetch order book data');
@@ -204,7 +217,8 @@ class TradeController extends Controller
             // Handle amount based on mode
             if ($amountMode === 'usd' && $usdAmount > 0) {
                 // Get current price for conversion
-                $ticker = $this->tokocryptoIntegration->getTicker($symbol);
+                $tokocryptoIntegration = $this->getTokocryptoIntegration();
+                $ticker = $tokocryptoIntegration->getTicker($symbol);
                 if (!$ticker || !isset($ticker['last'])) {
                     throw new \Exception('Unable to get current price for USDT conversion');
                 }
@@ -225,12 +239,12 @@ class TradeController extends Controller
                     throw new \Exception('Price must be greater than 0 for limit orders');
                 }
                 $result = $side === 'buy'
-                    ? $this->tokocryptoIntegration->createLimitBuyOrder($symbol, $amount, $price)
-                    : $this->tokocryptoIntegration->createLimitSellOrder($symbol, $amount, $price);
+                    ? $tokocryptoIntegration->createLimitBuyOrder($symbol, $amount, $price)
+                    : $tokocryptoIntegration->createLimitSellOrder($symbol, $amount, $price);
             } else {
                 $result = $side === 'buy'
-                    ? $this->tokocryptoIntegration->createMarketBuyOrder($symbol, $amount)
-                    : $this->tokocryptoIntegration->createMarketSellOrder($symbol, $amount);
+                    ? $tokocryptoIntegration->createMarketBuyOrder($symbol, $amount)
+                    : $tokocryptoIntegration->createMarketSellOrder($symbol, $amount);
             }
 
             if (!$result) {

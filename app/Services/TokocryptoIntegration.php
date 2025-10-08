@@ -16,6 +16,10 @@ class TokocryptoIntegration
                 'enableRateLimit' => true,
                 'rateLimit' => 1000,
                 'timeout' => 30000,
+                'options' => [
+                    'adjustForTimeDifference' => false, // Disable to avoid publicGetTime issues
+                    'recvWindow' => 10000, // Add recvWindow for compatibility
+                ],
             ];
 
             // Only set API credentials if they are provided

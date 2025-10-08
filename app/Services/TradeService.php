@@ -20,7 +20,8 @@ class TradeService
             'enableRateLimit' => true,
             'rateLimit' => 1000,
             'options' => [
-                'adjustForTimeDifference' => true,
+                'adjustForTimeDifference' => false, // Disable to avoid publicGetTime issues
+                'recvWindow' => 10000, // Add recvWindow for compatibility
             ],
         ];
 
