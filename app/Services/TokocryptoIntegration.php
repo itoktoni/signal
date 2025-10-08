@@ -11,48 +11,17 @@ class TokocryptoIntegration
     public function __construct(string $apiKey = '', string $secret = '', bool $sandbox = true)
     {
         try {
-            // Ensure CCXT autoloader is loaded - try multiple approaches
-            $ccxtLoaded = false;
-
-            // Method 1: Check if already loaded
-            if (class_exists('\ccxt\Exchange')) {
-                $ccxtLoaded = true;
-            }
-
-            // Method 2: Try to load manually if not already loaded
-            if (!$ccxtLoaded) {
-                $autoloadFile = __DIR__ . '/../vendor/autoload.php';
-                if (file_exists($autoloadFile)) {
-                    require_once $autoloadFile;
-                    $ccxtLoaded = class_exists('\ccxt\Exchange');
-                }
-            }
-
-            // Method 3: Direct include if autoloader fails
-            if (!$ccxtLoaded) {
-                $ccxtFile = __DIR__ . '/../vendor/ccxt/ccxt/php/tokocrypto.php';
-                if (file_exists($ccxtFile)) {
-                    require_once $ccxtFile;
-                    $ccxtLoaded = class_exists('\ccxt\tokocrypto');
-                }
-            }
-
-            if (!$ccxtLoaded) {
-                throw new \Exception('CCXT library not found. Please ensure CCXT is properly installed via Composer.');
-            }
-
+            // Only set credentials if they are provided
             $config = [
                 'enableRateLimit' => true,
                 'rateLimit' => 1000,
                 'timeout' => 30000,
             ];
 
-            // Only set API credentials and sandbox for private operations
-            // Public market data should use live exchange without credentials
+            // Only set API credentials if they are provided
             if (!empty($apiKey) && !empty($secret)) {
                 $config['apiKey'] = $apiKey;
                 $config['secret'] = $secret;
-                // Only use sandbox if explicitly requested for trading operations
                 if ($sandbox) {
                     $config['sandbox'] = true;
                 }
@@ -67,21 +36,49 @@ class TokocryptoIntegration
     public function initialize(): bool
     {
         try {
-            $this->exchange->load_markets();
+            $this->exchange->loadMarkets();
             echo "Tokocrypto exchange initialized successfully\n";
-            echo "Available symbols: " . count($this->exchange->symbols) . "\n";
             return true;
         } catch (\Exception $e) {
             echo "Failed to initialize Tokocrypto exchange: " . $e->getMessage() . "\n";
-            return false;
+
+            // Try alternative initialization
+            try {
+                echo "Trying alternative initialization method...\n";
+                $this->exchange->fetchMarkets();
+                echo "Alternative initialization successful\n";
+                return true;
+            } catch (\Exception $e2) {
+                echo "Alternative initialization also failed: " . $e2->getMessage() . "\n";
+                return false;
+            }
         }
     }
 
     public function getBalance(): ?array
     {
         try {
-            return $this->exchange->fetch_balance();
+            // Check if we have API credentials
+            if (empty($this->exchange->apiKey)) {
+                throw new \Exception('API credentials not configured');
+            }
+
+            $response = $this->exchange->fetch_balance();
+
+            // Validate that response is an array (CCXT should return array)
+            if (!is_array($response)) {
+                throw new \Exception('Invalid response format from exchange');
+            }
+
+            return $response;
         } catch (\Exception $e) {
+            // Handle JSON parsing errors specifically
+            if (str_contains($e->getMessage(), 'JSON') || str_contains($e->getMessage(), 'token')) {
+                echo "Error fetching balance: Invalid response from exchange (possibly HTML error page)\n";
+                echo "This usually means API credentials are not configured or invalid.\n";
+                throw new \Exception('Invalid API response - check credentials');
+            }
+
             echo "Error fetching balance: " . $e->getMessage() . "\n";
             throw $e;
         }
@@ -189,19 +186,32 @@ class TokocryptoIntegration
 
     public function getAvailableSymbols(): array
     {
-        return array_keys($this->exchange->symbols);
+        try {
+            $markets = $this->exchange->loadMarkets();
+            return $this->exchange->symbols ?? array_keys($markets);
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     public function getExchangeInfo(): array
     {
-        return [
-            'id' => $this->exchange->id,
-            'name' => $this->exchange->name,
-            'countries' => $this->exchange->countries,
-            'urls' => $this->exchange->urls,
-            'version' => $this->exchange->version,
-            'rateLimit' => $this->exchange->rateLimit,
-        ];
+        try {
+            return [
+                'id' => $this->exchange->id ?? 'tokocrypto',
+                'name' => $this->exchange->name ?? 'Tokocrypto',
+                'countries' => $this->exchange->countries ?? ['ID'],
+                'urls' => $this->exchange->urls ?? [],
+                'version' => $this->exchange->version ?? '1.0',
+                'rateLimit' => $this->exchange->rateLimit ?? 1000,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'id' => 'tokocrypto',
+                'name' => 'Tokocrypto',
+                'error' => $e->getMessage(),
+            ];
+        }
     }
 
     public function getExchange(): tokocrypto

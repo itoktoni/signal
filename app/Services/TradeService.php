@@ -14,17 +14,29 @@ class TradeService
 
     public function __construct()
     {
-        $this->exchange = new tokocrypto([
-            'apiKey' => config('services.tokocrypto.api_key', env('TOKOCRYPTO_API_KEY')),
-            'secret' => config('services.tokocrypto.secret', env('TOKOCRYPTO_SECRET')),
-            'sandbox' => config('services.tokocrypto.sandbox', env('TOKOCRYPTO_SANDBOX', true)),
+        // Only set credentials if they are provided
+        $config = [
+            'timeout' => 30000,
+            'enableRateLimit' => true,
+            'rateLimit' => 1000,
             'options' => [
                 'adjustForTimeDifference' => true,
             ],
-        ]);
+        ];
 
-        // Load markets to cache
-        $this->loadMarkets();
+        $apiKey = config('services.tokocrypto.api_key', env('TOKOCRYPTO_API_KEY'));
+        $secret = config('services.tokocrypto.secret', env('TOKOCRYPTO_API_SECRET'));
+
+        if (!empty($apiKey) && !empty($secret)) {
+            $config['apiKey'] = $apiKey;
+            $config['secret'] = $secret;
+            $config['sandbox'] = config('services.tokocrypto.sandbox', env('TOKOCRYPTO_SANDBOX', true));
+        }
+
+        $this->exchange = new tokocrypto($config);
+
+        // Don't load markets in constructor to avoid initialization issues
+        // Markets will be loaded on-demand when needed
     }
 
     /**
@@ -34,7 +46,24 @@ class TradeService
     {
         try {
             $markets = Cache::remember('tokocrypto_markets', 3600, function () {
-                return $this->exchange->load_markets();
+                try {
+                    return $this->exchange->loadMarkets();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to load markets, trying fetchMarkets', [
+                        'error' => $e->getMessage()
+                    ]);
+
+                    // Try alternative method if loadMarkets fails
+                    try {
+                        return $this->exchange->fetchMarkets();
+                    } catch (\Exception $e2) {
+                        Log::error('Both loadMarkets and fetchMarkets failed', [
+                            'error1' => $e->getMessage(),
+                            'error2' => $e2->getMessage()
+                        ]);
+                        throw $e2;
+                    }
+                }
             });
             return $markets;
         } catch (\Exception $e) {
@@ -75,6 +104,13 @@ class TradeService
     public function executeTrade(Trade $trade)
     {
         try {
+            // Check if we have API credentials
+            if (empty($this->exchange->apiKey)) {
+                return [
+                    'success' => false,
+                    'error' => 'API credentials not configured. Please set TOKOCRYPTO_API_KEY and TOKOCRYPTO_SECRET in your .env file.',
+                ];
+            }
             // Prepare order parameters
             $orderParams = [
                 'symbol' => $trade->symbol,
@@ -139,6 +175,14 @@ class TradeService
     public function cancelTrade(Trade $trade)
     {
         try {
+            // Check if we have API credentials
+            if (empty($this->exchange->apiKey)) {
+                return [
+                    'success' => false,
+                    'error' => 'API credentials not configured. Please set TOKOCRYPTO_API_KEY and TOKOCRYPTO_SECRET in your .env file.',
+                ];
+            }
+
             if (!$trade->exchange_order_id) {
                 return [
                     'success' => false,
@@ -184,6 +228,14 @@ class TradeService
     public function getTradeStatus(Trade $trade)
     {
         try {
+            // Check if we have API credentials
+            if (empty($this->exchange->apiKey)) {
+                return [
+                    'success' => false,
+                    'error' => 'API credentials not configured. Please set TOKOCRYPTO_API_KEY and TOKOCRYPTO_SECRET in your .env file.',
+                ];
+            }
+
             if (!$trade->exchange_order_id) {
                 return [
                     'success' => false,
@@ -256,18 +308,39 @@ class TradeService
     public function getBalance($currency = null)
     {
         try {
+            // Check if we have API credentials
+            if (empty($this->exchange->apiKey)) {
+                Log::warning('Cannot fetch balance: API credentials not configured');
+                return $currency ? 0 : [];
+            }
+
             $balance = $this->exchange->fetchBalance();
+
+            // Validate response format
+            if (!is_array($balance)) {
+                Log::error('Invalid balance response format', ['response_type' => gettype($balance)]);
+                return $currency ? 0 : [];
+            }
 
             if ($currency) {
                 return $balance['total'][$currency] ?? 0;
             }
 
-            return $balance['total'];
+            return $balance['total'] ?? [];
         } catch (\Exception $e) {
-            Log::error('Failed to fetch balance', [
-                'error' => $e->getMessage(),
-                'currency' => $currency
-            ]);
+            // Handle JSON parsing errors specifically
+            if (str_contains($e->getMessage(), 'JSON') || str_contains($e->getMessage(), 'token')) {
+                Log::error('Balance fetch failed due to JSON parsing error', [
+                    'error' => $e->getMessage(),
+                    'currency' => $currency,
+                    'suggestion' => 'Check API credentials and network connectivity'
+                ]);
+            } else {
+                Log::error('Failed to fetch balance', [
+                    'error' => $e->getMessage(),
+                    'currency' => $currency
+                ]);
+            }
 
             return $currency ? 0 : [];
         }

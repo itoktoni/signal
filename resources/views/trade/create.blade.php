@@ -55,13 +55,32 @@
                         <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Market Data</h5>
                     </div>
                     <div class="card-body">
-                        <!-- Symbol Selection -->
+                        <!-- Coin Selection -->
                         <div class="row mb-3">
                             <div class="col-md-6">
+                                <x-select name="coin_symbol" id="coinSelect" label="Select Coin"
+                                    :options="$coins"
+                                    :value="request('coin_symbol')" col="12"
+                                    onchange="updateTradingPairs()"/>
+                            </div>
+                            <div class="col-md-6">
                                 <x-select name="symbol" id="symbolSelect" label="Trading Pair"
-                                    :options="['BTC/USDT' => 'BTC/USDT', 'ETH/USDT' => 'ETH/USDT', 'BNB/USDT' => 'BNB/USDT', 'ADA/USDT' => 'ADA/USDT', 'SOL/USDT' => 'SOL/USDT']"
+                                    :options="$popular_pairs"
                                     :value="request('symbol', 'BTC/USDT')" col="12"/>
                             </div>
+                        </div>
+
+                        <!-- Available Trading Pairs for Selected Coin -->
+                        <div class="row mb-3" id="tradingPairsSection" style="display: none;">
+                            <div class="col-12">
+                                <label class="form-label">Available Trading Pairs</label>
+                                <div id="tradingPairsContainer" class="d-flex flex-wrap gap-2">
+                                    <!-- Trading pairs will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Symbol Selection (Original) -->
                             <div class="col-md-6">
                                 <label class="form-label">&nbsp;</label>
                                 <div class="d-flex gap-2">
@@ -113,7 +132,11 @@
                         <h5 class="mb-0"><i class="bi bi-wallet"></i> Account Balance</h5>
                     </div>
                     <div class="card-body">
-                        @if (empty(config('services.tokocrypto.api_key')) || empty(config('services.tokocrypto.api_secret')))
+                        @php
+                            $credentialsConfigured = !empty(config('services.tokocrypto.api_key')) && !empty(config('services.tokocrypto.secret'));
+                        @endphp
+
+                        @if (!$credentialsConfigured)
                             <div class="alert alert-warning">
                                 <i class="bi bi-exclamation-triangle"></i>
                                 API credentials not configured. Set TOKOCRYPTO_API_KEY and TOKOCRYPTO_API_SECRET to view balance.
@@ -180,10 +203,68 @@
                             <!-- Symbol -->
                             <x-input name="symbol" id="symbolInput" label="Symbol" value="BTC/USDT" required col="12"/>
 
-                            <!-- Amount -->
-                            <x-input name="amount" id="amountInput" type="number" label="Amount" step="0.00000001" min="0.00000001" required col="12">
-                                <small class="form-text text-muted">Minimum amount depends on the trading pair</small>
-                            </x-input>
+                            <!-- Trading Mode Toggle -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label class="form-label">Trading Mode</label>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="amount_mode" id="baseAmountMode" value="base">
+                                                <label class="form-check-label" for="baseAmountMode">
+                                                    <i class="bi bi-currency-bitcoin"></i> Base Currency Amount
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="amount_mode" id="usdAmountMode" value="usd" checked>
+                                                <label class="form-check-label" for="usdAmountMode">
+                                                    <i class="bi bi-currency-dollar"></i> USDT Amount
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Current Price Display -->
+                            <div class="row mb-3" id="priceInfoSection" style="display: none;">
+                                <div class="col-12">
+                                    <div class="card bg-light">
+                                        <div class="card-body py-2">
+                                            <div class="row text-center">
+                                                <div class="col-4">
+                                                    <small class="text-muted">Current Price</small>
+                                                    <div class="fw-bold" id="currentPrice">-</div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted">24h Change</small>
+                                                    <div class="fw-bold" id="priceChange">-</div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted">Base/USDT</small>
+                                                    <div class="fw-bold" id="basePerUsdt">-</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Base Currency Amount -->
+                            <div id="baseAmountSection">
+                                <x-input name="amount" id="amountInput" type="number" label="Amount" step="0.00000001" min="0.00000001" required col="12">
+                                    <small class="form-text text-muted">Amount in base currency (e.g., BTC, ETH)</small>
+                                </x-input>
+                            </div>
+
+                            <!-- USDT Amount -->
+                            <div id="usdAmountSection" style="display: none;">
+                                <x-input name="usd_amount" id="usdAmountInput" type="number" label="USDT Amount" step="0.01" min="0.01" col="12">
+                                    <small class="form-text text-muted">Amount in USDT (will be converted to base currency)</small>
+                                </x-input>
+                            </div>
 
                             <!-- Price (Limit Orders) -->
                             <div class="mb-3" id="priceSection" style="display: none;">
@@ -218,6 +299,118 @@
             refreshTicker();
         });
 
+        // Update trading pairs when coin selection changes
+        async function updateTradingPairs() {
+            const coinSelect = document.getElementById('coinSelect');
+            const selectedCoin = coinSelect.value;
+
+            if (!selectedCoin) {
+                document.getElementById('tradingPairsSection').style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`{{ route('trade.tradingAjax') }}?action=get_trading_pairs&coin=${encodeURIComponent(selectedCoin)}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    displayTradingPairs(data.pairs);
+                } else {
+                    console.error('Failed to fetch trading pairs:', data.error);
+                }
+            } catch (error) {
+                console.error('Error fetching trading pairs:', error);
+            }
+        }
+
+        // Display trading pairs for selected coin
+        function displayTradingPairs(pairs) {
+            const container = document.getElementById('tradingPairsContainer');
+            const section = document.getElementById('tradingPairsSection');
+
+            if (Object.keys(pairs).length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            let html = '';
+            Object.entries(pairs).forEach(([symbol, name]) => {
+                html += `
+                    <button type="button" class="btn btn-outline-primary btn-sm"
+                            onclick="selectTradingPair('${symbol}')">
+                        ${name}
+                    </button>
+                `;
+            });
+
+            container.innerHTML = html;
+            section.style.display = 'block';
+        }
+
+        // Select a trading pair from the available options
+        function selectTradingPair(symbol) {
+            document.getElementById('symbolSelect').value = symbol;
+            document.getElementById('symbolInput').value = symbol;
+            currentSymbol = symbol;
+            refreshTicker();
+        }
+
+        // Toggle between base currency and USDT amount modes
+        function toggleAmountMode(mode) {
+            const baseAmountSection = document.getElementById('baseAmountSection');
+            const usdAmountSection = document.getElementById('usdAmountSection');
+            const priceInfoSection = document.getElementById('priceInfoSection');
+
+            if (mode === 'usd') {
+                baseAmountSection.style.display = 'none';
+                usdAmountSection.style.display = 'block';
+                priceInfoSection.style.display = 'block';
+                document.getElementById('amountInput').removeAttribute('required');
+                document.getElementById('usdAmountInput').setAttribute('required', 'required');
+            } else {
+                baseAmountSection.style.display = 'block';
+                usdAmountSection.style.display = 'none';
+                priceInfoSection.style.display = 'block';
+                document.getElementById('usdAmountInput').removeAttribute('required');
+                document.getElementById('amountInput').setAttribute('required', 'required');
+            }
+
+            // Clear the other amount field
+            if (mode === 'usd') {
+                document.getElementById('amountInput').value = '';
+            } else {
+                document.getElementById('usdAmountInput').value = '';
+            }
+        }
+
+        // Convert USDT amount to base currency amount
+        function convertUsdToBase() {
+            const usdAmount = parseFloat(document.getElementById('usdAmountInput').value);
+            const currentPrice = parseFloat(document.getElementById('currentPrice').textContent.replace(/,/g, ''));
+
+            if (usdAmount > 0 && currentPrice > 0) {
+                const baseAmount = usdAmount / currentPrice;
+                document.getElementById('amountInput').value = baseAmount.toFixed(8);
+            }
+        }
+
+        // Convert base currency amount to USDT amount
+        function convertBaseToUsd() {
+            const baseAmount = parseFloat(document.getElementById('amountInput').value);
+            const currentPrice = parseFloat(document.getElementById('currentPrice').textContent.replace(/,/g, ''));
+
+            if (baseAmount > 0 && currentPrice > 0) {
+                const usdAmount = baseAmount * currentPrice;
+                document.getElementById('usdAmountInput').value = usdAmount.toFixed(2);
+            }
+        }
+
         // Update form when symbol input changes
         document.getElementById('symbolInput').addEventListener('input', function() {
             currentSymbol = this.value;
@@ -245,6 +438,23 @@
         // Update submit button text
         document.querySelectorAll('input[name="side"], input[name="type"]').forEach(input => {
             input.addEventListener('change', updateSubmitButton);
+        });
+
+        // Handle trading mode toggle
+        document.querySelectorAll('input[name="amount_mode"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                toggleAmountMode(this.value);
+            });
+        });
+
+        // Handle USDT amount input changes
+        document.getElementById('usdAmountInput')?.addEventListener('input', function() {
+            convertUsdToBase();
+        });
+
+        // Handle base amount input changes
+        document.getElementById('amountInput')?.addEventListener('input', function() {
+            convertBaseToUsd();
         });
 
         function updateSubmitButton() {
@@ -282,6 +492,26 @@
             const section = document.getElementById('tickerSection');
             const container = document.getElementById('tickerData');
 
+            // Update price info section
+            document.getElementById('currentPrice').textContent = formatPrice(ticker.last);
+
+            const changePercent = ticker.percentage ? parseFloat(ticker.percentage) : 0;
+            const changeClass = changePercent >= 0 ? 'text-success' : 'text-danger';
+            const changeIcon = changePercent >= 0 ? 'bi-arrow-up' : 'bi-arrow-down';
+
+            document.getElementById('priceChange').innerHTML = `
+                <span class="${changeClass}">
+                    <i class="bi ${changeIcon}"></i>
+                    ${formatPrice(Math.abs(changePercent))}%
+                </span>
+            `;
+
+            if (ticker.last && ticker.last > 0) {
+                const basePerUsdt = 1 / ticker.last;
+                document.getElementById('basePerUsdt').textContent = formatNumber(basePerUsdt);
+            }
+
+            // Update main ticker display
             container.innerHTML = `
                 <div class="col-md-3">
                     <div class="card bg-light">
@@ -376,11 +606,21 @@
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
 
             try {
+                const amountMode = document.querySelector('input[name="amount_mode"]:checked').value;
                 const formData = new FormData();
                 formData.append('side', document.querySelector('input[name="side"]:checked').value);
                 formData.append('type', document.querySelector('input[name="type"]:checked').value);
                 formData.append('symbol', document.getElementById('symbolInput').value);
-                formData.append('amount', document.getElementById('amountInput').value);
+                formData.append('amount_mode', amountMode);
+
+                // Handle amount based on mode
+                if (amountMode === 'usd') {
+                    const usdAmount = document.getElementById('usdAmountInput').value;
+                    formData.append('usd_amount', usdAmount);
+                    // Server will convert USDT amount to base amount
+                } else {
+                    formData.append('amount', document.getElementById('amountInput').value);
+                }
 
                 if (document.querySelector('input[name="type"]:checked').value === 'limit') {
                     formData.append('price', document.getElementById('priceInput').value);
@@ -448,7 +688,7 @@
         }
 
         // Load balance if API credentials are configured
-        @if (!empty(config('services.tokocrypto.api_key')) && !empty(config('services.tokocrypto.api_secret')))
+        @if (!empty(config('services.tokocrypto.api_key')) && !empty(config('services.tokocrypto.secret')))
         document.addEventListener('DOMContentLoaded', async function() {
             try {
                 const response = await fetch('{{ route('trade.tradingAjax') }}?action=get_balance', {
@@ -458,6 +698,12 @@
                         'Accept': 'application/json'
                     }
                 });
+
+                // Check if response is ok before parsing JSON
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
                 const data = await response.json();
 
                 if (data.success) {
@@ -468,8 +714,15 @@
                 }
             } catch (error) {
                 console.error('Balance loading error:', error);
-                document.getElementById('balanceSection').innerHTML =
-                    '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Error loading balance: ' + error.message + '</div>';
+
+                // Handle JSON parsing errors specifically
+                if (error.message.includes('JSON') || error.message.includes('Unexpected token')) {
+                    document.getElementById('balanceSection').innerHTML =
+                        '<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> API credentials may not be configured properly</div>';
+                } else {
+                    document.getElementById('balanceSection').innerHTML =
+                        '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Error loading balance: ' + error.message + '</div>';
+                }
             }
         });
         @endif
@@ -503,6 +756,15 @@
         // Initial load
         document.addEventListener('DOMContentLoaded', function() {
             refreshTicker();
+
+            // If a coin is pre-selected, load its trading pairs
+            const coinSelect = document.getElementById('coinSelect');
+            if (coinSelect.value) {
+                updateTradingPairs();
+            }
+
+            // Initialize with USDT mode as default
+            toggleAmountMode('usd');
         });
     </script>
 </x-layout>

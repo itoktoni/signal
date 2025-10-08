@@ -37,7 +37,7 @@ return [
 
     'tokocrypto' => [
         'api_key' => env('TOKOCRYPTO_API_KEY'),
-        'api_secret' => env('TOKOCRYPTO_API_SECRET'),
+        'secret' => env('TOKOCRYPTO_API_SECRET'),
         'sandbox' => env('TOKOCRYPTO_SANDBOX', false),
     ],
 
