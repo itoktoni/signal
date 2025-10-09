@@ -199,7 +199,7 @@ class HybridTrendRangeStrategy extends AnalysisAbstract
             ],
             'signal' => 'BUY',
             'confidence' => $confidence,
-            'score' => $score,
+            'score' => $confidence,
             'price' => $currentPrice,
             'entry' => $entry,
             'stop_loss' => $stopLoss,

@@ -636,13 +636,10 @@ class DefaultAnalysis extends AnalysisAbstract
 
     private function calculateScore(string $signal, float $confidence): int
     {
-        $baseScore = $confidence;
-        if ($signal === 'BUY') {
-            return min(100, $baseScore + 10);
-        } elseif ($signal === 'SELL') {
-            return min(100, $baseScore + 5);
+        if ($signal === 'BUY' || $signal === 'SELL') {
+            return min(100, $confidence);
         }
-        return min(100, $baseScore);
+        return 50;
     }
 
     private function detectPatterns(array $historicalData): array

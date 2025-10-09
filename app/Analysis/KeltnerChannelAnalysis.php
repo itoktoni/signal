@@ -119,7 +119,7 @@ class KeltnerChannelAnalysis extends AnalysisAbstract
             'description'        => $description,
             'signal'             => $signal,
             'confidence'         => round($confidence, 2),
-            'score'              => round(($confidence + $trendStrength) / 2, 2),
+            'score'              => ($signal === 'BUY' || $signal === 'SELL') ? round($confidence, 2) : 50,
             'price'              => $price,
             'entry'              => round($entry, 4),
             'stop_loss'          => round($stop_loss, 4),

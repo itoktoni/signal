@@ -669,10 +669,9 @@ class SignalBuyGrok extends AnalysisAbstract
 
     private function calculateScore(string $signal, float $confidence): int
     {
-        $baseScore = $confidence;
         if ($signal === 'BUY' || $signal === 'SELL') {
-            return min(100, $baseScore + 10);
+            return min(100, $confidence);
         }
-        return min(100, $baseScore);
+        return 50;
     }
 }

@@ -66,7 +66,7 @@ class HmaBreakoutAnalysis extends AnalysisAbstract
             ],
             'signal' => $buySignal ? 'BUY' : 'SELL',
             'confidence' => $confidence,
-            'score' => $score,
+            'score' => $confidence,
             'price' => $price,
             'entry' => $entry,
             'stop_loss' => $stopLoss,
