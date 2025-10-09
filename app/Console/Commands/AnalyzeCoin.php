@@ -33,7 +33,7 @@ class AnalyzeCoin extends Command
     public function handle()
     {
         $symbol = $this->argument('symbol');
-        $method = $this->argument('method') ?? 'hma_breakout';
+        $method = $this->argument('method') ?? 'daytrade_buy';
         $amount = (float) $this->option('amount');
 
         if($symbol == 'all')
