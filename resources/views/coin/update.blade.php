@@ -156,7 +156,13 @@
                                                              </td>
                                                              <td>
                                                                  <span class="crypto-indicator-value">
-                                                                     {{ $value }}
+                                                                    @if (is_numeric($value))
+                                                                        {{ numberFormat($value, 5) }}
+                                                                    @elseif (is_array($value))
+                                                                        {{ json_encode($value) }}
+                                                                    @else
+                                                                        {{ $value }}
+                                                                    @endif
                                                                  </span>
                                                              </td>
                                                          </tr>

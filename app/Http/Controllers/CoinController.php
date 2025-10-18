@@ -197,9 +197,9 @@ class CoinController extends Controller
         ]);
     }
 
-    public function getApi($code)
+    public function getTest($code)
     {
-// Get parameters
+        // Get parameters
         $coinCode = request('coin_code', $code);
         $timeframe = request('timeframe', '4h');
         $amount = max(1, floatval(request('amount', 100)));

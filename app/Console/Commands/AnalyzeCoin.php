@@ -8,6 +8,7 @@ use App\Models\Coin;
 use App\Services\TelegramService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
 
 class AnalyzeCoin extends Command
 {
@@ -84,6 +85,8 @@ class AnalyzeCoin extends Command
 
             // Hasil SimpleAnalysis (object sesuai AnalysisInterface)
             $result = $analysisService->analyze($symbol, 100, '5m', $forcedApi);
+            $result = Http::get('/testing/'.$symbol);
+            dd($result);
 
             $currentPrice = $result->price;
 
