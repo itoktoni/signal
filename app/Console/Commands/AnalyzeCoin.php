@@ -85,8 +85,6 @@ class AnalyzeCoin extends Command
 
             // Hasil SimpleAnalysis (object sesuai AnalysisInterface)
             $result = $analysisService->analyze($symbol, 100, '5m', $forcedApi);
-            $result = Http::get('/testing/'.$symbol);
-            dd($result);
 
             $currentPrice = $result->price;
 
